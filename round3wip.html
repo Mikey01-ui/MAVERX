@@ -12,36 +12,66 @@
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --void: #1e0f1a; --green-stable: #00c41c; --green-matrix: #00FF41;
-    --purple-light: #8f44e8; --orange: #f79421; --pink: #d31972;
+    --void: #1e0f1a; --void-pure: #000000; --green-stable: #00c41c; --green-matrix: #00FF41;
+    --purple: #5400ad; --purple-light: #8f44e8; --orange: #f79421; --pink: #d31972;
     --white: #faf7f2; --panel-bg: #221829; --panel-border: rgba(0,196,28,0.35);
-    --grey-text: #cccccc;
+    --grey-dim: #2e2e2e; --grey-mid: #444444; --grey-text: #cccccc; --grey-light: #edeae5;
     --font-mono: 'Share Tech Mono', monospace; --font-display: 'Space Grotesk', sans-serif; --font-body: 'DM Sans', sans-serif;
   }
+  html { font-size: clamp(15px, 1.2vw, 22px); }
   html, body { width:100%; min-height:100%; overflow:auto; font-family:var(--font-body); background:var(--void); color:var(--white); }
   .ambient-glow { position:fixed; inset:0; z-index:0; pointer-events:none; background:
     radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%); }
+    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%); }
+  .corner { position:fixed; z-index:2; width:40px; height:40px; pointer-events:none; }
+  .corner--tl { top:10px; left:10px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+  .corner--tr { top:10px; right:10px; border-top:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
+  .corner--bl { bottom:10px; left:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+  .corner--br { bottom:10px; right:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
   .scanlines { position:fixed; inset:0; z-index:10; pointer-events:none;
     background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px); mix-blend-mode: multiply; }
   .bg-grid { position:fixed; inset:0; z-index:0;
     background-image: linear-gradient(rgba(0,196,28,0.11) 1px, transparent 1px), linear-gradient(90deg, rgba(0,196,28,0.11) 1px, transparent 1px);
     background-size: 40px 40px; background-position: 0 36px; }
-  .status-bar { position:fixed; top:0; left:0; right:0; z-index:5; height:36px; padding:0 64px; display:flex; justify-content:space-between; align-items:center;
-    border-bottom:1px solid rgba(0,196,28,0.28); background:#1e0f1a; }
+  .status-bar { position:fixed; top:0; left:0; right:0; z-index:5; height:36px; padding:0 clamp(1rem,4vw,64px); display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid rgba(0,196,28,0.28); background:linear-gradient(180deg, rgba(30,15,26,0.9) 0%, transparent 100%); }
   .status-left, .status-right { font-family:var(--font-mono); font-size:0.65rem; color:var(--green-stable); letter-spacing:0.08em; display:flex; gap:1.5rem; align-items:center; }
+  .status-right span:last-child { color:var(--green-matrix); text-shadow:0 0 8px rgba(0,255,65,0.3); }
   .status-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--green-stable); margin-right:6px; vertical-align:middle; }
   .status-dot.live { background:var(--green-matrix); box-shadow:0 0 8px rgba(0,255,65,0.6); animation:blink 2.4s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-  .page { position:relative; z-index:2; margin-top:36px; display:none; flex-direction:column; align-items:center; justify-content:center; padding:clamp(0.5rem,1.5vh,1.5rem) 4vw clamp(1rem,2vh,2rem); min-height:calc(100vh - 36px); overflow-x:hidden;overflow-y:auto; }
-  #page2{justify-content:flex-start}
-  .page.active { display:flex; }
+  #intro-root .page { position:relative; z-index:2; margin-top:36px; display:none; flex-direction:column; align-items:center; justify-content:flex-start; padding:1.5vh 6vw 1.2rem; min-height:calc(100vh - 36px); overflow-x:hidden; overflow-y:auto; }
+  #intro-root .page.active { display:flex; }
+  #intro-root .page-eyebrow { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable); letter-spacing:0.25em; text-transform:uppercase; margin-bottom:0.4vh; flex-shrink:0; }
+  #intro-root .page-title { font-family:var(--font-display); font-size:clamp(1.35rem,3.2vh,2rem); font-weight:700; letter-spacing:-0.01em; margin-bottom:0.8vh; flex-shrink:0;
+    background:linear-gradient(135deg, var(--white) 60%, var(--purple-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .page-eyebrow { font-family:var(--font-mono); font-size:clamp(0.46rem,0.6vw,0.65rem); color:var(--green-stable); letter-spacing:0.25em; text-transform:uppercase; margin-bottom:clamp(0.2rem,0.5vh,0.6rem); }
   .page-title { font-family:var(--font-display); font-size:clamp(1.2rem,2.8vh,2.6rem); font-weight:700; margin-bottom:clamp(0.5rem,1.5vh,1.5rem);
     background:linear-gradient(135deg, var(--white) 60%, var(--purple-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .page-subtitle { font-family:var(--font-body); font-size:clamp(0.85rem,1.2vw,1.05rem); color:var(--grey-text); text-align:center; max-width:560px; margin-bottom:1rem; line-height:1.6; }
   .intro-stats { font-family:var(--font-mono); font-size:clamp(0.5rem,0.65vw,0.7rem); color:var(--green-stable); letter-spacing:0.2em; margin-bottom:1.2rem; }
+  #intro-root #page0 .page-title { font-size: clamp(1.6rem, 4vh, 2.75rem); margin-bottom: clamp(0.35rem, 1vh, 0.75rem); }
+  #intro-root #page0 { justify-content: flex-start; padding-top: clamp(0.8rem, 2vh, 1.5rem); }
+  #intro-root #page0 .page-subtitle { max-width: min(42rem, 92vw); margin-bottom: clamp(0.75rem, 1.5vh, 1.1rem); }
+  #intro-root #page0 .content { width: min(88vw, 920px); flex: 0 1 auto; justify-content: flex-start; min-height: 0; margin-bottom: clamp(0.5rem, 1.2vh, 1rem); }
+  #intro-root #page0 .brief-section { animation: none; }
+  #intro-root #page0 .intro-stats { margin-bottom: clamp(0.75rem, 1.5vh, 1.2rem); text-align: center; }
+  #intro-root #page1 .content { width:min(88vw, 1000px); gap:1vh; flex:1; justify-content:center; min-height:0; }
+  #intro-root #page2 .content { width:min(88vw, 1400px); gap:1vh; flex:1; justify-content:flex-start; min-height:0; overflow:visible; }
+  #intro-root .section-label { font-size: 0.55rem; margin-bottom: 0.5vh; }
   .content { width:min(920px,90vw); display:flex; flex-direction:column; gap:clamp(0.3rem,0.8vh,0.8rem); flex:1; justify-content:center; overflow:hidden; }
+  #intro-root .brief-section { flex:0 0 auto; display:flex; flex-direction:column; animation:fadeUpIntro 0.6s 0.3s both; }
+  #intro-root .brief-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px; padding:1.2rem 2.5vw; position:relative; overflow:hidden;
+    box-shadow:0 0 60px rgba(84,0,173,0.14), 0 0 120px rgba(0,196,28,0.08), inset 0 1px 0 rgba(0,196,28,0.12); }
+  #intro-root .brief-card::before { content:''; position:absolute; top:10px; left:10px; width:16px; height:16px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+  #intro-root .brief-card::after { content:''; position:absolute; bottom:10px; right:10px; width:16px; height:16px; border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+  #intro-root .encrypted-indicator { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.8vh; display:flex; align-items:center; gap:0.6rem; }
+  #intro-root .encrypted-dot { width:5px; height:5px; border-radius:50%; background:var(--green-stable); box-shadow:0 0 8px rgba(0,196,28,0.6), 0 0 20px rgba(0,196,28,0.2); }
+  #intro-root .brief-text { font-family:var(--font-body); font-size:0.9rem; line-height:1.75; color:var(--grey-light); font-weight:300; }
+  #intro-root .brief-text p { margin-bottom:0.7vh; }
+  #intro-root .brief-text p:last-child { margin-bottom:0; }
+  #intro-root .brief-text strong { color:var(--orange); font-weight:600; text-shadow:0 0 20px rgba(247,148,33,0.12); }
   .broker-section { flex:0 0 auto; display:flex; flex-direction:column; }
   .section-label { font-family:var(--font-mono); font-size:clamp(0.46rem,0.58vw,0.63rem); color:var(--purple-light); letter-spacing:0.22em; text-transform:uppercase; margin-bottom:clamp(0.2rem,0.6vh,0.6rem); display:flex; align-items:center; gap:0.8rem; }
   .section-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, rgba(84,0,173,0.42), transparent); }
@@ -51,8 +81,14 @@
   .broker-text p { margin-bottom:clamp(0.6em,1vh,0.9em); }
   .broker-text strong { color:var(--orange); font-weight:600; }
   .ops-section { flex:0 0 auto; display:flex; flex-direction:column; }
+  #intro-root .ops-section { animation:fadeUpIntro 0.6s 0.3s both; }
   .steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(0.8rem,1.5vw,1.5rem); }
+  #intro-root .steps-grid { align-items:stretch; gap:clamp(0.4rem, 0.8vw, 0.9rem); }
   .step-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px; padding:clamp(1rem,1.6vh,1.8rem); height:100%; display:flex; flex-direction:column; }
+  #intro-root .step-card { padding:0.72rem 0.9rem; position:relative; transition:border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    box-shadow:0 0 38px rgba(84,0,173,0.09), 0 0 70px rgba(0,196,28,0.04), inset 0 1px 0 rgba(0,196,28,0.08); }
+  #intro-root .step-card::before { content:''; position:absolute; top:-1px; left:18%; right:18%; height:1px; background:linear-gradient(90deg, transparent, var(--purple), transparent); opacity:0.72; pointer-events:none; }
+  #intro-root .step-card:hover { border-color:rgba(0,255,65,0.38); box-shadow:0 0 36px rgba(0,255,65,0.07), 0 0 56px rgba(84,0,173,0.08); transform:translateY(-1px); }
   /* Live demo: phased instruction line */
   .demo-step-hint{font-family:var(--font-mono);font-size:clamp(10px,1.05vw,12px);color:rgba(0,196,28,.9);
     line-height:1.45;letter-spacing:.04em;min-height:2.6em;padding:8px 10px;margin-bottom:8px;border-left:3px solid rgba(0,196,28,.45);
@@ -81,19 +117,51 @@
   .demo-cur-arrow{display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
   .demo-cur-ring{position:absolute;top:0;left:0;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.35);opacity:0;transform:scale(.5)}
   .step-number { font-family:var(--font-display); font-size:clamp(1.6rem,2.5vh,2.4rem); font-weight:700; color:var(--green-matrix); line-height:1; margin-bottom:0.4rem; }
+  #intro-root .step-number { font-size:1.6rem; margin-bottom:0.35vh; text-shadow:0 0 20px rgba(0,255,65,0.15); }
   .step-title { font-family:var(--font-mono); font-size:clamp(0.68rem,1vw,0.95rem); color:var(--orange); letter-spacing:0.16em; text-transform:uppercase; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(0,196,28,0.28); text-shadow:0 0 20px rgba(247,148,33,0.15); }
+  #intro-root .step-title { font-size:0.6rem; color:var(--purple-light); letter-spacing:0.18em; margin-bottom:0.4vh; padding-bottom:0.35vh; text-shadow:none; }
   .step-desc { font-family:var(--font-body); font-size:clamp(0.78rem,1vw,0.95rem); line-height:1.65; color:var(--grey-text); flex:1; }
+  #intro-root .step-desc { font-size:0.82rem; line-height:1.6; font-weight:300; }
   .atlas-note { font-size:clamp(0.72rem,0.95vw,0.88rem); color:var(--orange); margin-top:0.8rem; font-style:italic; }
+  #intro-root .detection-section { flex:0 0 auto; margin-top:0.6rem; animation:fadeUpIntro 0.6s 0.4s both; }
+  #intro-root .detection-card { background:var(--panel-bg); border:1px solid rgba(211,25,114,0.45); border-radius:2px; padding:0.55vh 1.3vw 1.35vh; position:relative; overflow:visible; display:flex; gap:0.9vw; align-items:flex-start;
+    box-shadow:0 0 0 1px rgba(211,25,114,0.45), 0 0 36px rgba(211,25,114,0.12), 0 0 56px rgba(84,0,173,0.12), inset 0 1px 0 rgba(211,25,114,0.10), inset 0 -1px 0 rgba(211,25,114,0.85);
+    transition:border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
+  #intro-root .detection-card::before { content:''; position:absolute; top:-1px; left:18%; right:18%; height:1px; background:linear-gradient(90deg, transparent, var(--pink), transparent); opacity:0.55; pointer-events:none; }
+  #intro-root .detection-card:hover { border-color:rgba(211,25,114,0.65); transform:translateY(-1px); }
+  #intro-root .detection-body { flex:1; min-width:0; }
+  #intro-root .detection-title { font-family:var(--font-mono); font-size:0.6rem; color:var(--pink); letter-spacing:0.18em; text-transform:uppercase; margin-bottom:0.7vh; padding-bottom:0.6vh; border-bottom:1px solid rgba(211,25,114,0.28); display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; }
+  #intro-root .detection-title-tag { display:inline-flex; align-items:center; gap:0.35rem; background:rgba(211,25,114,0.12); border:1px solid rgba(211,25,114,0.3); border-radius:2px; padding:0.1rem 0.5rem; font-size:0.5rem; color:rgba(211,25,114,0.85); letter-spacing:0.15em; }
+  #intro-root .detection-desc { font-family:var(--font-body); font-size:0.82rem; line-height:1.6; color:var(--grey-text); font-weight:300; }
+  #intro-root .detection-desc strong { color:var(--pink); font-weight:600; }
+  #intro-root .detection-desc em { color:var(--orange); font-style:normal; font-weight:500; }
+  #intro-root .detection-desc p { margin-bottom:0.35vh; }
+  #intro-root .detection-desc p:last-child { margin-bottom:0; }
+  #intro-root .detection-pills { display:flex; flex-wrap:wrap; gap:0.7rem; margin-top:1vh; }
+  #intro-root .dpill { font-family:var(--font-mono); font-size:0.62rem; letter-spacing:0.1em; padding:0.2rem 0.6rem; border-radius:2px; border:1px solid; white-space:nowrap; }
+  #intro-root .dpill-low  { color:rgba(0,196,28,0.85);  border-color:rgba(0,196,28,0.3);  background:rgba(0,196,28,0.07); }
+  #intro-root .dpill-mid  { color:var(--orange); border-color:rgba(247,148,33,0.3); background:rgba(247,148,33,0.07); }
+  #intro-root .dpill-high { color:var(--pink); border-color:rgba(211,25,114,0.3); background:rgba(211,25,114,0.07); }
   .button-section { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:0.5rem; margin-top:clamp(0.3rem,1vh,1rem); }
+  #intro-root .button-section { gap:0.4vh; margin-top:0.8vh; animation:fadeUpIntro 0.5s 0.5s both; }
+  #intro-root .button-label { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable); letter-spacing:0.2em; text-transform:uppercase; }
+  #intro-root .btn-next { position:relative; overflow:hidden; width:clamp(160px, 18vw, 280px); padding:0.65vh 2vw; font-size:0.9rem; transition:background 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s; }
+  #intro-root .btn-next::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform:translateX(-100%); transition:transform 0.5s ease; pointer-events:none; }
+  #intro-root .btn-next:hover::before { transform:translateX(100%); }
+  #intro-root .btn-next:hover { background:#ffa234; border-color:#ffa234; transform:translateY(-1px); box-shadow:0 8px 32px rgba(247,148,33,0.25), 0 0 60px rgba(247,148,33,0.1); }
+  #intro-root .btn-next:active { transform:translateY(0); box-shadow:0 0 20px rgba(247,148,33,0.2); }
+  #intro-root .btn-arrow { transition:transform 0.2s; }
+  #intro-root .btn-next:hover .btn-arrow { transform:translateX(4px); }
   .btn-next { width:clamp(200px,22vw,300px); padding:clamp(0.6rem,1.1vh,1rem) 2vw; background:var(--orange); border:1px solid var(--orange); color:var(--void); font-family:var(--font-display); font-size:clamp(0.85rem,1.1vw,1.05rem); font-weight:600; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; }
   .btn-inner { display:flex; align-items:center; justify-content:center; gap:0.6rem; }
-  @media (max-width:680px){ .steps-grid{grid-template-columns:1fr} .status-bar{padding:0 1.5rem} }
+  @keyframes fadeUpIntro { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @media (max-width:680px){ .steps-grid{grid-template-columns:1fr} .status-bar{padding:0 1.5rem} #intro-root .detection-card{flex-direction:column; gap:0.8rem;} }
 
   #intro-root{position:relative;z-index:1}
   #gp-root { position:fixed; inset:0; z-index:100; background:#0b0f14; }
   html.gp-html-active { overflow:hidden; height:100%; }
   :root { --void:#1e0f1a; --panel-bg:#221829; --panel-border:rgba(0,196,28,.35);
-    --green-stable:#00c41c; --green-matrix:#00FF41; --purple-light:#8f44e8; --orange:#f79421; --pink:#d31972;
+    --green-stable:#00c41c; --green-matrix:#00FF41; --purple:#5400ad; --purple-light:#8f44e8; --orange:#f79421; --pink:#d31972;
     --text-w:#faf7f2; --text-d:rgba(0,196,28,.45); --text-b:var(--text-w); --text:rgba(250,247,242,.82);
     --green:var(--green-matrix); --red:var(--pink); --cyan:#56d6ff; --border-b:rgba(0,196,28,.22); --bg:#0b0f14; }
   #gp-root *,#gp-root *::before,#gp-root *::after{box-sizing:border-box}
@@ -364,6 +432,10 @@
 <div class="ambient-glow"></div>
 <div class="scanlines"></div>
 <div class="bg-grid"></div>
+<div class="corner corner--tl"></div>
+<div class="corner corner--tr"></div>
+<div class="corner corner--bl"></div>
+<div class="corner corner--br"></div>
 
 <div id="intro-root">
 <div class="status-bar">
@@ -374,39 +446,54 @@
   <div class="page-eyebrow">OPERATION OMNI — MISSION 03 OF 05</div>
   <div class="page-title">THE HUMAN SHIELD</div>
   <p class="page-subtitle">Who sees what — not just what we have</p>
-  <p class="intro-stats">10 FILES · 3 RELEASE CHANNELS · NOVA SIGN-OFF</p>
-  <div class="button-section"><button type="button" class="btn-next" onclick="goToPage(1)"><div class="btn-inner"><span>Continue</span><span>→</span></div></button></div>
-</div>
 
-<div class="page" id="page1">
-  <div class="page-eyebrow">// Intelligence Brief</div>
-  <div class="page-title">Audience, not appetite</div>
   <div class="content">
-    <div class="broker-section">
-      <div class="section-label">// Nova</div>
-      <div class="broker-card">
-        <div class="broker-text">
-          <p>I'm not here to slow the op down. I'm here because <strong>the world is not our only stakeholder.</strong></p>
-          <p>If we ship raw employee lists to the press to watch MegaCorp bleed, we become the next headline — the activists who doxxed civilians. <strong>I will not sign a release package that confuses "impact" with "exposure."</strong></p>
-          <p>We are not OMNI. We choose who we hurt.</p>
+    <div class="brief-section">
+      <div class="section-label">// Situation overview</div>
+      <div class="brief-card">
+        <div class="brief-text">
+          <p>Marshall has queued <strong>ten files</strong> for disclosure — raw material pulled from the OMNI investigation. The crew does not win by dumping the entire drive to the world. We win by proving the story <strong>without</strong> becoming the kind of collateral damage we accuse MegaCorp of creating.</p>
+          <p>This round is about <strong>audience</strong> as much as evidence. The same dataset can be safe for a regulator under seal, reckless on a public Proof Wall, or too dangerous to release at all. Your job is not to “publish everything we stole.” It is to match each file to the channel that fits <strong>who is entitled to see it</strong> and <strong>how much harm</strong> disclosure could do.</p>
+          <p>Voss keeps the mirror stable; the channel carries traffic. <strong>Nova holds an ethics veto.</strong> She will sign off on the disclosure package only when the <strong>distribution map</strong> reflects minimum necessary disclosure — when public proof, official accountability, and vault-only material are separated honestly, not when we have maximised outrage for headlines.</p>
+          <p>You will open each staged file, read what it contains, and <strong>route</strong> it: Public Wall, Official filing, or no release. Misroutes do not just slow the op — they erode Nova’s trust the same way sloppy clicks fed the detection meter in earlier missions. The crew is watching whether you treat privacy and governance as operational constraints, not fine print.</p>
+          <p>Work clean. <strong>Ten files. Three channels. One sign-off.</strong> Prove we can expose OMNI and still choose who we hurt.</p>
         </div>
       </div>
     </div>
-    <div class="broker-section" style="margin-top:1rem">
-      <div class="section-label">// Voss</div>
-      <div class="broker-card">
-        <div class="broker-text">
-          <p>Marshall staged ten files for disclosure. <strong>Same data — different audiences need different channels.</strong> Public Proof Wall for what is safe to show the world. Official filing for what regulators or counsel need under seal. And some material never leaves the vault.</p>
+  </div>
+
+  <p class="intro-stats">10 FILES · 3 RELEASE CHANNELS · NOVA SIGN-OFF</p>
+  <div class="button-section"><button type="button" class="btn-next" onclick="goToPage(1)"><div class="btn-inner"><span>Continue</span><span class="btn-arrow">→</span></div></button></div>
+</div>
+
+<div class="page" id="page1">
+  <div class="page-eyebrow">// Mission 03 — The Human Shield</div>
+  <div class="page-title">Pre-Mission Brief</div>
+  <div class="content">
+    <div class="brief-section">
+      <div class="section-label">// Intelligence Brief</div>
+      <div class="brief-card">
+        <div class="encrypted-indicator">
+          <span class="encrypted-dot"></span>
+          NOVA · VOSS — ENCRYPTED CHANNEL
+        </div>
+        <div class="brief-text">
+          <p><strong>NOVA.</strong> I'm not here to slow the op down. I'm here because <strong>the world is not our only stakeholder.</strong></p>
+          <p>If we ship raw employee lists to the press to watch MegaCorp bleed, we become the next headline — the activists who doxxed civilians. <strong>I will not sign a release package that confuses "impact" with "exposure."</strong></p>
+          <p>We are not OMNI. We choose who we hurt.</p>
+          <p><strong>VOSS.</strong> Marshall staged ten files for disclosure. <strong>Same data — different audiences need different channels.</strong> Public Proof Wall for what is safe to show the world. Official filing for what regulators or counsel need under seal. And some material never leaves the vault.</p>
           <p>Route each file. Nova signs when the <strong>distribution map</strong> matches our ethics — not when we've shown everything we stole.</p>
         </div>
       </div>
     </div>
   </div>
-  <div class="button-section"><button type="button" class="btn-next" onclick="goToPage(2)"><div class="btn-inner"><span>Continue</span><span>→</span></div></button></div>
+  <div class="button-section">
+    <button type="button" class="btn-next" onclick="goToPage(2)"><div class="btn-inner"><span>Continue</span><span class="btn-arrow">→</span></div></button>
+  </div>
 </div>
 <div class="page" id="page2">
-  <div class="page-eyebrow">// How It Works</div>
-  <div class="page-title">Release channels</div>
+  <div class="page-eyebrow">// Mission 03 — The Human Shield</div>
+  <div class="page-title">Mission Protocol</div>
   <div class="content">
     <div class="ops-section">
       <div class="section-label">// Live demo</div>
@@ -440,7 +527,7 @@
         </div>
       </div>
 
-      <div class="section-label" style="margin-top:clamp(.6rem,1vh,1rem)">// Release channels</div>
+      <div class="section-label" style="margin-top:clamp(.6rem,1vh,1rem)">// How to Breach</div>
       <div class="steps-grid">
         <div class="step-card">
           <div class="step-number">01</div>
@@ -460,10 +547,31 @@
       </div>
       <p class="atlas-note">Privacy and ethics are partly about <strong>minimum necessary disclosure</strong> — and <strong>who is entitled to see what</strong>.</p>
     </div>
+
+    <div class="detection-section">
+      <div class="detection-card">
+        <div class="detection-body">
+          <div class="detection-title">
+            THE NOVA TRUST METER
+            <span class="detection-title-tag"><i class="fas fa-user-shield"></i> ETHICS LOCK</span>
+          </div>
+          <div class="detection-desc">
+            <p>Nova’s trust starts <strong>high</strong>. Every sloppy route — treating the Public Wall like a dump, or leaking vault-only material — erodes it. If trust collapses, <strong>she will not sign off</strong> and the disclosure plan stalls.</p>
+            <p>The meter runs from <em>100% (ALIGNED)</em> down toward <em>0% (RECKLESS)</em>. If it bottoms out, assume the operation channel goes cold. Move clean: <strong>audience first, harm second, headlines last.</strong></p>
+          </div>
+          <div class="detection-pills">
+            <span class="dpill dpill-high">Wrong channel / exposure · trust drops</span>
+            <span class="dpill dpill-mid">Hint requested · budget + heat</span>
+            <span class="dpill dpill-mid">Mis-routed sensitive file · spike</span>
+            <span class="dpill dpill-low">Clean routing · stable</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="button-section">
-    <div style="font-family:var(--font-mono);font-size:10px;color:var(--green-stable);letter-spacing:.15em">// Ready?</div>
-    <button type="button" class="btn-next" onclick="startRound3Game()"><div class="btn-inner"><span>Enter Marshall's Desktop</span><span>→</span></div></button>
+    <div class="button-label">// Ready to breach?</div>
+    <button type="button" class="btn-next" onclick="startRound3Game()"><div class="btn-inner"><span>Breach the Desktop</span><span class="btn-arrow">→</span></div></button>
   </div>
 </div>
 </div>
@@ -756,7 +864,7 @@ function goToPage(n) {
 
       if (n !== 2) stopStepVids();
 
-      const children = nextPage.querySelectorAll('.page-eyebrow, .page-title, .page-subtitle, .intro-stats, .content, .ops-section, .broker-section, .button-section, #demo-step-hint, #demo-panel, .steps-grid, .atlas-note');
+      const children = nextPage.querySelectorAll('.page-eyebrow, .page-title, .page-subtitle, .intro-stats, .content, .ops-section, .broker-section, .brief-section, .detection-section, .button-section, .button-label, #demo-step-hint, #demo-panel, .steps-grid, .atlas-note, .detection-card, .detection-pills');
       gsap.set(children, { opacity: 0, y: 22 });
 
       gsap.timeline({ defaults: { ease: 'power2.out' } })
@@ -2071,7 +2179,7 @@ window.addEventListener('load', () => {
   if (typeof window.gsap === 'undefined') return;
   const p0 = document.getElementById('page0');
   if (!p0 || !p0.classList.contains('active')) return;
-  const els = p0.querySelectorAll('.page-eyebrow, .page-title, .page-subtitle, .intro-stats, .button-section');
+  const els = p0.querySelectorAll('.page-eyebrow, .page-title, .page-subtitle, .content, .intro-stats, .button-section');
   gsap.set(els, { opacity: 0, y: 28 });
   gsap.to(els, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'power2.out', delay: 0.15 });
 });

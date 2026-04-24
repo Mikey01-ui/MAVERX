@@ -1,0 +1,3583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Data Heist: Operation OMNI — Mission 1: Identifying the Footprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --void: #1e0f1a;
+    --void-pure: #000000;
+    --green-stable: #00c41c;
+    --green-matrix: #00FF41;
+    --purple: #5400ad;
+    --purple-light: #8f44e8;
+    --orange: #f79421;
+    --pink: #d31972;
+    --white: #faf7f2;
+    --panel-bg: #221829;
+    --panel-border: rgba(0,196,28,0.35);
+    --grey-dim: #2e2e2e;
+    --grey-mid: #444444;
+    --grey-text: #cccccc;
+    --grey-light: #edeae5;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    overflow: auto;
+    font-family: var(--font-body);
+    background: var(--void);
+    color: var(--white);
+  }
+
+  /* === AMBIENT GLOW === */
+  .ambient-glow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%);
+  }
+
+  /* === SCANLINE OVERLAY === */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  /* === GRID BACKGROUND === */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,196,28,0.11) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,196,28,0.11) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 36px;
+  }
+
+  /* === CORNER MARKS === */
+  .corner {
+    position: fixed;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+  }
+  .corner--tl { top: 10px; left: 10px; border-top: 1px solid rgba(0,196,28,0.65); border-left: 1px solid rgba(0,196,28,0.65); }
+  .corner--tr { top: 10px; right: 10px; border-top: 1px solid rgba(0,196,28,0.65); border-right: 1px solid rgba(0,196,28,0.65); }
+  .corner--bl { bottom: 10px; left: 10px; border-bottom: 1px solid rgba(0,196,28,0.65); border-left: 1px solid rgba(0,196,28,0.65); }
+  .corner--br { bottom: 10px; right: 10px; border-bottom: 1px solid rgba(0,196,28,0.65); border-right: 1px solid rgba(0,196,28,0.65); }
+
+  /* === STATUS BAR === */
+  .status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    height: 36px;
+    padding: 0 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,196,28,0.28);
+    background: linear-gradient(180deg, rgba(30,15,26,0.9) 0%, transparent 100%);
+  }
+  .status-left, .status-right {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--green-stable);
+    letter-spacing: 0.08em;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green-stable);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .status-dot.live {
+    background: var(--green-matrix);
+    box-shadow: 0 0 8px rgba(0,255,65,0.6), 0 0 20px rgba(0,255,65,0.2);
+    animation: blink 2.4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .status-right span:last-child {
+    color: var(--green-matrix);
+    text-shadow: 0 0 8px rgba(0,255,65,0.3);
+  }
+
+  /* === MAIN PAGE === */
+  .page {
+    position: relative;
+    z-index: 2;
+    margin-top: 36px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: clamp(0.5rem, 1.5vh, 1.5rem) 4vw clamp(1rem, 2vh, 2rem);
+    min-height: calc(100vh - 36px);
+    overflow: hidden;
+  }
+
+  .page.active {
+    display: flex;
+  }
+
+  /* === HEADER === */
+  .page-eyebrow {
+    font-family: var(--font-mono);
+    font-size: clamp(0.46rem, 0.6vw, 0.65rem);
+    color: var(--green-stable);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.6rem);
+    flex-shrink: 0;
+    animation: fadeUp 0.5s 0.1s both;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.8vh, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: clamp(0.5rem, 1.5vh, 1.5rem);
+    flex-shrink: 0;
+    animation: fadeUp 0.5s 0.2s both;
+    background: linear-gradient(135deg, var(--white) 60%, var(--purple-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* === CONTENT CONTAINER === */
+  .content {
+    width: min(920px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.3rem, 0.8vh, 0.8rem);
+    flex: 1;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* === BROKER INTELLIGENCE BRIEF === */
+  .broker-section {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    animation: fadeUp 0.6s 0.3s both;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: clamp(0.46rem, 0.58vw, 0.63rem);
+    color: var(--purple-light);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: clamp(0.2rem, 0.6vh, 0.6rem);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(84,0,173,0.42), transparent);
+  }
+
+  .broker-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    padding: clamp(1.2rem, 2vh, 2rem) clamp(1.4rem, 2.5vw, 2.5rem);
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 60px rgba(84,0,173,0.14),
+      0 0 120px rgba(0,196,28,0.08),
+      inset 0 1px 0 rgba(0,196,28,0.12);
+  }
+
+  /* Corner accent on broker card */
+  .broker-card::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 10px;
+    width: 16px; height: 16px;
+    border-top: 1px solid rgba(0,196,28,0.65);
+    border-left: 1px solid rgba(0,196,28,0.65);
+    pointer-events: none;
+  }
+  .broker-card::after {
+    content: '';
+    position: absolute;
+    bottom: 10px; right: 10px;
+    width: 16px; height: 16px;
+    border-bottom: 1px solid rgba(0,196,28,0.65);
+    border-right: 1px solid rgba(0,196,28,0.65);
+    pointer-events: none;
+  }
+
+  .broker-card .card-accent { display: none; }
+
+  .broker-card::selection { background: rgba(143,68,232,0.24); }
+
+  .broker-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.46rem, 0.58vw, 0.63rem);
+    color: var(--green-stable);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: clamp(0.3rem, 0.7vh, 0.8rem);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .broker-tag-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green-matrix);
+    box-shadow: 0 0 8px rgba(0,255,65,0.6), 0 0 20px rgba(0,255,65,0.2);
+    animation: blink 2.4s ease-in-out infinite;
+  }
+
+  .broker-text {
+    font-family: var(--font-body);
+    font-size: clamp(0.8rem, 1.1vw, 1rem);
+    line-height: 1.75;
+    color: var(--grey-light);
+    font-weight: 300;
+  }
+  .broker-text p {
+    margin-bottom: clamp(0.6em, 1vh, 0.9em);
+  }
+  .broker-text p:last-child {
+    margin-bottom: 0;
+  }
+  .broker-text strong {
+    color: var(--orange);
+    font-weight: 600;
+    text-shadow: 0 0 20px rgba(247,148,33,0.12);
+  }
+
+  /* === OPERATIONAL BRIEF — 3 STEPS === */
+  .ops-section {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    animation: fadeUp 0.6s 0.3s both;
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: stretch;
+    gap: clamp(0.8rem, 1.5vw, 1.5rem);
+  }
+
+  .step-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    padding: clamp(1rem, 1.6vh, 1.8rem) clamp(1rem, 1.4vw, 1.6rem);
+    position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    box-shadow:
+      0 0 38px rgba(84,0,173,0.09),
+      0 0 70px rgba(0,196,28,0.04),
+      inset 0 1px 0 rgba(0,196,28,0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .step-card:hover {
+    border-color: rgba(0,255,65,0.38);
+    box-shadow:
+      0 0 36px rgba(0,255,65,0.07),
+      0 0 56px rgba(84,0,173,0.08);
+    transform: translateY(-1px);
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 18%;
+    right: 18%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--purple), transparent);
+    opacity: 0.72;
+    pointer-events: none;
+  }
+
+  .step-number {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 2.5vh, 2.4rem);
+    font-weight: 700;
+    color: var(--green-matrix);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: clamp(0.4rem, 0.6vh, 0.7rem);
+    text-shadow: 0 0 20px rgba(0,255,65,0.15);
+  }
+
+  .step-title {
+    font-family: var(--font-mono);
+    font-size: clamp(0.5rem, 0.62vw, 0.68rem);
+    color: var(--purple-light);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: clamp(0.4rem, 0.6vh, 0.8rem);
+    padding-bottom: clamp(0.3rem, 0.5vh, 0.6rem);
+    border-bottom: 1px solid rgba(0,196,28,0.28);
+  }
+
+  .step-desc {
+    font-family: var(--font-body);
+    font-size: clamp(0.78rem, 1vw, 0.95rem);
+    line-height: 1.65;
+    color: var(--grey-text);
+    font-weight: 300;
+    flex: 1;
+  }
+
+  /* === BUTTON SECTION === */
+  .button-section {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.3rem, 0.6vh, 0.7rem);
+    margin-top: clamp(0.3rem, 1vh, 1rem);
+    animation: fadeUp 0.5s 0.5s both;
+  }
+
+  .button-label {
+    font-family: var(--font-mono);
+    font-size: clamp(0.42rem, 0.55vw, 0.6rem);
+    color: var(--green-stable);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .btn-next {
+    width: clamp(200px, 22vw, 300px);
+    padding: clamp(0.6rem, 1.1vh, 1rem) 2vw;
+    background: var(--orange);
+    border: 1px solid var(--orange);
+    color: var(--void);
+    font-family: var(--font-display);
+    font-size: clamp(0.85rem, 1.1vw, 1.05rem);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  }
+  .btn-next::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+    pointer-events: none;
+  }
+  .btn-next:hover::before { transform: translateX(100%); }
+  .btn-next:hover {
+    background: #ffa234;
+    border-color: #ffa234;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(247,148,33,0.25), 0 0 60px rgba(247,148,33,0.1);
+  }
+  .btn-next:active {
+    transform: translateY(0);
+    box-shadow: 0 0 20px rgba(247,148,33,0.2);
+  }
+
+  .btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .btn-arrow {
+    font-size: 1em;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+  .btn-next:hover .btn-arrow { transform: translateX(4px); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 680px) {
+    .steps-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+    .content { width: 92vw; }
+    .status-bar { padding: 0 1.5rem; }
+  }
+
+  /* Gameplay shell — hidden until breach; fixed layer when active */
+  #gp-root {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+  }
+  html.gp-html-active {
+    overflow: hidden;
+    height: 100%;
+  }
+
+/* ========== GAMEPLAY (pg4) — merged; body visuals scoped to .gp-gameplay-active ========== */
+
+/* ═══════════════════════════════════════════════════
+   CSS VARIABLES & RESET
+═══════════════════════════════════════════════════ */
+:root {
+  
+  --void:#1e0f1a; --panel-bg:#221829; --bg-s:#2b2034;
+  --border:#1e3524; --border-b:#2d5b36; --panel-border:rgba(0,196,28,.35);
+  --green-stable:#00c41c; --green-matrix:#00FF41;
+  --purple:#5400ad; --purple-light:#8f44e8;
+  --orange:#f79421; --pink:#d31972;
+  --text-w:#faf7f2; --text-d:rgba(0,196,28,.45);
+  /* Font stack */
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  /* Legacy aliases for minimal code changes */
+  --bg:var(--void); --bg-p:var(--panel-bg);
+  --text:var(--green-stable); --text-b:var(--text-w);
+  --cyan:var(--green-stable); --amber:var(--orange); --green:var(--green-matrix); --red:var(--pink);
+}
+/* Only box-sizing here — margin/padding reset would override every class (e.g. .bm-bubble, .broker-hdr) because #gp-root * beats single classes */
+#gp-root *,#gp-root *::before,#gp-root *::after{box-sizing:border-box}
+body.gp-gameplay-active{font-family:var(--font-body);background:var(--void);color:var(--text);
+  font-size:clamp(13px,1.4vw,16px);
+  width:100vw;height:100vh;overflow:hidden;user-select:none}
+body.gp-gameplay-active::before{content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,196,28,0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,196,28,0.11) 1px, transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+body.gp-gameplay-active::after{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,
+    rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:1}
+button{cursor:pointer}button:focus{outline:none}
+/* OMNI Ambient Glow */
+body.gp-gameplay-active{background:var(--void)}
+#game::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%)}
+
+
+/* ═══════════════════════════════════════════════════
+   GAME LAYOUT
+═══════════════════════════════════════════════════ */
+#game{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column}
+#hdr{min-height:54px;background:linear-gradient(180deg, rgba(34,24,41,.96) 0%, rgba(30,15,26,.94) 100%);border-bottom:1px solid rgba(0,196,28,.28);
+  display:flex;align-items:center;padding:6px 18px;flex-shrink:0;z-index:3;box-shadow:inset 0 1px 0 rgba(0,196,28,.08)}
+.hdr-left{font-family:'Space Grotesk',sans-serif;font-size:clamp(12px,1.2vw,15px);color:var(--cyan);letter-spacing:1.5px;white-space:nowrap}
+.hdr-center{flex:1;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:clamp(12px,1.2vw,15px);
+  color:var(--purple-light);letter-spacing:2px}
+.hdr-right{display:flex;align-items:center;gap:10px;font-family:'Share Tech Mono';
+  font-size:clamp(13px,1.3vw,16px);color:var(--text);white-space:nowrap}
+#timer{color:var(--text-b)}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px var(--green);animation:livePulse 1.5s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.4}}
+#step-banner{height:44px;background:rgba(84,0,173,0.10);border-bottom:1px solid rgba(0,196,28,.22);
+  display:flex;align-items:center;padding:0 12px;font-size:clamp(14px,1.5vw,18px);color:var(--text-b);
+  letter-spacing:.4px;flex-shrink:0;z-index:3;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+#step-banner::before{content:'▶ ';color:var(--orange);margin-right:6px;flex-shrink:0}
+#main-row{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ═══════════════════════════════════════════════════
+   DESKTOP PANEL
+═══════════════════════════════════════════════════ */
+#desktop-panel{flex:0 0 62%;position:relative;overflow:hidden;background:#000}
+#wallpaper{position:absolute;top:0;left:0;right:0;bottom:30px;opacity:0;transition:opacity .9s ease;
+  background:linear-gradient(to bottom,#4990d8 0%,#6aaede 18%,#8dc6eb 32%,#a8d6f5 40%,
+    #c4e4fc 43%,#86c44a 44%,#5fa436 52%,#4e9030 60%,#3d7826 70%,#2d6020 82%,#1e4614 100%)}
+#wallpaper.visible{opacity:1}
+
+/* Desktop Icons */
+.di{position:absolute;width:70px;text-align:center;cursor:pointer;padding:5px 4px;
+  border-radius:4px;opacity:0;transition:opacity .6s ease,box-shadow .3s;z-index:10}
+.di.visible{opacity:1}
+.di:hover{background:rgba(255,255,255,.18)}
+.di-icon{font-size:30px;line-height:1;display:block;margin-bottom:3px;color:#f0c538;filter:drop-shadow(1px 1px 1px rgba(0,0,0,.4))}
+.di-label{font-family:'Tahoma',sans-serif;font-size:clamp(11px,1vw,13px);color:#fff;
+  text-shadow:1px 1px 3px #000,0 0 6px #000,-1px -1px 3px #000;
+  word-break:break-word;line-height:1.25}
+.di.di-mission{animation:iconPulse 1.2s ease-in-out infinite}
+@keyframes iconPulse{0%,100%{box-shadow:0 0 0 transparent}
+  50%{box-shadow:0 0 16px 5px rgba(255,160,0,.75);background:rgba(255,160,0,.12)}}
+.di.di-locked{animation:none!important}
+
+/* Sticky Notes */
+.sticky{position:absolute;width:min(188px,calc(100vw - 48px));padding:16px 18px 18px;font-family:'Tahoma',sans-serif;
+  font-size:clamp(11px,1.1vw,13px);line-height:1.62;box-shadow:3px 3px 10px rgba(0,0,0,.35);
+  border-radius:2px;opacity:0;transition:opacity .6s ease;z-index:5;white-space:pre-wrap}
+.sticky.visible{opacity:1}
+.sticky-yellow{background:#fdf18a;color:#333;transform:rotate(-1.8deg)}
+.sticky-pink{background:#f8b8c3;color:#333;transform:rotate(1.3deg)}
+.sticky-blue{background:#b8d6f9;color:#333;transform:rotate(-.8deg)}
+.sticky-hdr{font-weight:700;font-size:clamp(11px,1.1vw,13px);display:block;margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.5px}
+
+/* ═══════════════════════════════════════════════════
+   XP WINDOWS
+═══════════════════════════════════════════════════ */
+.xp-win{position:absolute;display:none;min-width:280px;border:2px solid #0f2f8a;
+  border-radius:6px 6px 4px 4px;
+  box-shadow:4px 4px 20px rgba(0,0,0,.65),1px 1px 0 rgba(255,255,255,.12) inset;
+  z-index:100;overflow:hidden}
+.xp-win.visible{display:block}
+.xp-tb{min-height:30px;height:auto;
+  background:linear-gradient(to bottom,#2b5edb 0%,#1239b4 35%,#1a4ac5 65%,#2b5edb 100%);
+  display:flex;align-items:center;padding:4px 8px 4px 10px;cursor:default;user-select:none}
+.xp-title{flex:1;display:flex;align-items:center;gap:5px;font-family:'Tahoma',sans-serif;
+  font-size:clamp(12px,1.1vw,14px);font-weight:700;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.5);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.xp-ti{font-size:14px;flex-shrink:0}
+.xp-ti .fa-folder{color:#f0c538}
+.xp-ti .fa-file-excel{color:#207245}
+.xp-ti .fa-file-word{color:#2b579a}
+.xp-ti .fa-file-alt{color:#888}
+.xp-btns{display:flex;gap:2px;margin-left:6px;flex-shrink:0}
+.xp-btn{width:22px;height:20px;border-radius:3px;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:'Tahoma',sans-serif;line-height:1;border:1px solid rgba(255,255,255,.25)}
+.xp-btn:hover{filter:brightness(1.25)}
+.xp-min,.xp-max{background:linear-gradient(to bottom,#6b99d3,#3a6db8)}
+.xp-cls{background:linear-gradient(to bottom,#d9534f,#b02a26)}
+.xp-cls:hover{background:linear-gradient(to bottom,#ef5350,#c62828)}
+.xp-menu{min-height:26px;height:auto;background:#ece9d8;border-bottom:1px solid #aca899;
+  display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:6px 12px;font-family:'Tahoma',sans-serif;
+  font-size:11px;color:#000;flex-shrink:0}
+.xpm{padding:4px 10px;cursor:pointer;border-radius:2px}
+.xpm:hover{background:#3375d6;color:#fff}
+.xp-body{background:#fff;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:#888 #f0ede5}
+.xp-body::-webkit-scrollbar{width:12px}
+.xp-body::-webkit-scrollbar-thumb{background:#888;border:3px solid #f0ede5;border-radius:6px}
+.xp-body.xb-tab{overflow:hidden;display:flex;flex-direction:column}
+.xp-status{min-height:24px;height:auto;background:#ece9d8;border-top:1px solid #aca899;
+  display:flex;align-items:center;padding:7px 12px;font-family:'Tahoma',sans-serif;
+  font-size:clamp(10px,1vw,13px);color:#555;flex-shrink:0}
+
+/* XP Tabs */
+.xp-tabs{display:flex;background:#d4d0c8;border-bottom:1px solid #aca899;
+  padding:8px 10px 0;gap:8px;flex-shrink:0;overflow-x:auto;overflow-y:hidden}
+.xp-tabs::-webkit-scrollbar{height:0}
+.xtab{padding:8px 14px 10px;font-family:'Tahoma',sans-serif;font-size:clamp(11px,1.1vw,13px);
+  background:#bdb8b0;border:1px solid #aca899;border-bottom:none;
+  border-radius:3px 3px 0 0;cursor:pointer;color:#333;white-space:nowrap;
+  position:relative;top:1px;flex-shrink:0}
+.xtab.active{background:#fff;color:#000;font-weight:600;z-index:1;
+  top:0;padding:9px 16px 14px;border-bottom:1px solid #fff}
+.xtab:hover:not(.active){background:#ccc}
+.xtab-panel{display:none;overflow-y:auto;overflow-x:hidden;flex:1;
+  scrollbar-width:thin;scrollbar-color:#888 #f0ede5}
+.xtab-panel::-webkit-scrollbar{width:12px}
+.xtab-panel::-webkit-scrollbar-thumb{background:#888;border:3px solid #f0ede5;border-radius:6px}
+.xtab-panel.active{display:block}
+
+/* Folder Grid */
+.folder-grid{display:flex;flex-wrap:wrap;gap:18px 20px;padding:20px 18px 22px;background:#fff;
+  min-height:160px;align-content:flex-start}
+.fg-item{width:128px;padding:12px 10px 14px;text-align:center;cursor:pointer;
+  border-radius:4px;border:1px solid transparent;box-sizing:border-box}
+.fg-item:hover{background:rgba(51,117,214,.1);border-color:rgba(51,117,214,.4)}
+.fg-item.fg-selected{background:rgba(181,213,255,.92);border-color:rgba(49,106,197,.5);box-shadow:inset 0 0 0 1px rgba(49,106,197,.25)}
+.fg-icon{font-size:42px;line-height:1;margin-bottom:12px}
+/* XP file type icon colors */
+.fg-icon .fi-xls{color:#207245}
+.fg-icon .fi-doc{color:#2b579a}
+.fg-icon .fi-pdf{color:#d42b2b}
+.fg-icon .fi-ppt{color:#d97839}
+.fg-icon .fi-csv{color:#207245}
+.fg-icon .fi-txt{color:#5a8cc8}
+.fg-icon .fi-log{color:#5a5a5a}
+.fg-icon .fi-img{color:#c46210}
+.fg-icon .fi-zip{color:#886622}
+.fg-icon .fi-default{color:#5a8cc8}
+.fg-label{font-family:'Tahoma',sans-serif;font-size:12px;color:#111;
+  word-break:normal;line-height:1.45;text-align:center;padding:0 2px;max-height:2.6em;overflow:hidden;overflow-wrap:break-word}
+
+/* ═══════════════════════════════════════════════════
+   XP TASKBAR
+═══════════════════════════════════════════════════ */
+#xp-taskbar{position:absolute;bottom:0;left:0;right:0;height:30px;
+  background:linear-gradient(to bottom,#245fd4,#1648b8);
+  display:flex;align-items:center;gap:2px;padding:0 4px;z-index:50;
+  opacity:0;transition:opacity .6s ease;border-top:1px solid #3a7ae0}
+#xp-taskbar.visible{opacity:1}
+#start-btn{background:linear-gradient(to bottom,#3da641,#278d2a);
+  border:1px solid #1e7a21;border-radius:10px;padding:2px 10px 2px 5px;
+  color:#fff;font-family:'Tahoma',sans-serif;font-size:11px;font-weight:700;
+  height:24px;display:flex;align-items:center;gap:4px;margin-right:6px;flex-shrink:0}
+.tb-div{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 4px;flex-shrink:0}
+.tb-wb{height:24px;min-width:100px;max-width:145px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+  border-radius:3px;color:#fff;font-family:'Tahoma',sans-serif;font-size:11px;
+  padding:0 7px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:flex;align-items:center;gap:4px;opacity:.5;transition:opacity .2s,background .2s}
+.tb-wb .fa-folder{color:#f0c538}
+.tb-wb.tb-on{opacity:1;background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3)}
+#tb-clock{margin-left:auto;color:#fff;font-family:'Tahoma',sans-serif;
+  font-size:11px;padding:0 8px;white-space:nowrap;flex-shrink:0}
+
+/* ═══════════════════════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════════════════════ */
+#right{flex:1;display:flex;flex-direction:column;background:linear-gradient(180deg, rgba(34,24,41,.98) 0%, rgba(30,15,26,.98) 100%);
+  border-left:1px solid rgba(0,196,28,.28);overflow:hidden;min-height:0;box-shadow:inset 1px 0 0 rgba(0,196,28,.08)}
+/* Tall enough for hdr + step + 2×2 nodes + progress + CONFIRM INTEL; scroll if viewport is very short */
+#eboard{flex-shrink:0;max-height:min(58vh,520px);padding:clamp(10px,2vh,16px) clamp(12px,2.8vw,22px) clamp(14px,2.2vh,20px);border-bottom:1px solid rgba(0,196,28,.22);overflow-x:hidden;overflow-y:auto;min-height:0}
+.eb-hdr{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 10px;margin-bottom:2px;
+  border-bottom:1px solid rgba(84,0,173,.28)}
+.eb-htitle{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,1.1vw,13px);color:var(--purple-light);letter-spacing:1.5px}
+#eb-hint{font-size:clamp(10px,1.1vw,13px);color:var(--amber);font-family:'Share Tech Mono'}
+/* FIX 2: Step indicator */
+#eb-step{font-family:'Space Grotesk',sans-serif;font-size:9px;color:var(--purple-light);
+  letter-spacing:3px;text-align:center;margin-bottom:clamp(10px,1.8vh,14px);min-height:12px;padding:6px 4px 0}
+.eb-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,2.2vw,14px);margin-bottom:8px;padding:4px 0 6px}
+.node{border:1.5px solid rgba(143,68,232,.30);border-radius:6px;padding:clamp(10px, 1.4vh, 16px) clamp(8px, 1vw, 14px);
+  text-align:center;cursor:pointer;transition:all .3s;background:rgba(43,32,52,.88);
+  min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(0,196,28,.08)}
+.node:hover{border-color:var(--purple-light);box-shadow:0 0 12px rgba(143,68,232,.22),0 0 24px rgba(0,196,28,.06),inset 0 1px 0 rgba(0,196,28,.08)}
+.node-icon{font-size:22px;margin-bottom:3px;color:var(--purple-light)}
+.node-name{font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--text-b);
+  font-weight:600;letter-spacing:1px;margin-bottom:3px}
+.node-status{font-size:clamp(9px,1vw,11px);color:rgba(143,68,232,.62);font-family:'Share Tech Mono';letter-spacing:.8px}
+.n-mission{border-color:var(--amber)!important;animation:nPulse 1.5s ease-in-out infinite}
+.n-mission .node-status{color:var(--amber)}
+.n-mission .node-icon{color:var(--amber)}
+@keyframes nPulse{0%,100%{box-shadow:0 0 6px rgba(255,144,0,.3)}
+  50%{box-shadow:0 0 18px rgba(255,144,0,.75)}}
+.n-active{border-color:var(--amber)!important;animation:nPulse 1.5s ease-in-out infinite}
+.n-active .node-status{color:var(--amber)}
+.n-active .node-icon{color:var(--amber)}
+.n-locked{border-color:var(--green)!important;background:rgba(0,255,65,.08);
+  animation:none!important;cursor:default}
+.n-locked .node-status{color:var(--green)}
+.n-locked .node-name{color:var(--green)}
+.n-locked .node-icon{color:var(--green)}
+.n-locked:hover{box-shadow:0 0 10px rgba(0,230,118,.25)!important}
+/* FIX 2: Guided flow node states */
+.n-start{border-color:var(--orange)!important;animation:orangePulse 1.5s ease-in-out infinite}
+.n-start .node-status{color:var(--orange)}
+.n-start .node-name{color:var(--orange)}
+.n-start .node-icon{color:var(--orange)}
+.n-next{border-color:var(--orange)!important;animation:orangePulse 1.5s ease-in-out infinite}
+.n-next .node-status{color:var(--orange)}
+.n-next .node-name{color:var(--orange)}
+.n-next .node-icon{color:var(--orange)}
+@keyframes orangePulse{0%,100%{box-shadow:0 0 6px rgba(247,148,33,.35)}
+  50%{box-shadow:0 0 22px rgba(247,148,33,.9)}}
+.n-dimmed{opacity:0.45;pointer-events:none;cursor:not-allowed!important}
+.n-dimmed:hover{border-color:rgba(84,0,173,.25)!important;box-shadow:none!important}
+.eb-progress{display:flex;gap:4px;margin-bottom:12px;height:4px;padding:0 2px}
+.ep-seg{flex:1;background:rgba(84,0,173,.15);border-radius:3px;transition:background .6s}
+.ep-seg.filled{background:var(--green)}
+#synth-btn{width:100%;margin:4px 0 0;padding:11px 12px;background:rgba(0,196,28,.06);color:var(--text-d);
+  border:1px solid rgba(0,196,28,.18);font-family:'Space Grotesk',sans-serif;font-size:clamp(11px,1.1vw,14px);
+  letter-spacing:2px;cursor:not-allowed;border-radius:4px;transition:all .3s;box-shadow:inset 0 1px 0 rgba(0,196,28,.05);flex-shrink:0}
+#synth-btn.ready{background:rgba(247,148,33,.1);color:var(--orange);border-color:var(--orange);
+  cursor:pointer;animation:synthPulse 1.5s ease-in-out infinite}
+#synth-btn.ready:hover{background:rgba(247,148,33,.2)}
+@keyframes synthPulse{0%,100%{box-shadow:0 0 6px rgba(247,148,33,.2)}
+  50%{box-shadow:0 0 22px rgba(247,148,33,.7)}}
+
+/* ═══════════════════════════════════════════════════
+   BISCUIT — TELEGRAM DARK THEME  (FIX 5)
+═══════════════════════════════════════════════════ */
+/* min-height:0 lets this flex child shrink; do NOT use 100vh-based min-height — it exceeds #right and clips the input bar */
+#broker-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+/* Telegram Header */
+.broker-hdr{min-height:0;height:auto;background:var(--panel-bg);border-bottom:1px solid rgba(0,196,28,.22);
+  display:flex;align-items:center;padding:8px clamp(14px,4vw,22px) 10px;gap:10px;flex-shrink:0;user-select:none;box-shadow:inset 0 1px 0 rgba(0,196,28,.06)}
+.bk-avatar{width:34px;height:34px;border-radius:50%;background:#2f2238;border:1px solid rgba(0,196,28,.16);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.bk-info{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;justify-content:center}
+.bk-name{color:var(--text-w);font-size:clamp(12px,1.3vw,15px);font-weight:600;
+  font-family:'DM Sans',sans-serif;line-height:1.2}
+.bk-members {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  font-size: clamp(10px, 1vw, 12px);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.35;
+  margin-top: 0;
+}
+.bk-member {
+  font-weight: 500;
+  transition: color 0.3s;
+}
+.bk-member.online {
+  color: var(--green-matrix);
+}
+.bk-member.offline {
+  color: rgba(100, 100, 100, 0.55);
+}
+.bk-sep {
+  color: rgba(100, 100, 100, 0.4);
+  font-size: 10px;
+}
+.bk-status{display:flex;align-items:center;gap:5px;font-size:clamp(10px,1vw,12px);
+  color:var(--green-matrix);font-family:'DM Sans',sans-serif}
+.bk-online-dot{width:5px;height:5px;border-radius:50%;background:var(--green-matrix);
+  flex-shrink:0;animation:onlinePulse 2s ease-in-out infinite}
+@keyframes onlinePulse{0%,100%{opacity:1}50%{opacity:.5}}
+.bk-icons{display:flex;gap:8px;margin-left:auto;color:var(--green-stable);font-size:15px;flex-shrink:0}
+/* Message area */
+#broker-body{flex:1;overflow-y:auto;padding:14px clamp(16px,4.5vw,26px) 16px;display:flex;flex-direction:column;
+  gap:0;min-height:0;background:var(--void);
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#broker-body::-webkit-scrollbar{width:4px}
+#broker-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* Date separator — Telegram pill */
+.bm-sep{display:flex;justify-content:center;margin:4px 0 14px;flex-shrink:0}
+.bm-sep-pill{background:rgba(43,32,52,.92);color:var(--green-stable);font-family:'DM Sans',sans-serif;
+  font-size:11px;padding:3px 14px;border-radius:12px;border:1px solid rgba(0,196,28,.18)}
+/* Sender name label */
+.bm-sender{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.5px;
+  color:var(--purple-light);margin-bottom:6px;padding-left:4px}
+/* Bubble group — stacked: full-width bubble, timestamp under (avoids narrow-column squeeze) */
+.bm-group{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:16px;flex-shrink:0;
+  min-width:0}
+/* Bubble */
+.bm-bubble{align-self:flex-start;display:block;width:100%;max-width:min(420px,100%);min-width:0;box-sizing:border-box;
+  padding:16px 20px;border-radius:14px 14px 14px 3px;line-height:1.65;
+  font-family:'DM Sans',sans-serif;font-size:clamp(13px,1.3vw,16px);
+  overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;
+  animation:bubbleIn 220ms ease forwards;opacity:0}
+@keyframes bubbleIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}}
+/* Timestamp + tick */
+.bm-ts{align-self:flex-end;font-size:10px;color:rgba(0,196,28,0.72);margin-top:4px;text-align:right;
+  padding:0 6px 0 0;font-family:'DM Sans',sans-serif;white-space:nowrap;max-width:100%}
+.bm-ts::after{content:' ✓'}
+/* Bubble colours — unified backgrounds, subtle tint differentiation */
+.bm-bubble.bm-d  {background:rgba(43,32,52,.92);color:var(--text-w);border:1px solid rgba(0,196,28,.10)}
+.bm-bubble.bm-ok {background:rgba(0,196,28,.08);color:#cfead2;border-left:2px solid rgba(0,196,28,.55)}
+.bm-bubble.bm-err{background:rgba(211,25,114,.08);color:#efb5cf;border-left:2px solid rgba(211,25,114,.35)}
+.bm-bubble.bm-win{background:rgba(0,255,65,.07);color:#d6f4dd;border-left:2px solid rgba(0,255,65,.38)}
+.bm-bubble.bm-h  {background:rgba(143,68,232,.12);color:#dbc7f6;border-left:2px solid rgba(143,68,232,.40)}
+/* Typing indicator */
+.bm-typing-wrap{margin-bottom:16px;flex-shrink:0}
+.bm-typing{background:rgba(43,32,52,.92);padding:16px 20px;border-radius:14px 14px 14px 3px;
+  display:inline-flex;gap:5px;align-items:center;border:1px solid rgba(0,196,28,.10);max-width:min(420px,100%);box-sizing:border-box}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--green-stable);
+  animation:tBounce 1.1s ease-in-out infinite}
+.tdot:nth-child(2){animation-delay:.18s}
+.tdot:nth-child(3){animation-delay:.36s}
+@keyframes tBounce{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-5px);opacity:1}}
+/* Input bar — Telegram style (compact so #broker-body gets more height) */
+.broker-footer{padding:0 0 max(10px,env(safe-area-inset-bottom,0));border-top:1px solid rgba(0,196,28,.22);flex-shrink:0;background:var(--panel-bg);box-shadow:inset 0 1px 0 rgba(0,196,28,.04)}
+.broker-input-bar{min-height:0;height:auto;display:flex;align-items:center;padding:8px clamp(14px,4vw,22px) 10px;gap:10px;flex-shrink:0}
+#broker-input{flex:1;background:#2f2238;border:1px solid rgba(0,196,28,.16);border-radius:18px;
+  color:var(--green-stable);font-family:'DM Sans',sans-serif;font-size:clamp(12px,1.25vw,14px);
+  font-style:italic;padding:0 16px;height:34px;cursor:not-allowed;outline:none}
+#broker-input::placeholder{color:rgba(0,196,28,0.58);opacity:1}
+.mic-btn{width:28px;height:28px;background:transparent;border:none;
+  color:var(--green-stable);font-size:16px;display:flex;align-items:center;justify-content:center;
+  cursor:default;flex-shrink:0}
+.hint-wrap{position:relative;flex-shrink:0}
+#hint-btn{width:32px;height:32px;background:transparent;border:none;
+  font-size:19px;display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,filter .2s;padding:0;position:relative;cursor:pointer;
+  color:#f5c518;filter:drop-shadow(0 0 5px rgba(245,197,24,.55))}
+#hint-btn:hover:not(:disabled){transform:scale(1.2);filter:drop-shadow(0 0 9px rgba(245,197,24,.9))}
+#hint-btn:disabled{opacity:.35;cursor:not-allowed;filter:none}
+.hint-tooltip{position:absolute;bottom:calc(100% + 7px);left:0;
+  transform:none;background:rgba(34,24,41,.96);color:#dbc7f6;
+  font-family:'DM Sans',sans-serif;font-size:clamp(11px,1vw,13px);padding:5px 9px;border-radius:4px;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;z-index:400;
+  border:1px solid rgba(143,68,232,.55);box-shadow:0 0 10px rgba(143,68,232,.3)}
+.hint-wrap:hover .hint-tooltip{opacity:1}
+#hint-cd{position:absolute;top:-5px;right:-5px;background:#e74c3c;color:#fff;
+  font-family:'Space Grotesk',sans-serif;font-size:8px;border-radius:10px;min-width:18px;
+  padding:1px 4px;text-align:center;display:none;line-height:1.5;pointer-events:none}
+#hint-cd.show{display:block}
+#send-btn{display:none}
+
+/* ═══════════════════════════════════════════════════
+   HACK OVERLAY
+═══════════════════════════════════════════════════ */
+#hack-overlay{position:absolute;inset:0;background:#000;z-index:200;
+  padding:44px 48px;font-family:'Share Tech Mono';font-size:14px;
+  line-height:2.1;display:none;overflow:hidden}
+#hack-overlay.active{display:block}
+#hack-overlay::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,
+    rgba(0,255,65,.025) 2px,rgba(0,255,65,.025) 4px);pointer-events:none}
+.ht{opacity:0;display:block;transition:opacity .3s}
+.ht.show{opacity:1}
+.ht-g{color:#00ff41}.ht-a{color:#ffb000}.ht-r{color:#ff4040}.ht-o{color:#ff8800}
+.ht-cur{display:inline-block;width:10px;height:18px;background:#00ff41;
+  animation:curBlink .7s step-end infinite;vertical-align:middle}
+@keyframes curBlink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ═══════════════════════════════════════════════════
+   CHART.JS WRAPPERS  (FIX 4)
+═══════════════════════════════════════════════════ */
+.chart-wrap{padding:18px 20px 20px;background:#fff;position:relative}
+.chart-ttl{font-family:'Tahoma',sans-serif;font-size:clamp(11px,1.1vw,13px);font-weight:700;color:#000;margin-bottom:4px}
+.chart-sub{font-family:'Tahoma',sans-serif;font-size:clamp(10px,1vw,12px);color:#666;margin:6px 0 14px;line-height:1.45}
+.chart-canvas-wrap{position:relative;height:190px}
+.chart-anom-panel{position:absolute;inset:0;background:rgba(0,0,0,.88);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  z-index:25;padding:20px}
+.chart-anom-panel.show{display:flex}
+.cap-ttl{font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--orange);
+  letter-spacing:2px;margin-bottom:12px}
+.cap-txt{font-size:clamp(12px,1.2vw,14px);color:#fff;text-align:center;max-width:300px;
+  line-height:1.65;margin-bottom:20px;font-family:'DM Sans',sans-serif}
+.cap-btn{background:var(--orange);color:var(--void);border:none;
+  font-family:'Space Grotesk',sans-serif;font-size:clamp(11px,1.1vw,13px);font-weight:700;
+  padding:11px 26px;letter-spacing:1.5px;cursor:pointer}
+.cap-btn:hover{background:#ffa234}
+.heatmap-wrap{overflow-x:auto;margin-top:8px}
+.heatmap-tbl{width:100%;border-collapse:collapse;font-family:'Tahoma',sans-serif;font-size:10px}
+.heatmap-tbl th{background:#e8e4d8;padding:4px 6px;text-align:center;border:1px solid #aca899;font-weight:700}
+.heatmap-fname{background:#f5f3eb!important;padding:4px 8px!important;text-align:left!important;border:1px solid #aca899;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.heatmap-cell{width:28px;min-width:28px;height:22px;border:1px solid #d0ccc0;padding:0}
+/* Compact reference tables below charts */
+.dt-compact-wrap{padding:6px 12px 10px;background:#fff}
+.dt-compact{width:100%;border-collapse:collapse;font-family:'Tahoma',sans-serif;
+  font-size:clamp(10px,1vw,12px)}
+.dt-compact th{background:#e8e4d8;padding:4px 8px;text-align:left;
+  border:1px solid #aca899;font-weight:700;font-size:10px;color:#333}
+.dt-compact td{padding:5px 8px;border:1px solid #d0ccc0;color:#000;vertical-align:middle}
+.dt-compact tr:nth-child(even) td{background:#f5f2ea}
+.dt-compact .crow{cursor:pointer}
+.dt-compact .crow:hover td{background:#ddeeff}
+/* File card grid (Payload) */
+.file-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 12px;background:#fff}
+.file-card{background:#f8f5ee;border:1px solid #d0ccc0;border-radius:4px;
+  padding:10px 12px;cursor:pointer;transition:background .15s}
+.file-card:hover{background:#eef4ff}
+.fc-icon{font-size:32px;margin-bottom:6px;display:block}
+.fc-name{font-family:'Tahoma',sans-serif;font-size:clamp(10px,1vw,12px);font-weight:700;
+  color:#000;word-break:break-all;margin-bottom:5px;line-height:1.3}
+.fc-meta{font-family:'Tahoma',sans-serif;font-size:clamp(9px,.9vw,11px);color:#555;line-height:1.6}
+.fc-badge{display:inline-block;background:#d0ccc0;color:#444;font-size:9px;
+  padding:2px 7px;border-radius:10px;margin-top:5px;font-weight:700;letter-spacing:.5px;
+  font-family:'Tahoma',sans-serif}
+
+/* ═══════════════════════════════════════════════════
+   DATA TABLES
+═══════════════════════════════════════════════════ */
+.dt-wrap{padding:10px 12px}
+.dt-ttl{font-family:'Tahoma',sans-serif;font-size:clamp(11px,1.1vw,13px);font-weight:700;color:#000}
+.dt-sub{font-family:'Tahoma',sans-serif;font-size:clamp(10px,1vw,12px);color:#666;margin:2px 0 10px}
+.dt{width:100%;border-collapse:collapse;font-family:'Tahoma',sans-serif;font-size:clamp(11px,1.1vw,13px)}
+.dt th{background:#e8e4d8;padding:6px 10px;text-align:left;border:1px solid #aca899;
+  font-weight:700;font-size:clamp(10px,1vw,12px);color:#333}
+.dt td{padding:8px 10px;border:1px solid #d0ccc0;color:#000;vertical-align:middle}
+.dt tr:nth-child(even) td{background:#f5f2ea}
+.dt .crow{cursor:pointer}
+.dt .crow:hover td{background:#ddeeff}
+.dt .nrow td{cursor:default}
+.dt-note{font-family:'Tahoma',sans-serif;font-size:clamp(11px,1vw,13px);color:#666;
+  padding:8px 12px;line-height:1.6;background:#fafaf8}
+
+/* Vault file list */
+.vf-wrap{padding:10px 12px}
+.vf-path{font-family:'Courier New',monospace;font-size:11px;color:#444;
+  background:#f0ede5;padding:4px 8px;border:1px solid #ccc;display:inline-block;
+  margin-bottom:8px}
+.vf-sub{font-family:'Tahoma',sans-serif;font-size:10px;color:#666;margin-bottom:8px}
+.vf-head{display:grid;grid-template-columns:24px 1fr 80px 90px 70px;
+  gap:0 8px;padding:4px 8px;background:#e8e4d8;
+  border:1px solid #aca899;font-family:'Tahoma',sans-serif;
+  font-size:10px;font-weight:700;color:#333;margin-bottom:2px}
+.vf-row{display:grid;grid-template-columns:24px 1fr 80px 90px 70px;
+  gap:0 8px;padding:5px 8px;border:1px solid #d0ccc0;
+  border-top:none;font-family:'Tahoma',sans-serif;font-size:11px;color:#000}
+.vf-row:nth-child(even){background:#f5f2ea}
+.vf-row.crow{cursor:pointer}
+.vf-row.crow:hover{background:#ddeeff;cursor:pointer}
+.vf-row.nrow{cursor:default}
+.vf-ico{font-size:16px}
+
+/* Log viewer */
+.log-wrap{padding:10px 12px;background:#fff}
+.log-body{font-family:'Courier New',monospace;font-size:10px;color:#333;
+  line-height:1.7;white-space:pre-wrap;background:#f8f8f6;
+  border:1px solid #d0ccc0;padding:8px;max-height:500px;overflow-y:auto}
+
+/* ═══════════════════════════════════════════════════
+   POWERPOINT WINDOW STYLING
+═══════════════════════════════════════════════════ */
+.xp-win.xwin-maximised .xp-tb,.xp-win.xwin-maximised .xp-menu,.xp-win.xwin-maximised .xp-status,.xp-win.xwin-maximised .ppt-menu,.xp-win.xwin-maximised .ppt-toolbar,.xp-win.xwin-maximised .ppt-footer{flex-shrink:0}
+.xp-win.xwin-maximised .ppt-body{flex:1;min-height:0;overflow:hidden}
+.xp-win.xwin-maximised .ppt-thumbs{width:160px;padding:10px}
+.xp-win.xwin-maximised .ppt-thumb-inner{width:140px;height:108px;font-size:14px}
+/* PPT window fit within desktop panel */
+#win-finance-ppt.visible{display:flex;flex-direction:column;max-height:calc(100vh - 196px)}
+#win-finance-ppt .ppt-body{flex:1;min-height:0;overflow:hidden}
+.ppt-menu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:#f0ece0;border-bottom:1px solid #aca899;padding:5px 12px;font-family:'Tahoma',sans-serif;font-size:11px;flex-shrink:0}
+.ppt-menu .xpm{margin-right:0;cursor:default}
+.ppt-toolbar{background:#f0ece0;border-bottom:1px solid #aca899;min-height:28px;height:auto;display:flex;align-items:center;padding:4px 10px;gap:6px;flex-shrink:0}
+.ppt-tb-btn{width:20px;height:20px;border:none;background:transparent;color:#666;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;border-radius:2px}
+.ppt-tb-btn:hover{background:#d0e4f8}
+.ppt-tb-div{width:1px;height:16px;background:#c0b8a8;margin:0 4px}
+.ppt-tb-drop{font-size:10px;color:#333;padding:4px 8px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer}
+.ppt-tb-slide{font-size:10px;color:#666;margin-left:auto}
+.ppt-body{display:flex;background:#e8e4d8;min-height:280px}
+.ppt-thumbs{width:180px;background:#e8e4d8;border-right:1px solid #c0b8a8;padding:8px;display:flex;flex-direction:column;gap:1px;flex-shrink:0;overflow-y:auto}
+.ppt-thumb{cursor:pointer;border:none;padding:0;margin:8px auto;display:block;background:transparent}
+.ppt-thumb-inner{width:156px;aspect-ratio:4/3;background:#fff;border:1px solid #c0b8a8;border-radius:2px;box-shadow:1px 2px 4px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;font-family:'Tahoma',sans-serif;font-weight:600}
+.ppt-thumb:hover .ppt-thumb-inner,.ppt-thumb.active .ppt-thumb-inner{border:2px solid #316ac5;box-shadow:0 0 0 2px rgba(49,106,197,.3)}
+.ppt-thumb-num{font-size:9px;color:#888;text-align:center;margin-top:4px}
+.ppt-main{flex:1;overflow:hidden;position:relative;background:#fff;margin:8px}
+.ppt-slide{background:#fff;padding:0;height:100%;min-height:260px;position:relative;overflow:hidden}
+.ppt-slide-accent{height:6px;background:linear-gradient(90deg,#0a1f5c,#1a4fc8,#0a9fd8);width:100%}
+.ppt-slide-accent-left{position:absolute;left:0;top:6px;bottom:28px;width:4px;background:#0a1f5c}
+.ppt-slide-title{position:absolute;left:28px;top:18px;font-family:Arial,Tahoma,sans-serif;font-size:18px;font-weight:700;color:#0a1f5c}
+.ppt-slide-title::after{content:'';position:absolute;left:0;bottom:-4px;width:60px;height:1px;background:#1a4fc8}
+.ppt-slide-logo{position:absolute;top:12px;right:16px;font-size:10px;color:#0a1f5c}
+.ppt-slide-body{position:absolute;left:28px;right:28px;top:70px;bottom:36px;overflow-y:auto;font-family:Arial,Tahoma,sans-serif;font-size:12px}
+.ppt-slide-footer{position:absolute;bottom:0;left:0;right:0;height:28px;background:#0a1f5c;display:flex;align-items:center;padding:0 16px;font-size:8px;color:rgba(255,255,255,.9)}
+.ppt-slide-footer .ppt-ff-left{flex:1;text-align:left}
+.ppt-slide-footer .ppt-ff-center{flex:1;text-align:center;opacity:.8}
+.ppt-slide-footer .ppt-ff-right{flex:1;text-align:right}
+.ppt-slide-title-only .ppt-slide-accent-left{display:none}
+.ppt-slide-title-only{background:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(10,31,92,.03) 2px,rgba(10,31,92,.03) 4px)}
+.ppt-slide-title-only .ppt-slide-body{top:0;left:0;right:0;bottom:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px}
+.ppt-slide-title-only .ppt-slide-title{position:static;margin-bottom:0}
+.ppt-stat-row{display:flex;gap:12px;flex-wrap:wrap}
+.ppt-stat-block{flex:1;min-width:0;background:#f4f7fc;border:1px solid #dde4f0;border-top:3px solid #1a4fc8;border-radius:4px;padding:14px 16px}
+.ppt-stat-num{font-size:28px;font-weight:700;color:#0a1f5c;font-family:'Space Grotesk',Arial,sans-serif}
+.ppt-stat-lbl{font-size:10px;color:#6a7a8a;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.ppt-stat-sub{font-size:11px;color:#1a7a3a;margin-top:2px}
+.ppt-stat-sub.neg{color:#8a1a1a}
+.ppt-stat-sub.neutral{color:#6a7a8a}
+.ppt-tbl{width:100%;border-collapse:collapse;font-size:11px;font-family:Arial,sans-serif}
+.ppt-tbl th{background:#0a1f5c;color:#fff;font-weight:700;font-size:10px;padding:6px 10px;text-align:left;border:1px solid #dde4f0}
+.ppt-tbl td{padding:6px 10px;border:1px solid #dde4f0;color:#2a3a4a}
+.ppt-tbl tr:nth-child(even) td{background:#f4f7fc}
+.ppt-tbl tr:nth-child(odd) td{background:#fff}
+.ppt-tbl .ppt-total-row td{font-weight:700;border-top:2px solid #0a1f5c}
+.ppt-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:600}
+.ppt-pill.on-track,.ppt-pill.resolved{background:#e6f4ea;color:#1a7a3a;border:1px solid #a8d8b0}
+.ppt-pill.under-review{background:#fff4e0;color:#8a5a00;border:1px solid #f0c060}
+.ppt-pill.deferred{background:#f0f0f0;color:#6a6a6a;border:1px solid #c0c0c0}
+.ppt-pill.contained,.ppt-pill.monitoring{background:#e0eeff;color:#1a3a8a;border:1px solid #a0b8e0}
+.ppt-pill.ongoing{background:#fff0e0;color:#8a4a00;border:1px solid #f0a060}
+.ppt-highlight-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f4f8;font-size:11px;color:#2a3a4a}
+.ppt-hl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.ppt-hl-dot.green{background:#1a7a3a}
+.ppt-hl-dot.amber{background:#8a5a00}
+.ppt-card-row{display:flex;gap:12px;flex-wrap:wrap}
+.ppt-card{flex:1;min-width:0;background:#f4f7fc;border:1px solid #dde4f0;border-radius:4px;padding:14px 16px;font-size:11px}
+.ppt-card-ttl{font-size:11px;font-weight:700;color:#0a1f5c;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ppt-card-txt{font-size:10px;color:#2a3a4a;line-height:1.8}
+.ppt-card.accent-green{border-top:3px solid #1a7a3a}
+.ppt-card.accent-blue{border-top:3px solid #1a4fc8}
+.ppt-card.accent-amber{border-top:3px solid #8a5a00}
+.ppt-risk-matrix{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;width:100%;max-width:200px;height:120px;margin-top:12px}
+.ppt-risk-q{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#333;position:relative}
+.ppt-risk-q.monitor{background:#fff4e0}
+.ppt-risk-q.priority{background:#ffe0e0}
+.ppt-risk-q.accept{background:#e0f4e8}
+.ppt-risk-q.manage{background:#e0eeff}
+.ppt-risk-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:#0a1f5c;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;font-weight:700}
+.ppt-footer{background:#f0ece0;border-top:1px solid #aca899;min-height:28px;height:auto;display:flex;align-items:center;padding:5px 12px;gap:10px;font-family:'Tahoma',sans-serif;font-size:11px;flex-shrink:0}
+.ppt-nav{background:#ece9d8;border:1px solid #aca899;width:24px;height:20px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
+.ppt-nav:hover:not(:disabled){background:#d4d0c8}
+.ppt-nav:disabled{opacity:.4;cursor:not-allowed}
+.ppt-counter{color:#333}
+.ppt-notes{flex:1;color:#888;font-style:italic;margin-left:10px;font-size:10px}
+.ppt-zoom{display:flex;align-items:center;gap:2px;margin-left:auto}
+.ppt-zoom-btn{width:18px;height:18px;border:1px solid #aca899;background:#ece9d8;cursor:pointer;font-size:10px}
+/* ── Scaled-up slide content ── */
+#win-finance-ppt .ppt-slide-title{font-size:23px}
+#win-finance-ppt .ppt-slide-body{font-size:14px;top:78px;left:24px;right:24px}
+#win-finance-ppt .ppt-slide-logo{font-size:12px}
+#win-finance-ppt .ppt-slide-footer{font-size:10px}
+#win-finance-ppt .ppt-tbl{font-size:13px}
+#win-finance-ppt .ppt-tbl th{font-size:12px;padding:7px 12px}
+#win-finance-ppt .ppt-tbl td{padding:7px 12px}
+#win-finance-ppt .ppt-stat-row{gap:14px}
+#win-finance-ppt .ppt-stat-block{padding:16px 18px}
+#win-finance-ppt .ppt-stat-num{font-size:32px}
+#win-finance-ppt .ppt-stat-lbl{font-size:12px}
+#win-finance-ppt .ppt-stat-sub{font-size:13px}
+#win-finance-ppt .ppt-card{font-size:13px;padding:16px 18px}
+#win-finance-ppt .ppt-card-ttl{font-size:13px}
+#win-finance-ppt .ppt-card-txt{font-size:12px}
+#win-finance-ppt .ppt-pill{font-size:10px;padding:4px 12px}
+#win-finance-ppt .ppt-highlight-row{font-size:13px}
+#win-finance-ppt .ppt-risk-matrix{max-width:260px;height:156px}
+#win-finance-ppt .ppt-risk-q{font-size:11px}
+#win-finance-ppt .ppt-risk-dot{width:13px;height:13px;font-size:8px}
+
+/* ═══════════════════════════════════════════════════
+   CALIBRATION — CHIP SELECTOR  (FIX 3)
+═══════════════════════════════════════════════════ */
+#cal-panel{position:absolute;right:0;top:0;bottom:30px;width:295px;
+  background:rgba(34,24,41,.98);border-left:2px solid var(--purple-light);z-index:310;
+  transform:translateX(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:-20px 0 40px rgba(0,0,0,.35), -1px 0 0 rgba(0,196,28,.08)}
+#cal-panel.open{transform:translateX(0)}
+.cp-hdr{padding:14px 16px 10px;border-bottom:1px solid rgba(0,196,28,.18);flex-shrink:0}
+.cp-node{font-family:'Space Grotesk',sans-serif;font-size:clamp(11px,1.1vw,13px);color:var(--purple-light);
+  letter-spacing:1.5px;margin-bottom:4px}
+.cp-sub{font-size:clamp(11px,1.1vw,13px);color:var(--text);font-family:'DM Sans',sans-serif;
+  line-height:1.4}
+.cp-body{flex:1;overflow-y:auto;padding:10px 14px;min-height:0;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.cp-params{display:flex;flex-direction:column;gap:clamp(10px, 1.5vh, 16px)}
+.cp-params.cp-compact{gap:11px}
+.cp-plbl{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,1vw,12px);color:var(--text-b);
+  letter-spacing:1.2px;margin-bottom:8px;line-height:1.4}
+.cp-chips{display:flex;flex-wrap:wrap;gap:5px}
+.cp-chip{padding:5px 11px;border:1.5px solid rgba(0,196,28,.22);border-radius:20px;
+  background:rgba(43,32,52,.88);color:var(--green-stable);font-family:'Share Tech Mono';
+  font-size:clamp(10px,1vw,12px);cursor:pointer;transition:all .15s;text-align:left;line-height:1.4}
+.cp-chip:hover{border-color:var(--purple-light);color:var(--purple-light);box-shadow:0 0 10px rgba(143,68,232,.12)}
+.cp-chip.cp-sel{border-color:var(--purple-light);color:var(--purple-light);background:rgba(143,68,232,.12)}
+.cp-chip.cp-correct{border-color:var(--green);color:var(--green);background:rgba(0,255,65,.08)}
+.cp-chip.cp-wrong{border-color:var(--red);color:var(--red);background:rgba(211,25,114,.08)}
+.cp-err{font-family:'Share Tech Mono';font-size:clamp(9px,.9vw,10px);color:var(--red);
+  margin-top:6px;display:none;line-height:1.4}
+.cp-err.show{display:block}
+.cp-foot{padding:12px 16px;border-top:1px solid var(--border-b);flex-shrink:0;
+  display:flex;gap:8px}
+.cp-ab{flex:1;padding:10px 4px;background:transparent;border:1px solid var(--border-b);
+  color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:clamp(9px,.9vw,11px);
+  border-radius:3px;letter-spacing:.8px;transition:all .2s}
+.cp-ab:hover{border-color:var(--red);color:var(--red)}
+.cp-ok{flex:2;padding:10px 4px;background:rgba(247,148,33,.1);border:1px solid var(--orange);
+  color:var(--orange);font-family:'Space Grotesk',sans-serif;font-size:clamp(9px,.9vw,11px);
+  border-radius:3px;letter-spacing:.8px;font-weight:700;transition:all .2s}
+.cp-ok:hover{background:rgba(247,148,33,.22)}
+
+/* ═══════════════════════════════════════════════════
+   CONFIRM INTEL + DEBRIEF + CABLE + TOAST
+═══════════════════════════════════════════════════ */
+#synth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:450;
+  display:flex;align-items:center;justify-content:center;flex-direction:column}
+#synth-svg{width:700px;height:500px}
+.synth-done{font-family:'Space Grotesk',sans-serif;font-size:16px;color:var(--green);
+  letter-spacing:4px;margin-top:28px;opacity:0;transition:opacity .8s}
+.synth-done.show{opacity:1}
+#debrief-overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:455;
+  display:flex;align-items:center;justify-content:center}
+.db-card{width:680px;max-width:90vw;background:var(--bg-p);border:1px solid rgba(0,255,65,.55);
+  border-radius:10px;padding:clamp(1.5rem, 3vh, 2.5rem) clamp(1.5rem, 3vw, 2.5rem);box-shadow:0 0 70px rgba(84,0,173,.16),0 0 36px rgba(0,255,65,.10);position:relative;overflow:hidden}
+.db-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--green-stable),var(--purple));opacity:.8}
+.db-badge{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,1vw,12px);color:var(--green);
+  letter-spacing:3px;margin-bottom:4px}
+.db-head{font-family:'Space Grotesk',sans-serif;font-size:clamp(17px,1.8vw,22px);color:var(--text-w);
+  letter-spacing:1px;margin-bottom:24px}
+.db-metrics{display:flex;gap:18px;margin-bottom:24px;padding-bottom:22px;
+  border-bottom:1px solid var(--border)}
+.db-m{text-align:center;flex:1}
+.db-mv{font-family:'Space Grotesk',sans-serif;font-size:clamp(20px,2vw,26px);color:var(--purple-light);font-weight:700}
+.db-ml{font-size:clamp(10px,1vw,12px);color:var(--text);letter-spacing:1.5px;margin-top:4px}
+.db-rw-ttl{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,1vw,12px);color:var(--amber);
+  letter-spacing:2px;margin-bottom:10px}
+.db-rw-txt{font-size:clamp(13px,1.3vw,15px);color:var(--text-b);line-height:1.72;margin-bottom:20px}
+.db-quote{font-family:'Share Tech Mono';font-size:clamp(11px,1.1vw,13px);color:var(--green-stable);
+  border-left:2px solid var(--green-stable);padding-left:12px;margin-top:12px;line-height:1.7}
+.db-next{width:100%;margin-top:10px;padding:14px;background:rgba(247,148,33,.1);
+  border:1px solid var(--orange);color:var(--orange);font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(11px,1.1vw,13px);font-weight:700;border-radius:4px;letter-spacing:1px;transition:all .2s}
+.db-next:hover{background:rgba(247,148,33,.22)}
+#cable-svg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+#toast{position:fixed;top:62px;left:50%;transform:translateX(-50%);
+  background:rgba(143,68,232,.94);color:#fff;font-family:'Share Tech Mono';
+  font-size:clamp(11px,1.1vw,13px);padding:8px 20px;border-radius:4px;z-index:600;
+  pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 0 20px rgba(143,68,232,.25)}
+#toast.show{opacity:1}
+#gp-root,#gp-root *{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#gp-root *::-webkit-scrollbar{width:6px;height:6px}
+#gp-root *::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ═══════════════════════════════════════════════════
+   BUDGET DISPLAY
+═══════════════════════════════════════════════════ */
+#budget{font-family:'Space Grotesk',sans-serif;font-size:clamp(13px,1.3vw,16px);
+  letter-spacing:1px;transition:color .4s}
+#budget.budget-green{color:var(--green)}
+#budget.budget-amber{color:var(--amber)}
+#budget.budget-red{color:var(--red);animation:budgetPulse 1.5s ease-in-out infinite}
+@keyframes budgetPulse{0%,100%{opacity:1}50%{opacity:.55}}
+#budget.budget-flash{animation:budgetShake .4s ease,budgetRedFlash .4s ease!important}
+@keyframes budgetShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}
+  40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes budgetRedFlash{0%,100%{filter:none}40%{filter:brightness(2) drop-shadow(0 0 8px var(--red))}}
+.budget-toast{position:fixed;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+  color:var(--red);pointer-events:none;z-index:601;white-space:nowrap;
+  text-shadow:0 0 8px rgba(231,76,60,.8);
+  animation:budgetFloat 2.4s ease forwards}
+@keyframes budgetFloat{0%{opacity:1;transform:translateY(0) scale(1)}15%{opacity:1;transform:translateY(-8px) scale(1.1)}100%{opacity:0;transform:translateY(-55px) scale(.9)}}
+/* Debrief budget breakdown */
+.db-budget{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.db-budget-ttl{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,1vw,12px);
+  color:var(--amber);letter-spacing:2px;margin-bottom:12px}
+.db-budget-row{display:flex;justify-content:space-between;
+  font-family:'Share Tech Mono';font-size:clamp(11px,1.1vw,13px);
+  color:var(--text-b);padding:4px 0}
+.db-budget-row.db-total{border-top:1px solid var(--border);margin-top:6px;
+  padding-top:10px;color:var(--text-w);font-weight:700}
+.db-rating{margin-top:16px;margin-bottom:8px;padding:10px 0;font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(11px,1.1vw,13px);color:var(--purple-light);letter-spacing:1px;text-align:center}
+
+</style>
+</head>
+<body>
+
+<div id="intro-root">
+<!-- Ambient glow layer -->
+<div class="ambient-glow"></div>
+
+<div class="scanlines"></div>
+<div class="bg-grid"></div>
+<div class="corner corner--tl"></div>
+<div class="corner corner--tr"></div>
+<div class="corner corner--bl"></div>
+<div class="corner corner--br"></div>
+
+<div class="status-bar">
+  <div class="status-left">
+    <span><span class="status-dot live"></span>TERMINAL ACTIVE</span>
+    <span id="clock">--:--:--</span>
+  </div>
+  <div class="status-right">
+    <span>OP-OMNI / v2.4.1</span>
+    <span>ENCRYPTED</span>
+  </div>
+</div>
+
+<!-- PAGE 1: Introduction -->
+<div class="page active" id="page1">
+  <div class="page-eyebrow">// Mission 1 — Identifying the Footprint</div>
+  <div class="page-title">Pre-Mission Brief</div>
+
+  <div class="content">
+    <!-- BROKER INTELLIGENCE BRIEF -->
+    <div class="broker-section">
+      <div class="section-label">// Intelligence Brief</div>
+      <div class="broker-card">
+        <div class="broker-text">
+          <p>You're <strong>The Mastermind</strong>. I'm <strong>Voss</strong>. I give you intel, you execute.</p>
+          <p>You're going to breach into the live desktop of <strong>Robert Marshall, SVP Strategy</strong>. He was a part of building OMNI. He authorized the engineers. He encrypted the dataset. He covered his tracks. Right now, he's in a meeting somewhere, completely unaware that we're inside his system. That we can see everything.</p>
+          <p>But access is temporary. Security audits run every hour. If we move carelessly the whole thing locks down. So we need to be surgical and precise. We find what we need and we vanish.</p>
+          <p>Four pieces of evidence are buried in his files, proof that OMNI exists, that it's real. Find them all. Lock them down. Then we get out. We've got time. But not much.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEXT BUTTON -->
+  <div class="button-section">
+    <button class="btn-next" onclick="goToPage(2)">
+      <div class="btn-inner">
+        <span>Continue</span>
+        <span class="btn-arrow">→</span>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- PAGE 2: Operational Protocol -->
+<div class="page" id="page2">
+  <div class="page-eyebrow">// Mission 1 — Identifying the Footprint</div>
+  <div class="page-title">Operational Protocol</div>
+
+  <div class="content">
+    <!-- OPERATIONAL BRIEF — HOW TO PLAY -->
+    <div class="ops-section">
+      <div class="section-label">// How to Breach</div>
+      <div class="steps-grid">
+
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-title">FOLLOW THE BOARD</div>
+          <div class="step-desc">The Evidence Board structures the investigation and keeps the operation focused. You will progress through four locked leads in a fixed order: COMPUTE, FUNDING, PERSONNEL, and DATA TRAIL. Each lead represents a different part of the case, and each completed lead unlocks the next. This is not free exploration. The board is your route through the evidence, helping you build the case one confirmed finding at a time.</div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-title">INVESTIGATE THE DESKTOP</div>
+          <div class="step-desc">Browse Marshall's XP desktop and inspect the files linked to the active lead. Every file can be opened, but not every chart, graphic, or document contains relevant evidence. Your task is to look carefully for the anomaly hidden in the data: a suspicious spike, bar, line, data point, label, or pattern that does not fit. Read Voss's instructions closely before interacting. This is a precision task, not a click hunt. When you identify the anomaly, click directly on the part of the visual that reveals it.</div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-title">VERIFY THE INTEL</div>
+          <div class="step-desc">Once the anomaly has been identified, you must verify the finding before it can be locked onto the Evidence Board. Answer the verification questions using the evidence you have reviewed. Some questions will relate directly to the anomaly you selected, while others may require you to examine additional charts, graphics, or files connected to the same lead. A correct answer depends on analysis, not guesswork. Confirm the intel, then lock the lead and move the operation forward.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BREACH BUTTON -->
+  <div class="button-section">
+    <div class="button-label">// Ready to breach?</div>
+    <button class="btn-next" id="btn-breach" onclick="startBreachGame()">
+      <div class="btn-inner">
+        <span>Breach the Desktop</span>
+        <span class="btn-arrow">→</span>
+      </div>
+    </button>
+  </div>
+</div>
+</div>
+
+<div id="gp-root" style="display:none">
+<!-- ═══════════════════════════════════════════════════
+     GAME
+═══════════════════════════════════════════════════ -->
+<div id="game" style="display:flex">
+
+  <div id="hdr">
+    <div class="hdr-left"><i class="fas fa-terminal"></i> MASTERMIND TERMINAL | OPERATION OMNI</div>
+    <div class="hdr-center">MISSION 01 OF 05 / IDENTIFYING THE FOOTPRINT</div>
+    <div class="hdr-right">
+      <span id="budget" class="budget-green"><i class="fas fa-wallet"></i> $50,000</span>
+      <span style="color:var(--border);margin:0 6px">|</span>
+      <span id="timer">00:00</span>
+      <span class="live-dot"></span>
+      <span style="letter-spacing:1px">LIVE</span>
+    </div>
+  </div>
+
+  <div id="step-banner">Select a lead on the board to begin investigation</div>
+
+  <div id="main-row">
+
+    <!-- ═══ DESKTOP PANEL ═══ -->
+    <div id="desktop-panel">
+      <div id="wallpaper"></div>
+
+      <!-- Desktop Icons -->
+      <div class="di" id="di-it"      style="top:22px;left:14px"  ondblclick="openWin('win-it')"><span class="di-icon"><i class="fas fa-folder"></i></span><div class="di-label">IT_Systems</div></div>
+      <div class="di" id="di-finance" style="top:106px;left:14px" ondblclick="openWin('win-finance')"><span class="di-icon"><i class="fas fa-folder"></i></span><div class="di-label">Finance</div></div>
+      <div class="di" id="di-hr"      style="top:190px;left:14px" ondblclick="openWin('win-hr')"><span class="di-icon"><i class="fas fa-folder"></i></span><div class="di-label">HR_Records</div></div>
+      <div class="di" id="di-vault"   style="top:274px;left:14px" ondblclick="openWin('win-vault')"><span class="di-icon"><i class="fas fa-folder"></i></span><div class="di-label">DataVault</div></div>
+      <div class="di" id="di-misc"    style="top:358px;left:14px" ondblclick="openWin('win-misc')"><span class="di-icon"><i class="fas fa-folder"></i></span><div class="di-label">Misc</div></div>
+      <div class="di" id="di-recycle" style="top:442px;left:14px"><span class="di-icon">🗑️</span><div class="di-label">Recycle Bin</div></div>
+
+      <!-- Sticky Notes -->
+      <div class="sticky sticky-yellow" id="sty0" style="top:22px;right:14px"><span class="sticky-hdr">THIS WEEK</span>SFO flight Fri 6am
+Jenkins call Wed
+Sub-Acct 7 → do NOT escalate
+Dentist Thurs</div>
+      <div class="sticky sticky-pink"  id="sty1" style="top:220px;right:14px">CFO verbal 09/14
+$47.2M — keep off tracker
+do not log</div>
+      <div class="sticky sticky-blue"  id="sty2" style="top:378px;right:14px">voicemail — Stanton 09/28
+847TB out. Endpoint masked.
+Lab 7B standing down.
+Delete this note.</div>
+
+      <!-- ══ FOLDER WINDOWS ══ -->
+
+      <div class="xp-win" id="win-it" style="top:58px;left:88px;width:420px" onmousedown="bringFront('win-it')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-it')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-folder"></i></span>IT_Systems — C:\Marshall\IT_Systems\</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-it')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-it')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" style="height:210px" id="wb-it"></div>
+        <div class="xp-status"><span>5 objects</span></div>
+      </div>
+
+      <!-- Easter egg: Marshall's personal notes (optional lore — not on taskbar) -->
+      <div class="xp-win" id="win-personal-notes" style="top:120px;left:160px;width:480px" onmousedown="bringFront('win-personal-notes')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-personal-notes')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-lines"></i></span>personal_notes.txt — Notepad</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-personal-notes')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-personal-notes')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">Format</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" id="wb-personal-notes" style="background:#fff;padding:14px 16px;font-family:'Courier New',Courier,monospace;font-size:clamp(11px,1.1vw,13px);color:#111;line-height:1.9;min-height:260px;max-height:min(50vh,420px);overflow-y:auto;white-space:pre-wrap;">Sep 17
+IT flagged the load spike again. Third time this month.
+Told Hargreaves it was the quarterly backup sync running long. He filed it. Done.
+Archived the ticket myself this time. Faster that way.
+
+If anyone pulls the logs they'll see 118% and ask questions.
+They won't pull the logs.
+
+OMNI needs the headroom. Stanton was clear about that.
+We're past the point where I get to ask what for.</div>
+        <div class="xp-status"><span>personal_notes.txt · C:\Marshall\IT_Systems\ · READ ONLY</span></div>
+      </div>
+
+      <div class="xp-win" id="win-finance" style="top:75px;left:105px;width:420px" onmousedown="bringFront('win-finance')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-finance')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-folder"></i></span>Finance — C:\Marshall\Finance\</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-finance')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-finance')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" style="height:230px" id="wb-finance"></div>
+        <div class="xp-status"><span>5 objects</span></div>
+      </div>
+
+      <div class="xp-win" id="win-hr" style="top:68px;left:96px;width:420px" onmousedown="bringFront('win-hr')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-hr')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-folder"></i></span>HR_Records — C:\Marshall\HR_Records\</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-hr')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-hr')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" style="height:230px" id="wb-hr"></div>
+        <div class="xp-status"><span>5 objects</span></div>
+      </div>
+
+      <div class="xp-win" id="win-vault" style="top:62px;left:92px;width:420px" onmousedown="bringFront('win-vault')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-vault')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-folder"></i></span>DataVault — C:\Marshall\DataVault\</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-vault')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-vault')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" style="height:210px" id="wb-vault"></div>
+        <div class="xp-status"><span>4 objects</span></div>
+      </div>
+
+      <div class="xp-win" id="win-misc" style="top:72px;left:110px;width:420px" onmousedown="bringFront('win-misc')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-misc')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-folder"></i></span>Misc — C:\Marshall\Misc\</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-misc')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-misc')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Help</span></div>
+        <div class="xp-body" style="height:190px" id="wb-misc"></div>
+        <div class="xp-status"><span>3 objects</span></div>
+      </div>
+
+      <!-- ══ FILE VIEWER WINDOWS ══ -->
+      <div class="xp-win" id="win-finance-ppt" style="top:30px;left:30px;width:min(820px,calc(62vw - 50px))" onmousedown="bringFront('win-finance-ppt')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-finance-ppt')" style="background:#d4d0c8">
+          <div class="xp-title" style="color:#000"><span class="xp-ti"><i class="fas fa-file-powerpoint"></i></span>board_report_Q3.ppt — Microsoft PowerPoint</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-finance-ppt')">_</button>
+            <button class="xp-btn xp-max" onclick="toggleMaximise('win-finance-ppt')">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-finance-ppt')">✕</button>
+          </div>
+        </div>
+        <div class="ppt-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span><span class="xpm">Tools</span><span class="xpm">Slide Show</span></div>
+        <div class="ppt-toolbar">
+          <button class="ppt-tb-btn" title="New">📄</button><button class="ppt-tb-btn" title="Open">📂</button><button class="ppt-tb-btn" title="Save">💾</button><button class="ppt-tb-btn" title="Print">🖨</button>
+          <span class="ppt-tb-div"></span>
+          <button class="ppt-tb-btn" title="Cut">✂</button><button class="ppt-tb-btn" title="Copy">📋</button><button class="ppt-tb-btn" title="Paste">📌</button>
+          <span class="ppt-tb-div"></span>
+          <button class="ppt-tb-btn" title="Undo">↶</button><button class="ppt-tb-btn" title="Redo">↷</button>
+          <span class="ppt-tb-div"></span>
+          <select class="ppt-tb-drop"><option>Title, Content</option></select>
+          <button class="ppt-tb-btn" title="Design">🎨</button>
+          <span class="ppt-tb-div"></span>
+          <span class="ppt-tb-slide" id="ppt-toolbar-slide">Slide 1 of 7</span>
+        </div>
+        <div class="ppt-body">
+          <div class="ppt-thumbs">
+            <div class="ppt-thumb" data-slide="0" onclick="pptGoTo(0)"><div class="ppt-thumb-inner">Title Slide</div><div class="ppt-thumb-num">1</div></div>
+            <div class="ppt-thumb" data-slide="1" onclick="pptGoTo(1)"><div class="ppt-thumb-inner">Executive Summary</div><div class="ppt-thumb-num">2</div></div>
+            <div class="ppt-thumb" data-slide="2" onclick="pptGoTo(2)"><div class="ppt-thumb-inner">Revenue by Unit</div><div class="ppt-thumb-num">3</div></div>
+            <div class="ppt-thumb" data-slide="3" onclick="pptGoTo(3)"><div class="ppt-thumb-inner">Budget Allocation</div><div class="ppt-thumb-num">4</div></div>
+            <div class="ppt-thumb" data-slide="4" onclick="pptGoTo(4)"><div class="ppt-thumb-inner">Workforce Summary</div><div class="ppt-thumb-num">5</div></div>
+            <div class="ppt-thumb" data-slide="5" onclick="pptGoTo(5)"><div class="ppt-thumb-inner">Risk Register</div><div class="ppt-thumb-num">6</div></div>
+            <div class="ppt-thumb" data-slide="6" onclick="pptGoTo(6)"><div class="ppt-thumb-inner">Q4 Outlook</div><div class="ppt-thumb-num">7</div></div>
+          </div>
+          <div class="ppt-main">
+            <!-- Slide 1: Title -->
+            <div class="ppt-slide ppt-slide-title-only" id="ppt-slide-0">
+              <div class="ppt-slide-accent"></div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div style="text-align:center;margin-bottom:24px"><span style="font-size:48px;color:#1a4fc8">⬡</span><span style="font-family:'Space Grotesk',Arial,sans-serif;font-size:22px;font-weight:700;color:#0a1f5c;letter-spacing:8px;margin-left:4px">MEGACORP</span></div>
+                <div style="width:200px;height:1px;background:#dde4f0;margin:0 auto 28px"></div>
+                <div style="font-size:10px;color:#1a4fc8;letter-spacing:4px;margin-bottom:12px">BOARD CONFIDENTIAL · OCTOBER 2003</div>
+                <div style="font-size:32px;font-weight:700;color:#0a1f5c;letter-spacing:-.5px;margin-bottom:12px">Q3 2003 Financial Performance Review</div>
+                <div style="width:80px;height:2px;background:#1a4fc8;margin:0 auto 12px"></div>
+                <div style="font-size:13px;color:#4a6a8a">Prepared by R. Marshall, SVP Strategy</div>
+                <div style="display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap">
+                  <span style="background:#f4f7fc;border:1px solid #dde4f0;border-radius:20px;padding:5px 14px;font-size:10px;color:#4a6a8a">📅 October 14, 2003</span>
+                  <span style="background:#f4f7fc;border:1px solid #dde4f0;border-radius:20px;padding:5px 14px;font-size:10px;color:#4a6a8a">🏢 MegaCorp Corporation</span>
+                  <span style="background:#f4f7fc;border:1px solid #dde4f0;border-radius:20px;padding:5px 14px;font-size:10px;color:#4a6a8a">🔒 Confidential</span>
+                </div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q3 2003 Financial Performance Review</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 2: Executive Summary -->
+            <div class="ppt-slide" id="ppt-slide-1" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Executive Summary</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div class="ppt-stat-row">
+                  <div class="ppt-stat-block"><div class="ppt-stat-num">$284.7M</div><div class="ppt-stat-lbl">Q3 Total Revenue</div><div class="ppt-stat-sub">+12% vs Q2</div></div>
+                  <div class="ppt-stat-block"><div class="ppt-stat-num">$198.2M</div><div class="ppt-stat-lbl">Operating Costs</div><div class="ppt-stat-sub neutral">Within budget</div></div>
+                  <div class="ppt-stat-block"><div class="ppt-stat-num">$86.5M</div><div class="ppt-stat-lbl">Net Operating Profit</div><div class="ppt-stat-sub">+8% vs forecast</div></div>
+                </div>
+                <div style="font-size:9px;color:#1a4fc8;letter-spacing:3px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #f0f4f8">KEY HIGHLIGHTS</div>
+                <div class="ppt-highlight-row"><span class="ppt-hl-dot green"></span><span>All core divisions performed at or above Q3 targets — no material variances to report</span></div>
+                <div class="ppt-highlight-row"><span class="ppt-hl-dot green"></span><span>Capital expenditure on schedule with zero overruns across all active projects</span></div>
+                <div class="ppt-highlight-row"><span class="ppt-hl-dot amber"></span><span>Strategic R&D investment programme progressing — full cost centre detail in Appendix B</span></div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Executive Summary</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 3: Revenue Breakdown -->
+            <div class="ppt-slide" id="ppt-slide-2" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Q3 Revenue by Business Unit</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px">
+                  <div style="width:45%;min-width:200px;position:relative">
+                    <div style="height:200px;position:relative"><canvas id="chartPptRev"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:18px;font-weight:700;color:#0a1f5c">$284.7M</div><div style="font-size:11px;color:#6a7a8a">Total Revenue</div></div></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:11px;color:#2a3a4a">
+                      <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;background:#1a4fc8;border-radius:1px"></span>Enterprise</span>
+                      <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;background:#0a9fd8;border-radius:1px"></span>Consumer</span>
+                      <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;background:#1a7a3a;border-radius:1px"></span>Govt</span>
+                      <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;background:#6a3a9a;border-radius:1px"></span>Licensing</span>
+                    </div>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <table class="ppt-tbl" style="font-size:15px">
+                      <tr><th>Business Unit</th><th>Q2 ($M)</th><th>Q3 ($M)</th></tr>
+                      <tr><td>Enterprise Solutions</td><td>108.4</td><td>119.6</td></tr>
+                      <tr><td>Consumer Products</td><td>71.2</td><td>79.7</td></tr>
+                      <tr><td>Government Contracts</td><td>43.0</td><td>51.2</td></tr>
+                      <tr><td>Licensing & IP</td><td>31.5</td><td>34.2</td></tr>
+                      <tr class="ppt-total-row"><td>TOTAL</td><td>254.1</td><td>284.7</td></tr>
+                    </table>
+                  </div>
+                </div>
+                <div style="font-size:10px;color:#2a3a4a;line-height:1.6;margin-top:10px">Government Contracts delivered strongest growth at +19.1%, driven by two new federal infrastructure awards in August 2003.</div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q3 Revenue by Business Unit</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 4: Department Budget Summary -->
+            <div class="ppt-slide" id="ppt-slide-3" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Q3 Department Budget Allocation</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div style="display:flex;gap:16px;flex-direction:column;font-size:10px">
+                  <div style="width:100%">
+                    <table class="ppt-tbl" style="font-size:9px">
+                      <tr><th>Department</th><th>Alloc ($M)</th><th>Spent ($M)</th><th>Variance</th><th>Status</th></tr>
+                      <tr><td>Operations</td><td>4.2</td><td>4.0</td><td>−$0.2M</td><td><span class="ppt-pill on-track">On Track</span></td></tr>
+                      <tr><td>IT Infrastructure</td><td>2.8</td><td>2.6</td><td>−$0.2M</td><td><span class="ppt-pill on-track">On Track</span></td></tr>
+                      <tr><td>R&D</td><td>7.1</td><td>7.1</td><td>$0.0M</td><td><span class="ppt-pill under-review">Under Review</span></td></tr>
+                      <tr><td>Marketing</td><td>6.4</td><td>6.1</td><td>−$0.3M</td><td><span class="ppt-pill on-track">On Track</span></td></tr>
+                      <tr><td>Legal & Compliance</td><td>2.1</td><td>1.9</td><td>−$0.2M</td><td><span class="ppt-pill on-track">On Track</span></td></tr>
+                      <tr class="ppt-total-row"><td>TOTAL</td><td>22.6</td><td>21.7</td><td>−$0.9M</td><td>—</td></tr>
+                    </table>
+                    <div style="font-size:9px;color:#6a7a8a;font-style:italic;margin-top:8px">* Full R&D cost centre breakdown available in budget_Q3.xls — Finance shared drive (Appendix B)</div>
+                  </div>
+                  <div style="width:100%;height:140px"><canvas id="chartPptBudget"></canvas></div>
+                </div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q3 Department Budget Allocation</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 5: Headcount & Workforce -->
+            <div class="ppt-slide" id="ppt-slide-4" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Q3 Workforce Summary</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div class="ppt-stat-row" style="margin-bottom:12px">
+                  <div class="ppt-stat-block"><div class="ppt-stat-num" style="font-size:24px">4,847</div><div class="ppt-stat-lbl">Total Headcount</div><div class="ppt-stat-sub neg">−0.4% vs Q2</div></div>
+                  <div class="ppt-stat-block"><div class="ppt-stat-num" style="font-size:24px">312</div><div class="ppt-stat-lbl">Active Contractors</div><div class="ppt-stat-sub neutral">Q3 average</div></div>
+                  <div class="ppt-stat-block"><div class="ppt-stat-num" style="font-size:24px">94%</div><div class="ppt-stat-lbl">Retention Rate</div><div class="ppt-stat-sub">+1.2pp vs Q2</div></div>
+                  <div class="ppt-stat-block"><div class="ppt-stat-num" style="font-size:24px">2,940h</div><div class="ppt-stat-lbl">Overtime Logged</div><div class="ppt-stat-sub neutral">All divisions</div></div>
+                </div>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:10px">
+                  <div style="width:45%;min-width:140px;height:130px"><canvas id="chartPptHc"></canvas></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:8px;color:#1a4fc8;letter-spacing:2px;margin-bottom:8px">OVERTIME SUMMARY</div>
+                    <table class="ppt-tbl" style="font-size:9px">
+                      <tr><th>Division</th><th>Hrs</th><th>vs Q2</th></tr>
+                      <tr><td>Engineering (all)</td><td>3,320h</td><td>+840h</td></tr>
+                      <tr><td>Operations</td><td>127h</td><td>−12h</td></tr>
+                      <tr><td>Sales & Marketing</td><td>95h</td><td>+8h</td></tr>
+                      <tr><td>Finance</td><td>44h</td><td>−6h</td></tr>
+                    </table>
+                    <div style="font-size:8px;color:#6a7a8a;font-style:italic;margin-top:6px">Engineering overtime includes classified project allocations.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q3 Workforce Summary</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 6: Risk Register -->
+            <div class="ppt-slide" id="ppt-slide-5" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Q3 Risk Register — Active Items</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div style="font-size:8px;color:#1a4fc8;letter-spacing:2px;margin-bottom:6px">MATERIAL RISKS</div>
+                <table class="ppt-tbl" style="font-size:9px">
+                  <tr><th>Risk Item</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Owner</th><th>Status</th></tr>
+                  <tr><td>Regulatory compliance review</td><td>Compliance</td><td>Medium</td><td>High</td><td>Legal Dept.</td><td><span class="ppt-pill monitoring">Monitoring</span></td></tr>
+                  <tr><td>IT infrastructure capacity</td><td>Operational</td><td>Low</td><td>Medium</td><td>IT Division</td><td><span class="ppt-pill resolved">Resolved</span></td></tr>
+                  <tr><td>Key personnel retention</td><td>HR</td><td>Medium</td><td>Medium</td><td>HR Director</td><td><span class="ppt-pill ongoing">Ongoing</span></td></tr>
+                  <tr><td>R&D programme delivery</td><td>Strategic</td><td>Low</td><td>High</td><td>SVP Strategy</td><td><span class="ppt-pill contained">Contained</span></td></tr>
+                  <tr><td>Data security & access ctrl</td><td>IT Security</td><td>Low</td><td>High</td><td>IT Division</td><td><span class="ppt-pill monitoring">Monitoring</span></td></tr>
+                </table>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q3 Risk Register</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+            <!-- Slide 7: Q4 Outlook -->
+            <div class="ppt-slide" id="ppt-slide-6" style="display:none">
+              <div class="ppt-slide-accent"></div><div class="ppt-slide-accent-left"></div>
+              <div class="ppt-slide-title">Q4 2003 — Strategic Priorities &amp; Outlook</div>
+              <div class="ppt-slide-logo">⬡ MEGACORP</div>
+              <div class="ppt-slide-body">
+                <div style="background:linear-gradient(90deg,#0a1f5c,#1a4fc8);color:#fff;padding:12px 16px;border-radius:4px;font-size:11px;font-weight:700;margin-bottom:12px">Full-year revenue guidance maintained at $1.12B · No material risks to profit outlook</div>
+                <div class="ppt-card-row">
+                  <div class="ppt-card accent-green"><div class="ppt-card-ttl">📈 Revenue &amp; Growth</div><div class="ppt-card-txt">Q4 forecast: $301M (+6% vs Q3)<br>Enterprise pipeline: 14 active proposals<br>Government contract renewals: December<br>Confidence level: HIGH</div></div>
+                  <div class="ppt-card accent-blue"><div class="ppt-card-ttl">💼 Investment &amp; Costs</div><div class="ppt-card-txt">R&D programme: final delivery phase<br>Infrastructure upgrades: November<br>Contractor reduction: −15% post-delivery<br>Full-year cost target: $12M savings</div></div>
+                  <div class="ppt-card accent-amber"><div class="ppt-card-ttl">⚙ Operational Focus</div><div class="ppt-card-txt">Q4 headcount stable — no planned changes<br>IT security review: October 31 deadline<br>Compliance audit: Q4 completion target<br>Next board briefing: January 15, 2004</div></div>
+                </div>
+              </div>
+              <div class="ppt-slide-footer"><span class="ppt-ff-left">MEGACORP CONFIDENTIAL</span><span class="ppt-ff-center">Q4 2003 Strategic Priorities &amp; Outlook</span><span class="ppt-ff-right">© 2003 MegaCorp Corporation</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ppt-footer">
+          <button class="ppt-nav" id="ppt-prev" onclick="pptPrev()">◀</button>
+          <button class="ppt-nav" id="ppt-next" onclick="pptNext()">▶</button>
+          <span class="ppt-counter" id="ppt-counter">Slide 1 of 7</span>
+          <div class="ppt-zoom">
+            <button class="ppt-zoom-btn" onclick="alert('Zoom In')">+</button>
+            <span style="font-size:10px;color:#666">100%</span>
+            <button class="ppt-zoom-btn" onclick="alert('Zoom Out')">−</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="xp-win" id="win-server" style="top:44px;left:86px;width:560px" onmousedown="bringFront('win-server')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-server')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-excel"></i></span>server_report.xls — Microsoft Excel</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-server')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-server')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body xb-tab" id="wb-server" style="height:296px"></div>
+        <div class="xp-status"><span>IT Infrastructure Report · Oct 2003</span></div>
+      </div>
+
+      <div class="xp-win" id="win-budget" style="top:54px;left:98px;width:545px" onmousedown="bringFront('win-budget')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-budget')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-excel"></i></span>budget_Q3.xls — Microsoft Excel</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-budget')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-budget')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body xb-tab" id="wb-budget" style="height:310px"></div>
+        <div class="xp-status"><span>Finance Portal · Restricted · 01-Oct-2003</span></div>
+      </div>
+
+      <div class="xp-win" id="win-personnel" style="top:50px;left:94px;width:548px" onmousedown="bringFront('win-personnel')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-personnel')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-word"></i></span>overtime_Sep.doc — Microsoft Word</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-personnel')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-personnel')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body xb-tab" id="wb-personnel" style="height:310px"></div>
+        <div class="xp-status"><span>HR Analytics · RESTRICTED · All Divisions</span></div>
+      </div>
+
+      <!-- ══ HR AUTHORISATION LOG ══ -->
+      <div class="xp-win" id="win-hr-auth" style="top:76px;left:110px;width:530px" onmousedown="bringFront('win-hr-auth')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-hr-auth')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-word"></i></span>auth_log_Sep.doc — Microsoft Word</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-hr-auth')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-hr-auth')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body" style="height:240px;padding:18px 22px;font-family:Georgia,serif;font-size:12px;color:#1a1a1a;overflow-y:auto">
+          <div style="text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:14px">
+            <div style="font-size:14px;font-weight:bold;letter-spacing:.3px">MegaCorp HR — Overtime Authorisation Log · September 2003</div>
+            <div style="font-size:11px;color:#555;font-style:italic;margin-top:3px">Confidential · HR Director Use Only</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px">
+            <thead>
+              <tr style="background:#e8e8e8">
+                <th style="padding:6px 8px;border:1px solid #bbb;text-align:left">Division</th>
+                <th style="padding:6px 8px;border:1px solid #bbb;text-align:left">Authorised By</th>
+                <th style="padding:6px 8px;border:1px solid #bbb;text-align:left">Auth Code</th>
+                <th style="padding:6px 8px;border:1px solid #bbb;text-align:left">Sign-off Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:5px 8px;border:1px solid #ddd">Sales &amp; Marketing</td><td style="padding:5px 8px;border:1px solid #ddd">J. Peterson</td><td style="padding:5px 8px;border:1px solid #ddd">AUTH-2003-MKT-09</td><td style="padding:5px 8px;border:1px solid #ddd">02-Sep-2003</td></tr>
+              <tr style="background:#f9f9f9"><td style="padding:5px 8px;border:1px solid #ddd">Engineering (Std)</td><td style="padding:5px 8px;border:1px solid #ddd">M. Chen</td><td style="padding:5px 8px;border:1px solid #ddd">AUTH-2003-ENG-09</td><td style="padding:5px 8px;border:1px solid #ddd">01-Sep-2003</td></tr>
+              <tr><td style="padding:5px 8px;border:1px solid #ddd">Engineering Classified</td><td style="padding:5px 8px;border:1px solid #ddd">R. Marshall</td><td style="padding:5px 8px;border:1px solid #ddd">[CLASSIFIED]</td><td style="padding:5px 8px;border:1px solid #ddd">30-Aug-2003</td></tr>
+              <tr style="background:#f9f9f9"><td style="padding:5px 8px;border:1px solid #ddd">Finance</td><td style="padding:5px 8px;border:1px solid #ddd">R. Simmons</td><td style="padding:5px 8px;border:1px solid #ddd">AUTH-2003-FIN-09</td><td style="padding:5px 8px;border:1px solid #ddd">03-Sep-2003</td></tr>
+              <tr><td style="padding:5px 8px;border:1px solid #ddd">Operations</td><td style="padding:5px 8px;border:1px solid #ddd">L. Torres</td><td style="padding:5px 8px;border:1px solid #ddd">AUTH-2003-OPS-09</td><td style="padding:5px 8px;border:1px solid #ddd">02-Sep-2003</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="xp-status"><span>5 records &nbsp;·&nbsp; HR CONFIDENTIAL</span></div>
+      </div>
+
+      <!-- ══ HEADCOUNT XLS ══ -->
+      <div class="xp-win" id="win-headcount" style="top:66px;left:108px;width:500px" onmousedown="bringFront('win-headcount')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-headcount')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-excel"></i></span>staffing_metrics_Sep.xls — Microsoft Excel</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-headcount')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-headcount')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body" style="height:320px;padding:10px 12px;background:#fff">
+          <div class="chart-ttl">Avg Overtime Hours per Employee — September 2003</div>
+          <div class="chart-sub">HR Records · Staffing Metrics · 01-Oct-2003 · All Divisions · Index scale — hover segment for exact figure</div>
+          <div style="height:268px"><canvas id="chartHeadcount"></canvas></div>
+        </div>
+        <div class="xp-status"><span>HR Records · Confidential · 10 divisions</span></div>
+      </div>
+
+      <!-- ══ FINANCE AUDIT DRAFT ══ -->
+      <div class="xp-win" id="win-finance-audit" style="top:82px;left:120px;width:520px" onmousedown="bringFront('win-finance-audit')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-finance-audit')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-word"></i></span>audit_draft.doc — Microsoft Word</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-finance-audit')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-finance-audit')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body" style="height:280px;padding:18px 22px;font-family:Georgia,serif;font-size:12px;color:#1a1a1a;overflow-y:auto">
+          <div style="text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:14px">
+            <div style="font-size:14px;font-weight:bold;letter-spacing:.3px">MegaCorp Finance — Draft Response to Auditor Query</div>
+            <div style="font-size:11px;color:#555;font-style:italic;margin-top:3px">Prepared by: R. Marshall &nbsp;·&nbsp; CONFIDENTIAL &nbsp;·&nbsp; Sep 2003</div>
+          </div>
+          <p style="margin:0 0 10px">Thank you for your correspondence dated 12 August 2003. We have reviewed the budget variance items flagged in your Q2 audit report and are satisfied that all material allocations are accounted for within standard reporting frameworks.</p>
+          <p style="margin:0 0 10px">With respect to the R&amp;D line item, we wish to clarify that the allocation of $7.1M has been routed through Sub-Account 7 for administrative purposes. This account is managed directly by the Office of the SVP Strategy and is not subject to standard departmental reporting requirements.</p>
+          <p style="margin:0 0 14px">We trust this clarifies the matter and request that no further escalation is required at this time. Please direct any outstanding queries to this office.</p>
+          <div style="margin-top:16px;font-size:11px;color:#333">Signed: <strong>R. Marshall</strong> &nbsp;·&nbsp; SVP Strategy &nbsp;·&nbsp; MegaCorp</div>
+        </div>
+        <div class="xp-status"><span>DRAFT — NOT SENT &nbsp;·&nbsp; CONFIDENTIAL</span></div>
+      </div>
+
+      <!-- ══ VAULT FILE WINDOWS ══ -->
+
+      <!-- access_heatmap.xls — Microsoft Excel -->
+      <div class="xp-win" id="win-vault-heatmap" style="top:70px;left:110px;width:600px" onmousedown="bringFront('win-vault-heatmap')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-vault-heatmap')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-excel"></i></span>access_heatmap.xls — Microsoft Excel</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-vault-heatmap')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-vault-heatmap')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <div class="xp-body xb-tab" id="wb-vault-heatmap" style="height:310px"></div>
+        <div class="xp-status"><span>DataVault — File Access Frequency · Q3 2003</span></div>
+      </div>
+
+      <!-- vault_audit_Q3.xls — Microsoft Excel -->
+      <div class="xp-win" id="win-vault-audit" style="top:78px;left:125px;width:570px" onmousedown="bringFront('win-vault-audit')">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-vault-audit')">
+          <div class="xp-title"><span class="xp-ti"><i class="fas fa-file-excel"></i></span>vault_audit_Q3.xls — Microsoft Excel</div>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="closeWin('win-vault-audit')">_</button>
+            <button class="xp-btn xp-max">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-vault-audit')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span><span class="xpm">Insert</span><span class="xpm">Format</span></div>
+        <!-- Formula bar -->
+        <div style="height:22px;background:#ece9d8;border-bottom:1px solid #aca899;display:flex;align-items:center;padding:0 6px;gap:6px;font-family:'Tahoma',sans-serif;font-size:11px;color:#000;flex-shrink:0">
+          <span style="background:#fff;border:1px solid #999;padding:1px 6px;min-width:44px;text-align:center">A1</span>
+          <span style="color:#888;font-size:13px;line-height:1">ƒx</span>
+          <span style="flex:1;background:#fff;border:1px solid #999;padding:1px 6px">File Name</span>
+        </div>
+        <div class="xp-body" style="height:270px;overflow-y:auto;overflow-x:auto;padding:0">
+          <table style="border-collapse:collapse;font-family:'Tahoma',sans-serif;font-size:11px;min-width:100%;white-space:nowrap">
+            <thead>
+              <tr style="background:#d4d0c8;position:sticky;top:0;z-index:1">
+                <th style="padding:5px 10px;border:1px solid #aca899;text-align:left;min-width:190px">File Name</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:72px">Operations</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:60px">Finance</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:72px">Engineering</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:40px">HR</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:64px">Executive</th>
+                <th style="padding:5px 8px;border:1px solid #aca899;text-align:center;min-width:50px;background:#e8e4d8;font-weight:700">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff">
+                <td style="padding:4px 10px;border:1px solid #ddd">ops_report_Q3.pdf</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">18</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">12</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">5</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">3</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">8</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">46</td>
+              </tr>
+              <tr style="background:#f9f9f9">
+                <td style="padding:4px 10px;border:1px solid #ddd">contractor_roster.csv</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">4</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">11</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">6</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">24</td>
+              </tr>
+              <tr style="background:#fff">
+                <td style="padding:4px 10px;border:1px solid #ddd">budget_summary.xls</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">3</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">24</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">7</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">37</td>
+              </tr>
+              <tr style="background:#f9f9f9">
+                <td style="padding:4px 10px;border:1px solid #ddd">hr_headcount.doc</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">0</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">0</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">14</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">17</td>
+              </tr>
+              <tr style="background:#fff">
+                <td style="padding:4px 10px;border:1px solid #ddd">board_minutes_Q3.pdf</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">6</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">0</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">11</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">20</td>
+              </tr>
+              <tr style="background:#fff8e8;font-weight:600">
+                <td style="padding:4px 10px;border:1px solid #ddd">CLASSIFIED_INITIATIVE.enc</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">3</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#c6efce;color:#276221">47</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">55</td>
+              </tr>
+              <tr style="background:#f9f9f9">
+                <td style="padding:4px 10px;border:1px solid #ddd">system_backup_Q3.tar</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">6</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">8</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">2</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">3</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">21</td>
+              </tr>
+              <tr style="background:#fff">
+                <td style="padding:4px 10px;border:1px solid #ddd">it_policy_2003.doc</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">7</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">3</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">9</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">4</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">24</td>
+              </tr>
+              <tr style="background:#f9f9f9">
+                <td style="padding:4px 10px;border:1px solid #ddd">legal_contracts_Q3.pdf</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">0</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">8</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">1</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">0</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center">5</td>
+                <td style="padding:4px 8px;border:1px solid #ddd;text-align:center;background:#f5f3ee;font-weight:600">14</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="xp-status"><span>DataVault · Access Audit Q3 2003 · READ ONLY</span></div>
+      </div>
+
+      <!-- Calibration Side Panel -->
+      <div id="cal-panel">
+        <div class="cp-hdr">
+          <div class="cp-node" id="cp-node">VERIFY LEAD</div>
+          <div class="cp-sub">Select the correct values from the evidence you found.</div>
+        </div>
+        <div class="cp-body">
+          <div class="cp-params" id="cp-params"></div>
+        </div>
+        <div class="cp-foot">
+          <button class="cp-ab" onclick="abortCal()">✕ ABORT</button>
+          <button class="cp-ok" onclick="confirmCal()">✓ CONFIRM LOCK</button>
+        </div>
+      </div>
+
+      <!-- Hack Overlay -->
+      <div id="hack-overlay">
+        <span class="ht ht-g" id="ht1">GHOST TERMINAL v3.1 — SECURE SHELL</span>
+        <span class="ht" id="ht2">Tunnel: <span class="ht-a">192.168.44.71 [megacorp-internal]</span> &nbsp;·&nbsp; MAC spoof: <span class="ht-a">done</span></span>
+        <span class="ht" id="ht3">Credentials: <span class="ht-a">sysadmin@megacorp.internal</span> &nbsp;·&nbsp; 2FA bypass: <span class="ht-g">OK</span></span>
+        <span class="ht" id="ht4">Desktop stream: <span class="ht-g">MIRRORING LIVE — read-only</span></span>
+        <span class="ht ht-o" id="ht5">⚠  Any keystroke triggers host alert. Observe only.</span>
+        <span class="ht" id="ht6">Breach window: <span class="ht-r">8 minutes</span></span>
+        <span class="ht" id="ht7"><span class="ht-cur"></span></span>
+      </div>
+
+      <!-- XP Taskbar -->
+      <div id="xp-taskbar">
+        <button id="start-btn">⊞ Start</button>
+        <div class="tb-div"></div>
+        <button class="tb-wb" id="tbw-it"      onclick="toggleWin('win-it')"><i class="fas fa-folder"></i> IT_Systems</button>
+        <button class="tb-wb" id="tbw-finance"  onclick="toggleWin('win-finance')"><i class="fas fa-folder"></i> Finance</button>
+        <button class="tb-wb" id="tbw-hr"       onclick="toggleWin('win-hr')"><i class="fas fa-folder"></i> HR_Records</button>
+        <button class="tb-wb" id="tbw-vault"    onclick="toggleWin('win-vault')"><i class="fas fa-folder"></i> DataVault</button>
+        <div id="tb-clock"></div>
+      </div>
+    </div><!-- end #desktop-panel -->
+
+    <!-- ═══ RIGHT PANEL ═══ -->
+    <div id="right">
+      <div id="eboard">
+        <div class="eb-hdr">
+          <span class="eb-htitle">EVIDENCE BOARD</span>
+          <span id="eb-hint"></span>
+        </div>
+        <!-- FIX 2: Step indicator -->
+        <div id="eb-step"></div>
+        <div class="eb-grid">
+          <div class="node n-idle" id="node-compute"   onclick="nodeClick('compute')"><div class="node-icon"><i class="fas fa-microchip"></i></div><div class="node-name">COMPUTE</div><div class="node-status" id="ns-compute">CLICK TO INVESTIGATE</div></div>
+          <div class="node n-idle" id="node-funding"   onclick="nodeClick('funding')"><div class="node-icon"><i class="fas fa-sack-dollar"></i></div><div class="node-name">FUNDING</div><div class="node-status" id="ns-funding">CLICK TO INVESTIGATE</div></div>
+          <div class="node n-idle" id="node-personnel" onclick="nodeClick('personnel')"><div class="node-icon"><i class="fas fa-users"></i></div><div class="node-name">PERSONNEL</div><div class="node-status" id="ns-personnel">CLICK TO INVESTIGATE</div></div>
+          <div class="node n-idle" id="node-dataTrail" onclick="nodeClick('dataTrail')"><div class="node-icon"><i class="fas fa-fingerprint"></i></div><div class="node-name">DATA TRAIL</div><div class="node-status" id="ns-dataTrail">CLICK TO INVESTIGATE</div></div>
+        </div>
+        <div class="eb-progress">
+          <div class="ep-seg" id="ep-compute"></div>
+          <div class="ep-seg" id="ep-funding"></div>
+          <div class="ep-seg" id="ep-personnel"></div>
+          <div class="ep-seg" id="ep-dataTrail"></div>
+        </div>
+        <button id="synth-btn" disabled onclick="startSynth()"><i class="fas fa-circle-nodes"></i> CONFIRM INTEL</button>
+      </div>
+
+      <!-- Operation Channel / group chat UI -->
+      <div id="broker-wrap">
+        <div class="broker-hdr">
+<div class="bk-avatar" id="bk-group-avatar">
+  <i class="fas fa-shield-halved"></i>
+</div>
+<div class="bk-info">
+  <div class="bk-name">Operation Channel</div>
+  <div class="bk-members" id="bk-members">
+    <span class="bk-member online" data-name="Voss">Voss</span><span class="bk-sep">,</span>
+    <span class="bk-member online" data-name="Zex">Zex</span><span class="bk-sep">,</span>
+    <span class="bk-member offline" data-name="Atlas">Atlas</span><span class="bk-sep">,</span>
+    <span class="bk-member offline" data-name="Nova">Nova</span><span class="bk-sep">,</span>
+    <span class="bk-member offline" data-name="Kade">Kade</span>
+  </div>
+</div>
+<div class="bk-icons"><i class="fas fa-magnifying-glass"></i> &nbsp; <i class="fas fa-lock"></i></div>
+<div id="bk-status" hidden></div>
+        </div>
+        <div id="broker-body">
+          <div class="bm-sep">
+            <div class="bm-sep-pill">Today</div>
+          </div>
+        </div>
+        <div class="broker-footer">
+          <div class="broker-input-bar">
+            <div class="hint-wrap">
+              <button id="hint-btn" onclick="requestHint()"><i class="fas fa-lightbulb"></i></button>
+              <div class="hint-tooltip">Request hint · costs $2,500</div>
+              <div id="hint-cd"></div>
+            </div>
+            <input id="broker-input" type="text" placeholder="Operation Channel — listen only" disabled>
+            <button class="mic-btn"><i class="fas fa-microphone"></i></button>
+            <button id="send-btn" style="display:none" disabled>↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #main-row -->
+</div><!-- end #game -->
+
+<!-- Confirm Intel / Debrief -->
+<div id="synth-overlay" style="display:none">
+  <svg id="synth-svg" viewBox="0 0 700 500"></svg>
+  <div class="synth-done" id="synth-done">✓ OMNI FOOTPRINT CONFIRMED</div>
+</div>
+<div id="debrief-overlay" style="display:none">
+  <div class="db-card">
+    <div class="db-badge">OPERATION 1 — FOOTPRINT CONFIRMED</div>
+    <div class="db-head">OMNI FOOTPRINT CONFIRMED</div>
+    <div class="db-metrics" id="db-metrics"></div>
+    <div class="db-rw-ttl">REAL-WORLD TRANSLATION</div>
+    <div class="db-rw-txt">
+      You identified overlapping anomalies across four departments to confirm Project OMNI exists. Each trace — compute, funding, personnel, data trail — was a breadcrumb left by a system too large to fully hide.
+      <br><br>
+      In the real world this is <strong style="color:var(--purple-light)">Data Analysis</strong>: filtering noise to find meaningful outliers, reading data accurately, and cross-referencing across multiple sources to build a coherent picture.
+      <div class="db-quote">"Compute, funding, personnel, data trail — all pointing to the same hidden system. OMNI has a footprint. I'm in." — Zex</div>
+    </div>
+    <button class="db-next" onclick="nextRound()">CONTINUE TO MISSION 2 — FORGING THE MASTER KEY →</button>
+  </div>
+</div>
+
+<!-- Cable SVG + Toast -->
+<svg id="cable-svg">
+  <defs>
+    <filter id="cable-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+</svg>
+<div id="toast"></div>
+</div>
+
+<script>
+'use strict';
+
+  // Clock (intro status bar)
+  function updateClock() {
+    document.getElementById('clock').textContent = new Date().toTimeString().slice(0, 8);
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Page navigation
+  function goToPage(pageNum) {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById('page' + pageNum).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // Transition to gameplay — no reload
+  function startBreachGame() {
+    var intro = document.getElementById('intro-root');
+    var gp = document.getElementById('gp-root');
+    if (intro) intro.style.display = 'none';
+    if (gp) {
+      gp.style.display = 'block';
+      document.documentElement.classList.add('gp-html-active');
+      document.body.classList.add('gp-gameplay-active');
+    }
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        startGame();
+      });
+    });
+  }
+
+/* ═══ GLOBAL CHART STORE ═══ */
+const CHARTS = {};
+
+/* ═══ GAME STATE ═══ */
+const GS = {
+  locked:new Set(), activeNode:null, calNode:null,
+  chipIdx:[], errors:0,
+  budget:50000, budgetStart:50000,
+  decoyPenalties:0, clickPenalties:0, calPenalties:0, hintPenalties:0,
+  hintsUsed:0,
+  brokerOpen:true, hackDone:false, hintCooldown:false, lastSender:null,
+  slideIdx:0, timerSec:0, timerInt:null, zTop:100, openWins:new Set(),
+  currentStep:0
+};
+
+/* Budget threshold flags — each fires once */
+const BUDGET_WARNED = {30000:false, 15000:false, 5000:false};
+
+/* FIX 2: Node order for guided flow */
+const NODE_ORDER = ['compute','funding','personnel','dataTrail'];
+
+/* ═══ FIX 3: NODES with exact calibration data ═══ */
+const NODES = {
+  compute:{
+    label:'COMPUTE', icon:'⚡', folder:'win-server', iconId:'di-it',
+    clue:"Something this scale doesn't run on air. OMNI needed serious compute resources — and that kind of drain doesn't vanish quietly. Check the IT Systems folder. Start with the infrastructure reports.",
+    lockMsg:"September hit nearly 3× the yearly average — and it wasn't isolated. Something was running through that machine. Logged.",
+    hint:"IT Systems → server_report.xls → Server Load tab. One month is clearly above the rest. Click that bar and read the tooltip.",
+    params:[
+      {label:'WHICH MONTH HAD THE SPIKE?',
+       opts:['January','February','March','April','May','June','July','August','September','October','November','December'],
+       ans:8,
+       err:'Not that one — look at the chart, one month stands way above the rest'},
+      {label:'WHAT WAS THE LOAD PERCENTAGE?',
+       opts:['24%','44%','72%','81%','100%','118%','142%','200%','400%'],
+       ans:5,
+       err:'Check the Y-axis value for the September bar — the exact percentage is there'},
+      {label:'WHAT DOES THE TICKET SAY?',
+       opts:['"Normal load"','"Ticket: Archived — DO NOT REOPEN"','"Scheduled maintenance"','"Flagged for review"'],
+       ans:1,
+       err:"Hover over the September bar — there's a tooltip with the exact ticket text"}
+    ]
+  },
+  funding:{
+    label:'FUNDING', icon:'◈', folder:'win-budget', iconId:'di-finance',
+    clue:"An operation like OMNI has to be funded. That money has to appear somewhere in the books, even if it's buried. Finance folder — look at the budget files.",
+    lockMsg:"$7.1 million with no owner and no department. That money went somewhere off the books. Logged.",
+    hint:"Finance → budget_Q3.xls → Budget Allocation. Hover each bar for owner and amount. One line has no owner.",
+    params:[
+      {label:'WHICH COST CENTRE HAS NO OWNER?',
+       opts:['Operations','IT Infrastructure','R&D — Unallocated','Marketing','Legal & Compliance'],
+       ans:2,
+       err:'Hover over each bar in the budget chart — the tooltip shows the owner. one of them has no owner listed.'},
+      {label:'WHAT IS THE ALLOCATED AMOUNT?',
+       opts:['$2.8M','$4.2M','$6.4M','$7.1M','$8.3M'],
+       ans:3,
+       err:'The amount is in the budget file. Find the bar with no owner and read its value carefully.'},
+      {label:'WHAT IS THE BUDGET VARIANCE ON THE R&D LINE IN THE BOARD REPORT?',
+       opts:['−$0.7M','−$0.3M','−$0.2M','−$0.1M','$0.0M'],
+       ans:4,
+       err:"check the variance column in the budget table in the board report — every department has an underspend except one.",
+       crossRef:true},
+      {label:'WHAT IS THE STATUS OF THE R&D LINE IN THE BOARD REPORT?',
+       opts:['On Track','Under Review','Deferred','Flagged','Closed'],
+       ans:1,
+       err:"that information is in the board report. check the status column in the budget table.",
+       crossRef:true}
+    ]
+  },
+  personnel:{
+    label:'PERSONNEL', icon:'◉', folder:'win-personnel', iconId:'di-hr',
+    clue:"You don't build something like OMNI with a skeleton crew. Someone was putting serious hours into a project that wasn't meant to exist. The HR records are the place to look.",
+    lockMsg:"2,940 hours on a project that officially doesn't exist. Someone built something real. Logged.",
+    hint:"HR → September overtime tab → scatter plot. One division is on a different scale. Hover points for project codes.",
+    params:[
+      {label:'HOW MANY OVERTIME HOURS WERE LOGGED?',
+       opts:['185h','340h','520h','670h','2,940h'],
+       ans:4,
+       err:'Find the division with the redacted project code on the scatter plot and read its hours carefully.'},
+      {label:'WHICH DIVISION HAS THE REDACTED PROJECT CODE?',
+       opts:['Sales & Marketing','Engineering (Std)','Product Development','Engineering Classified','Operations'],
+       ans:3,
+       err:'Hover over each dot on the scatter plot — the tooltip shows the project code. one of them is redacted.'},
+      {label:'WHAT WAS THE AVERAGE OVERTIME HOURS PER EMPLOYEE IN ENGINEERING CLASSIFIED?',
+       opts:['8h','13h','18h','23h','47h'],
+       ans:3,
+       err:'Open staffing_metrics_Sep.xls in the HR folder — find the Engineering Classified staff count, then divide into the total overtime hours.',
+       crossRef:true},
+      {label:'WHO AUTHORISED THE CLASSIFIED OVERTIME?',
+       opts:['M. Chen','J. Peterson','L. Torres','R. Simmons','R. Marshall'],
+       ans:4,
+       err:"that information isn't in the overtime file. keep looking through the HR folder.",
+       crossRef:true}
+    ]
+  },
+  dataTrail:{
+    label:'DATA TRAIL', icon:'⬡', folder:'win-vault-heatmap', iconId:'di-vault',
+    clue:"If OMNI exists, it leaves traces beyond compute, budgets, and staffing. Something inside DataVault was being accessed heavily, then abruptly disappeared from use. Find the file whose activity drops off a cliff.",
+    lockMsg:"Sustained access, then a hard cutoff. That file was active, important, and deliberately buried. Logged.",
+    hint:"DataVault → access_heatmap.xls → find the file with heavy activity that suddenly drops to zero. Click the affected row / cell.",
+    params:[
+      {label:'WHICH FILE SHOWS A SUDDEN DROP TO ZERO ACCESSES?',
+       opts:['ops_report_Q3.pdf','contractor_roster.csv','budget_summary.xls','CLASSIFIED_INITIATIVE.enc','system_backup_Q3.tar'],
+       ans:3,
+       err:'Look at the heatmap on Tab 1. Find the file that was being used heavily then suddenly stops.'},
+      {label:'IN WHICH WEEK DID ACCESS DROP TO ZERO?',
+       opts:['Week 9','Week 10','Week 11','Week 12','Week 13'],
+       ans:4,
+       err:'Look at the last few weeks on the heatmap row for that file. Find the grey cell.'},
+      {label:'WHICH DEPARTMENT LOGGED THE MOST ACCESSES TO THE FILE?',
+       opts:['Operations','Finance','Engineering','HR','Executive'],
+       ans:2,
+       err:"check vault_audit_Q3.xls in the DataVault folder. find the file row and compare across the departments.",
+       crossRef:true},
+      {label:'HOW MANY ACCESSES DID THAT DEPARTMENT LOG?',
+       opts:['12','23','31','47','64'],
+       ans:3,
+       err:"you're in the right file — read the value in that department's column carefully.",
+       crossRef:true}
+    ]
+  }
+};
+
+/* ═══ FILE ICON HELPER — XP-style per file type ═══ */
+function fileIcon(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const map = {
+    xls:  {fa:'fa-file-excel',   cls:'fi-xls'},
+    xlsx: {fa:'fa-file-excel',   cls:'fi-xls'},
+    doc:  {fa:'fa-file-word',    cls:'fi-doc'},
+    docx: {fa:'fa-file-word',    cls:'fi-doc'},
+    ppt:  {fa:'fa-file-powerpoint', cls:'fi-ppt'},
+    pptx: {fa:'fa-file-powerpoint', cls:'fi-ppt'},
+    pdf:  {fa:'fa-file-pdf',     cls:'fi-pdf'},
+    csv:  {fa:'fa-file-csv',     cls:'fi-csv'},
+    txt:  {fa:'fa-file-lines',   cls:'fi-txt'},
+    log:  {fa:'fa-file-code',    cls:'fi-log'},
+    jpg:  {fa:'fa-file-image',   cls:'fi-img'},
+    jpeg: {fa:'fa-file-image',   cls:'fi-img'},
+    png:  {fa:'fa-file-image',   cls:'fi-img'},
+    zip:  {fa:'fa-file-zipper',  cls:'fi-zip'},
+    tar:  {fa:'fa-file-zipper',  cls:'fi-zip'},
+    enc:  {fa:'fa-file-shield',  cls:'fi-default'},
+  };
+  const m = map[ext] || {fa:'fa-file', cls:'fi-default'};
+  return `<i class="fas ${m.fa} ${m.cls}"></i>`;
+}
+
+const FOLDERS = {
+    it:[
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'config_backup.txt', decoy:true, msg:"Nothing there. That file's clean."},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'server_report.xls', decoy:false, win:'win-server'},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'personal_notes.txt', decoy:false, fn:'openPersonalNotes'},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'patch_notes.doc', decoy:true, msg:"Wrong file. Stay focused."},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'helpdesk_log.csv', decoy:true, msg:'Dead end. Don\'t waste time on it.'}
+    ],
+    finance:[
+      {ico:'<i class="fas fa-file-powerpoint"></i>', nm:'board_report_Q3.ppt', fn:'openFinancePpt'},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'expenses.pdf', decoy:true, msg:"Nothing relevant. Keep searching."},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'contracts.doc', decoy:true, msg:"Wrong file. Stay focused."},
+      {ico:'<i class="fas fa-file-excel"></i>', nm:'budget_Q3.xls', decoy:false, win:'win-budget'},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'travel.csv', decoy:true, msg:'Dead end. Don\'t waste time on it.'},
+      {ico:'<i class="fas fa-file-alt"></i>', nm:'audit_draft.doc', fn:'openFinanceAudit'}
+    ],
+  hr:[
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'onboarding.doc', decoy:true, msg:"Wrong file. Stay focused."},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'holidays.pdf', decoy:true, msg:"Nothing relevant. Keep searching."},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'overtime_Sep.doc', decoy:false, win:'win-personnel'},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'auth_log_Sep.doc', fn:'openHrAuth'},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'reviews_Q2.doc', decoy:true, msg:'Dead end. Don\'t waste time on it.'},
+    {ico:'<i class="fas fa-file-excel"></i>', nm:'staffing_metrics_Sep.xls', fn:'openHeadcount'}
+  ],
+  vault:[
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'access_heatmap.xls', fn:'openVaultHeatmap'},
+    {ico:'<i class="fas fa-file-excel"></i>', nm:'vault_audit_Q3.xls', fn:'openVaultAudit'},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'backup_log.txt', decoy:true, msg:"Nothing there. That file's clean."},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'ops_report_Q3.pdf', decoy:true, msg:"Wrong file. Stay focused."}
+  ],
+  misc:[
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'golf_scores.xls', decoy:true, msg:'Dead end. Don\'t waste time on it.'},
+    {ico:'<i class="fas fa-image"></i>', nm:'photo.jpg', decoy:true, msg:"Wrong file. Stay focused."},
+    {ico:'<i class="fas fa-file-alt"></i>', nm:'books.txt', decoy:true, msg:"Nothing relevant. Keep searching."}
+  ]
+};
+
+/* ═══ START ═══ */
+function startGame() {
+  document.getElementById('game').style.display = 'flex';
+  buildCharts();
+  startTimer();
+  runHackSequence();
+}
+function startTimer() {
+  GS.timerInt = setInterval(() => {
+    GS.timerSec++;
+    const m = String(Math.floor(GS.timerSec/60)).padStart(2,'0');
+    const s = String(GS.timerSec%60).padStart(2,'0');
+    document.getElementById('timer').textContent = m+':'+s;
+  }, 1000);
+}
+
+/* ═══ HACK SEQUENCE ═══ */
+function runHackSequence() {
+  const ho = document.getElementById('hack-overlay');
+  ho.classList.add('active');
+  const delays = [300,620,960,1280,1600,1930,2260];
+  ['ht1','ht2','ht3','ht4','ht5','ht6','ht7'].forEach((id,i) => {
+    setTimeout(() => document.getElementById(id).classList.add('show'), delays[i]);
+  });
+  setTimeout(() => {
+    ho.style.transition = 'opacity 0.7s ease';
+    ho.style.opacity = '0';
+    setTimeout(() => {
+      ho.classList.remove('active');
+      ho.style.opacity = '';
+      ho.style.transition = '';
+      revealDesktop();
+    }, 720);
+  }, 3350);
+}
+
+function revealDesktop() {
+  GS.hackDone = true;
+  document.getElementById('wallpaper').classList.add('visible');
+  document.querySelectorAll('.di').forEach((d,i) => setTimeout(() => d.classList.add('visible'), i*80));
+  document.querySelectorAll('.sticky').forEach((s,i) => setTimeout(() => s.classList.add('visible'), 300+i*120));
+  document.getElementById('xp-taskbar').classList.add('visible');
+  tickClock();
+  setInterval(tickClock, 1000);
+  /* FIX 2: Init guided flow */
+  initGuidedFlow();
+  /* Voss intro messages */
+  setTimeout(() => brokerSay("We're in. Marshall's desktop — live, read-only. He has no idea.", 'bm-d'), 700);
+  setTimeout(() => brokerSay("You have four leads on the board. Start with COMPUTE — that's where the infrastructure trail begins.", 'bm-d'), 2200);
+  setTimeout(() => brokerSay("Zex won't commit without a confirmed footprint. Everything we find goes on the board.", 'bm-d'), 4200);
+}
+
+/* ═══ FIX 2: GUIDED FLOW INIT ═══ */
+function initGuidedFlow() {
+  /* COMPUTE: pulsing cyan, START HERE → */
+  document.getElementById('node-compute').className = 'node n-start';
+  document.getElementById('ns-compute').textContent = 'START HERE →';
+  /* All others: dimmed + LOCKED */
+  ['funding','personnel','dataTrail'].forEach(nid => {
+    document.getElementById('node-'+nid).className = 'node n-dimmed';
+    document.getElementById('ns-'+nid).textContent = 'LOCKED';
+  });
+  document.getElementById('eb-step').textContent = 'LEAD 1 OF 4';
+}
+
+function tickClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('tb-clock').textContent = `${h}:${m} ${ap}`;
+}
+
+/* ═══ EASTER EGG: Marshall's personal notes (optional lore) ═══ */
+let personalNotesOpened = false;
+function openPersonalNotes() {
+  if (!GS.hackDone) return;
+  openWin('win-personal-notes');
+  if (!personalNotesOpened) {
+    personalNotesOpened = true;
+    setTimeout(() => brokerSay("He knew. He archived it himself. Marshall isn't just a bystander.", 'bm-d'), 1200);
+  }
+}
+
+/* ═══ FINANCE PPT OPENER ═══ */
+let pptChartBuilt = false;
+let pptSlideIdx = 0;
+
+function openFinancePpt() {
+  if (!GS.hackDone) return;
+  openWin('win-finance-ppt');
+  pptGoTo(0);
+  if (!pptChartBuilt) {
+    pptChartBuilt = true;
+    setTimeout(() => {
+      const revCtx = document.getElementById('chartPptRev');
+      if (revCtx) CHARTS['pptRev'] = new Chart(revCtx, {
+        type:'doughnut',
+        data:{labels:['Enterprise Solutions','Consumer Products','Government Contracts','Licensing & IP'],
+          datasets:[{data:[42,28,18,12],backgroundColor:['#1a4fc8','#0a9fd8','#1a7a3a','#6a3a9a'],borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0a1628',titleColor:'#fff',bodyColor:'#fff',titleFont:{size:10},bodyFont:{size:10},padding:10,cornerRadius:6}},
+          cutout:'55%'}
+      });
+      const budgetCtx = document.getElementById('chartPptBudget');
+      if (budgetCtx) {
+        const budgetOpts = {indexAxis:'y',responsive:true,maintainAspectRatio:false,interaction:{mode:'index'},plugins:{legend:{display:true,labels:{font:{size:9},color:'#2a3a4a'}},tooltip:{mode:'index',backgroundColor:'#0a1628',titleColor:'#fff',bodyColor:'#fff',titleFont:{size:10},bodyFont:{size:10},padding:10,callbacks:{label:(ctx)=>{const alloc=[4.2,2.8,7.1,6.4,2.1];const spent=[4.0,2.6,7.1,6.1,1.9];const i=ctx.dataIndex;if(ctx.datasetIndex===0)return `Allocated: $${alloc[i]}M`;const diff=(alloc[i]-spent[i]).toFixed(1);return[`Spent:     $${spent[i]}M`,`Variance:  −$${diff}M`];}}}},scales:{x:{grid:{color:'#e8eef6'},ticks:{font:{size:10},color:'#6a7a8a'}},y:{grid:{display:false},ticks:{font:{size:10},color:'#6a7a8a'}}}};
+        CHARTS['pptBudget'] = new Chart(budgetCtx,{type:'bar',data:{labels:['Operations','IT Infra','R&D','Marketing','Legal'],datasets:[{label:'Allocated',data:[4.2,2.8,7.1,6.4,2.1],backgroundColor:'#1a4fc8',borderRadius:2},{label:'Spent',data:[4.0,2.6,7.1,6.1,1.9],backgroundColor:'#0a9fd8',borderRadius:2}]},options:budgetOpts});
+      }
+      const hcCtx = document.getElementById('chartPptHc');
+      if (hcCtx) {
+        const hcOpts = {indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0a1628',titleColor:'#fff',bodyColor:'#fff',titleFont:{size:10},bodyFont:{size:10},padding:10}},scales:{x:{grid:{color:'#e8eef6'},ticks:{font:{size:10},color:'#6a7a8a'}},y:{grid:{display:false},ticks:{font:{size:10},color:'#6a7a8a'}}}};
+        CHARTS['pptHc'] = new Chart(hcCtx,{type:'bar',data:{labels:['Engineering','Operations','Sales & Marketing','Other','Finance','Legal','Strategy & Exec'],datasets:[{label:'Headcount',data:[1205,976,842,1066,384,218,156],backgroundColor:['#1a4fc8','#0a9fd8','#1a7a3a','#6a3a9a','#8a5a00','#1a4fc8','#0a9fd8'],borderRadius:2}]},options:hcOpts});
+      }
+    }, 150);
+  }
+  if (GS.calNode === 'funding') {
+    const node = NODES['funding'];
+    const crossRefIndices = node.params.map((p,i) => p.crossRef ? i : -1).filter(i => i >= 0);
+    const stuckOnCrossRef = crossRefIndices.some(idx => {
+      const solvedBefore = node.params.slice(0, idx).every((_,i) => GS.chipIdx[i] === node.params[i].ans);
+      const unsolved = GS.chipIdx[idx] !== node.params[idx].ans;
+      return solvedBefore && unsolved;
+    });
+    if (stuckOnCrossRef) {
+      setTimeout(() => brokerSay("The cross-reference is in the board report. Read it carefully.",'bm-ok'), 1500);
+    }
+  }
+}
+
+/* PowerPoint slide navigation */
+function pptGoTo(n) {
+  pptSlideIdx = Math.max(0, Math.min(6, n));
+  document.querySelectorAll('.ppt-slide').forEach((s,i) => { s.style.display = i === pptSlideIdx ? 'block' : 'none'; });
+  document.querySelectorAll('.ppt-thumb').forEach((t,i) => { t.classList.toggle('active', i === pptSlideIdx); });
+  const counter = document.getElementById('ppt-counter');
+  const toolbarSlide = document.getElementById('ppt-toolbar-slide');
+  if (counter) counter.textContent = `Slide ${pptSlideIdx+1} of 7`;
+  if (toolbarSlide) toolbarSlide.textContent = `Slide ${pptSlideIdx+1} of 7`;
+  const prevBtn = document.getElementById('ppt-prev');
+  const nextBtn = document.getElementById('ppt-next');
+  if (prevBtn) prevBtn.disabled = pptSlideIdx === 0;
+  if (nextBtn) nextBtn.disabled = pptSlideIdx === 6;
+  if (CHARTS['pptRev'] && pptSlideIdx === 2) setTimeout(() => CHARTS['pptRev'].resize(), 50);
+  if (CHARTS['pptBudget'] && pptSlideIdx === 3) setTimeout(() => CHARTS['pptBudget'].resize(), 50);
+  if (CHARTS['pptHc'] && pptSlideIdx === 4) setTimeout(() => CHARTS['pptHc'].resize(), 50);
+}
+function pptPrev() { if (pptSlideIdx > 0) pptGoTo(pptSlideIdx - 1); }
+function pptNext() { if (pptSlideIdx < 6) pptGoTo(pptSlideIdx + 1); }
+
+/* ═══ BUILD FUNCTIONS ═══ */
+function buildCharts() {
+  buildFolders();
+  buildServerChart();
+  buildFinanceChart();
+  buildPersonnelChart();
+  buildVaultHeatmap();
+}
+
+function buildFolders() {
+  const map = {it:'wb-it', finance:'wb-finance', hr:'wb-hr', vault:'wb-vault', misc:'wb-misc'};
+  Object.entries(map).forEach(([key, bid]) => {
+    const grid = document.createElement('div');
+    grid.className = 'folder-grid';
+    FOLDERS[key].forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'fg-item';
+      item.innerHTML = `<div class="fg-icon">${fileIcon(f.nm)}</div><div class="fg-label">${f.nm}</div>`;
+      item.addEventListener('click', () => {
+        grid.querySelectorAll('.fg-item').forEach(el => el.classList.remove('fg-selected'));
+        item.classList.add('fg-selected');
+      });
+      item.addEventListener('dblclick', () => {
+        if (f.fn) { window[f.fn](); }
+        else if (f.decoy) { handleDecoy(f.msg); }
+        else if (f.tab !== undefined) { openWin(f.win); switchTab('wb-dataTrail', f.tab); }
+        else { openWin(f.win); }
+      });
+      grid.appendChild(item);
+    });
+    document.getElementById(bid).appendChild(grid);
+  });
+}
+
+/* ─── FIX 4: COMPUTE — Chart.js bar chart ─── */
+function buildServerChart() {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  /* Tab 0: Network Traffic — line chart */
+  const netTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Network Throughput — FY 2003</div>
+    <div class="chart-sub">Monthly total GB · Core backbone · All segments</div>
+    <div class="chart-canvas-wrap"><canvas id="chartNet"></canvas></div>
+  </div>`;
+
+  /* Tab 1: Server Load — bar chart */
+  const srvTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Sector Node Load Index — FY 2003</div>
+    <div class="chart-sub">Monthly avg load % by cluster · IT Infrastructure Report · Oct 2003</div>
+    <div class="chart-canvas-wrap"><canvas id="chartSrv"></canvas></div>
+    <div class="chart-anom-panel" id="cap">
+      <div class="cap-ttl">ANOMALY CONFIRMED</div>
+      <div class="cap-txt">September hit 118% — dwarfing every other month including the elevated spikes in June (72%) and October (81%). Nearly 3× the yearly average load.<br><br>Tooltip reads: "Ticket: Archived — DO NOT REOPEN"</div>
+      <button class="cap-btn" onclick="document.getElementById('cap').classList.remove('show');openCal('compute')">VERIFY LEAD →</button>
+    </div>
+  </div>`;
+
+  /* Tab 2: Disk Usage — bar chart */
+  const diskTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Disk Usage by Node — Q3 2003</div>
+    <div class="chart-sub">Automated snapshot · 01-Oct-2003 · All partitions</div>
+    <div class="chart-canvas-wrap"><canvas id="chartDisk"></canvas></div>
+  </div>`;
+
+  document.getElementById('wb-server').innerHTML = `
+    <div class="xp-tabs">
+      <button class="xtab active" onclick="switchTab('wb-server',0)">Network Traffic</button>
+      <button class="xtab" onclick="switchTab('wb-server',1)">Server Load</button>
+      <button class="xtab" onclick="switchTab('wb-server',2)">Disk Usage</button>
+    </div>
+    <div class="xtab-panel active" id="wbs0">${netTab}</div>
+    <div class="xtab-panel" id="wbs1">${srvTab}</div>
+    <div class="xtab-panel" id="wbs2">${diskTab}</div>`;
+
+  setTimeout(() => {
+    /* Network Traffic line */
+    const netCtx = document.getElementById('chartNet');
+    if (netCtx) CHARTS['wb-server_0'] = new Chart(netCtx, {
+      type:'line',
+      data:{labels:months,datasets:[{label:'GB',data:[152,148,161,155,143,158,167,171,164,158,145,162],
+        borderColor:'#4a7fc1',backgroundColor:'rgba(74,127,193,.12)',borderWidth:2,pointRadius:3,tension:.3}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},
+          y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'GB'}}}}
+    });
+
+    /* Server Load bar — all bars steel blue */
+    const srvCtx = document.getElementById('chartSrv');
+    if (srvCtx) CHARTS['wb-server_1'] = new Chart(srvCtx, {
+      type:'bar',
+      data:{labels:months,datasets:[{label:'Load %',
+        data:[28,31,44,26,29,72,35,33,118,81,38,27],
+        backgroundColor:'#4a7fc1',borderRadius:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        onHover:(e,els)=>{ if(e.native) e.native.target.style.cursor=els.length?'pointer':'default'; },
+        onClick:(e,els)=>{ if(els.length) barClick(els[0].index); },
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:(ctx)=>{
+            const v=ctx.parsed.y;
+            return ctx.dataIndex===8?`${v}% — Ticket: Archived — DO NOT REOPEN`:`${v}%`;
+          }}}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},
+          y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'Load %'},
+            ticks:{callback:v=>v+'%'}}}}
+    });
+
+    /* Disk Usage bar */
+    const diskCtx = document.getElementById('chartDisk');
+    if (diskCtx) CHARTS['wb-server_2'] = new Chart(diskCtx, {
+      type:'bar',
+      data:{labels:['Node-A','Node-B','Node-C','Node-D'],
+        datasets:[{label:'Usage %',data:[56,68,58,72],backgroundColor:'#4a7fc1',borderRadius:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},
+          y:{max:100,grid:{color:'rgba(0,0,0,.06)'},ticks:{callback:v=>v+'%'}}}}
+    });
+  }, 120);
+}
+
+/* ─── FIX 4: FUNDING — horizontal bar chart + compact table ─── */
+function buildFinanceChart() {
+  /* Tab 0: Headcount Costs — bar chart */
+  const hcTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Headcount Costs — Q3 2003</div>
+    <div class="chart-sub">HR & Finance Joint Report · 01-Oct-2003 · Restricted</div>
+    <div class="chart-canvas-wrap"><canvas id="chartHC"></canvas></div>
+  </div>`;
+
+  /* Tab 1: Capex — bar chart */
+  const cxTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Capital Expenditure — Q3 2003</div>
+    <div class="chart-sub">Finance · Capex Tracker · Authorised Items Only</div>
+    <div class="chart-canvas-wrap"><canvas id="chartCX"></canvas></div>
+  </div>`;
+
+  /* Tab 2: Budget Allocation — horizontal bar + compact table */
+  const baTab = `<div class="chart-wrap">
+    <div class="chart-ttl">Q3 2003 Budget Allocation</div>
+    <div class="chart-sub">Finance Portal · Restricted · 01-Oct-2003</div>
+    <div style="position:relative">
+      <div class="chart-canvas-wrap" style="height:170px"><canvas id="chartBA"></canvas></div>
+      <div class="chart-anom-panel" id="cap-funding">
+        <div class="cap-ttl">ANOMALY CONFIRMED</div>
+        <div class="cap-txt">$7.1M sits under R&D — Unallocated with no department owner. That is a lot of money to go nowhere official.</div>
+        <button class="cap-btn" onclick="document.getElementById('cap-funding').classList.remove('show');openCal('funding')">VERIFY LEAD →</button>
+      </div>
+    </div>
+  </div>
+  <div class="dt-compact-wrap">
+    <table class="dt-compact">
+      <thead><tr><th>Cost Centre</th><th>Dept. Owner</th><th>Allocated</th><th>% of Total</th></tr></thead>
+      <tbody>
+        <tr class="crow" onclick="tblClick('funding','n')"><td>Operations</td><td>Ops Division</td><td>$4.2M</td><td>22%</td></tr>
+        <tr class="crow" onclick="tblClick('funding','n')"><td>IT Infrastructure</td><td>IT Division</td><td>$2.8M</td><td>15%</td></tr>
+        <tr class="crow" onclick="tblClick('funding','a')"><td>R&amp;D — Unallocated</td><td>[NO OWNER]</td><td>$7.1M</td><td>37%</td></tr>
+        <tr class="crow" onclick="tblClick('funding','n')"><td>Marketing</td><td>Mktg Division</td><td>$2.6M</td><td>14%</td></tr>
+        <tr class="crow" onclick="tblClick('funding','n')"><td>Legal &amp; Compliance</td><td>Legal Dept.</td><td>$2.1M</td><td>11%</td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  /* Tab 3: Variance Report */
+  const vrTab = `<div class="dt-wrap">
+    <div class="dt-ttl">Budget Variance — Q2 vs Q3 2003</div>
+    <div class="dt-sub">Finance · Quarterly Comparison · Internal</div>
+    <table class="dt">
+      <thead><tr><th>Cost Centre</th><th>Q2 ($M)</th><th>Q3 ($M)</th><th>Δ ($M)</th><th>Δ %</th></tr></thead>
+      <tbody>
+        <tr class="nrow"><td>Operations</td><td>3.90</td><td>4.20</td><td>+0.30</td><td>+7.7%</td></tr>
+        <tr class="nrow"><td>IT Infrastructure</td><td>2.60</td><td>2.80</td><td>+0.20</td><td>+7.7%</td></tr>
+        <tr class="nrow"><td>R&amp;D</td><td>6.80</td><td>7.10</td><td>+0.30</td><td>+4.4%</td></tr>
+        <tr class="nrow"><td>Marketing</td><td>2.50</td><td>2.60</td><td>+0.10</td><td>+4.0%</td></tr>
+        <tr class="nrow"><td>Legal &amp; Compliance</td><td>2.00</td><td>2.10</td><td>+0.10</td><td>+5.0%</td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  document.getElementById('wb-budget').innerHTML = `
+    <div class="xp-tabs">
+      <button class="xtab active" onclick="switchTab('wb-budget',0)">Headcount Costs</button>
+      <button class="xtab" onclick="switchTab('wb-budget',1)">Capex</button>
+      <button class="xtab" onclick="switchTab('wb-budget',2)">Budget Allocation</button>
+      <button class="xtab" onclick="switchTab('wb-budget',3)">Variance Report</button>
+    </div>
+    <div class="xtab-panel active">${hcTab}</div>
+    <div class="xtab-panel">${cxTab}</div>
+    <div class="xtab-panel">${baTab}</div>
+    <div class="xtab-panel">${vrTab}</div>`;
+
+  setTimeout(() => {
+    /* Headcount Costs bar */
+    const hcCtx = document.getElementById('chartHC');
+    if (hcCtx) CHARTS['wb-budget_0'] = new Chart(hcCtx, {
+      type:'bar',
+      data:{labels:['Operations','IT Dept.','Marketing','Legal','Admin'],
+        datasets:[{label:'$M',data:[3.45,2.62,1.92,1.77,1.12],backgroundColor:'#4a7fc1',borderRadius:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'$M'}}}}
+    });
+
+    /* Capex bar */
+    const cxCtx = document.getElementById('chartCX');
+    if (cxCtx) CHARTS['wb-budget_1'] = new Chart(cxCtx, {
+      type:'bar',
+      data:{labels:['Server Hardware','Office Reno.','SW Licences'],
+        datasets:[{label:'$M',data:[1.40,0.82,0.58],backgroundColor:'#4a7fc1',borderRadius:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'$M'}}}}
+    });
+
+    /* Budget Allocation horizontal bar */
+    const baCtx = document.getElementById('chartBA');
+    if (baCtx) CHARTS['wb-budget_2'] = new Chart(baCtx, {
+      type:'bar',
+      data:{
+        labels:['Operations','IT Infrastructure','R&D — Unallocated','Marketing','Legal & Compliance'],
+        datasets:[{label:'$M',data:[4.2,2.8,7.1,6.4,2.1],backgroundColor:'#4a7fc1',borderRadius:2}]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true,maintainAspectRatio:false,
+        onHover:(e,els)=>{ if(e.native) e.native.target.style.cursor=els.length?'pointer':'default'; },
+        onClick:(e,els)=>{
+          if(!els.length) return;
+          const idx=els[0].index;
+          if(idx===2){ /* R&D — Unallocated */
+            if(GS.activeNode==='funding'){
+              hlNode('funding','n-active');
+              document.getElementById('ns-funding').textContent='ANOMALY FOUND';
+              document.getElementById('cap-funding').classList.add('show');
+            } else if(GS.locked.has('funding')){
+              brokerSay("That's already confirmed. Move on to the next target.",'bm-d');
+            } else {
+              brokerSay("That's the anomaly. Select Funding on the board before you log it.",'bm-err');
+            }
+          } else {
+            wrongClickDeduct();
+          }
+        },
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:(ctx)=>{
+            const owners=['Ops Division','IT Division','[NO OWNER]','Mktg Division','Legal Dept.'];
+            return `$${ctx.parsed.x}M — ${owners[ctx.dataIndex]}`;
+          }}}},
+        scales:{
+          x:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'$ Millions'}},
+          y:{grid:{color:'rgba(0,0,0,.06)'}}
+        }
+      }
+    });
+  }, 120);
+}
+
+/* ─── FIX 4: PERSONNEL — scatter plot + compact table ─── */
+function buildPersonnelChart() {
+  /* Tab 0: H1 Summary — line chart */
+  const h1Tab = `<div class="chart-wrap">
+    <div class="chart-ttl">Overtime Summary — H1 2003 (Jan–Jun)</div>
+    <div class="chart-sub">HR Analytics · All Divisions · Semi-Annual Review</div>
+    <div class="chart-canvas-wrap"><canvas id="chartH1"></canvas></div>
+  </div>`;
+
+  /* Tab 1: September Breakdown — scatter plot only */
+  const sepTab = `<div class="chart-wrap">
+    <div class="chart-ttl">September 2003 — Overtime by Division</div>
+    <div class="chart-sub">HR Analytics · RESTRICTED · All Divisions</div>
+    <div style="position:relative">
+      <div class="chart-canvas-wrap" style="height:260px"><canvas id="chartSep"></canvas></div>
+      <div class="chart-anom-panel" id="cap-personnel">
+        <div class="cap-ttl">ANOMALY CONFIRMED</div>
+        <div class="cap-txt">Engineering Classified logged 2,940 hours under a [REDACTED] project code. That is 7× the next highest division.</div>
+        <button class="cap-btn" onclick="document.getElementById('cap-personnel').classList.remove('show');openCal('personnel')">VERIFY LEAD →</button>
+      </div>
+    </div>
+  </div>`;
+
+  /* Tab 2: Policy Notes */
+  const polTab = `<div class="dt-note">
+    <strong>OVERTIME AUTHORISATION POLICY — MEGACORP HR</strong><br><br>
+    1. Standard overtime (under 200h/month per division) requires line manager approval.<br>
+    2. Overtime exceeding 200h/month must be escalated to VP level.<br>
+    3. Any overtime associated with classified projects requires SVP or above sign-off.<br>
+    4. All overtime must be logged in the HR system within 5 business days.<br>
+    5. Project codes must be listed on all authorisation requests. Classified projects may use redacted identifiers with SVP approval.<br>
+    6. Records are retained for 7 years per regulatory requirements.<br><br>
+    <em>Effective: January 2003. Last reviewed: July 2003.</em>
+  </div>`;
+
+  document.getElementById('wb-personnel').innerHTML = `
+    <div class="xp-tabs">
+      <button class="xtab active" onclick="switchTab('wb-personnel',0)">Q1–Q2 Summary</button>
+      <button class="xtab" onclick="switchTab('wb-personnel',1)">September Breakdown</button>
+      <button class="xtab" onclick="switchTab('wb-personnel',2)">Policy Notes</button>
+    </div>
+    <div class="xtab-panel active">${h1Tab}</div>
+    <div class="xtab-panel">${sepTab}</div>
+    <div class="xtab-panel">${polTab}</div>`;
+
+  setTimeout(() => {
+    /* H1 line chart */
+    const h1Ctx = document.getElementById('chartH1');
+    if (h1Ctx) CHARTS['wb-personnel_0'] = new Chart(h1Ctx, {
+      type:'line',
+      data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[
+        {label:'Sales & Mktg',data:[60,65,58,72,68,67],borderColor:'#4a7fc1',borderWidth:1.5,pointRadius:3,tension:.3,fill:false},
+        {label:'Engineering', data:[200,215,208,225,220,232],borderColor:'#5a9cd6',borderWidth:1.5,pointRadius:3,tension:.3,fill:false},
+        {label:'Finance',     data:[28,32,30,31,29,33],borderColor:'#7ab3e0',borderWidth:1.5,pointRadius:3,tension:.3,fill:false},
+        {label:'Operations',  data:[80,85,78,88,82,92],borderColor:'#8ec6e8',borderWidth:1.5,pointRadius:3,tension:.3,fill:false},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},
+        scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},
+          y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'Hours'}}}}
+    });
+
+    /* September scatter */
+    const sepCtx = document.getElementById('chartSep');
+    if (sepCtx) {
+      const divLabels  = ['Sales & Mktg','Engineering\n(Project Alpha)','Engineering\nClassified','Finance','IT Operations','Operations','Legal &\nCompliance','Product\nDevelopment','R&D (Std)','Engineering\n(Std)'];
+      const divHours   = [95,1850,2940,62,340,185,47,670,290,520];
+      const divCodes   = ['MKT-2003-09','ENG-PA-2003-09','[REDACTED]','FIN-2003-09','ITO-2003-09','OPS-2003-09','LEG-2003-09','PRD-2003-09','RND-2003-09','ENG-2003-09'];
+      CHARTS['wb-personnel_1'] = new Chart(sepCtx, {
+        type:'scatter',
+        data:{datasets:[{label:'Overtime Hours',
+          data:divHours.map((h,i)=>({x:i+1,y:h,div:divLabels[i],code:divCodes[i]})),
+          backgroundColor:'#4a7fc1',pointRadius:8,pointHoverRadius:11}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          onHover:(e,els)=>{ if(e.native) e.native.target.style.cursor=els.length?'pointer':'default'; },
+          onClick:(e,els)=>{
+            if(!els.length) return;
+            const idx=els[0].index;
+            if(idx===2){ /* Engineering Classified */
+              if(GS.activeNode==='personnel'){
+                hlNode('personnel','n-active');
+                document.getElementById('ns-personnel').textContent='ANOMALY FOUND';
+                document.getElementById('cap-personnel').classList.add('show');
+              } else if(GS.locked.has('personnel')){
+                brokerSay("That's already confirmed.",'bm-d');
+              } else {
+                brokerSay("Correct. Select Personnel on the board before you log it.",'bm-err');
+              }
+            } else {
+              wrongClickDeduct();
+            }
+          },
+          plugins:{legend:{display:false},
+            tooltip:{callbacks:{label:(ctx)=>{
+              const p=ctx.raw;
+              return [`Division: ${p.div}`,`Overtime: ${p.y}h`,`Code: ${p.code}`];
+            }}}},
+          scales:{
+            x:{min:.5,max:10.5,grid:{color:'rgba(0,0,0,.06)'},
+              ticks:{stepSize:1,callback:(v)=>{const L=['','S&M','Eng PA','Eng Class.','Finance','IT Ops','Ops','Legal','Prod Dev','R&D','Eng (Std)'];return L[v]||'';}}},
+            y:{grid:{color:'rgba(0,0,0,.06)'},title:{display:true,text:'Overtime Hours'}}
+          }}
+      });
+    }
+  }, 120);
+}
+
+/* ─── DATA TRAIL — DataVault access frequency heatmap ─── */
+const HEATMAP_FILES = ['ops_report_Q3.pdf','contractor_roster.csv','budget_summary.xls','hr_headcount.doc','board_minutes_Q3.pdf','network_diagrams.zip','system_backup_Q3.tar','it_policy_2003.doc','legal_contracts_Q3.pdf','marketing_assets.zip','CLASSIFIED_INITIATIVE.enc','compliance_audit_Q3.doc'];
+const HEATMAP_OMNI_ROW = 10;
+const HEATMAP_BOARD_MINUTES_ROW = 4;
+const HEATMAP_DATA = [
+  [4,3,5,4,6,3,4,5,3,4,2,3,4],
+  [2,1,3,2,2,1,2,3,1,2,1,2,1],
+  [8,9,7,10,8,11,9,8,10,7,6,5,4],
+  [3,2,4,3,3,2,3,4,2,3,2,1,2],
+  [1,0,1,2,1,0,1,1,0,1,2,1,0],
+  [6,5,7,6,8,6,7,5,6,7,5,6,5],
+  [12,14,11,13,12,15,13,12,14,11,13,12,14],
+  [1,2,1,1,2,1,0,1,2,1,1,0,1],
+  [5,4,6,5,7,5,6,4,5,6,4,5,4],
+  [9,11,8,10,12,10,9,11,8,7,6,5,4],
+  [16,18,15,17,19,18,16,17,18,15,4,1,0],
+  [3,4,3,5,3,4,3,4,3,5,3,4,3]
+];
+
+function heatmapColor(n) {
+  if (n === 0) return '#f0f0f0';
+  if (n <= 5) return '#c8ddf0';
+  if (n <= 15) return '#5a88c8';
+  return '#1a3a6a';
+}
+
+function heatmapCellClick(fileIdx, weekIdx) {
+  if (!GS.hackDone) return;
+  const isOmni = fileIdx === HEATMAP_OMNI_ROW;
+  const isWeek13 = weekIdx === 12;
+  const isBoardMinutes = fileIdx === HEATMAP_BOARD_MINUTES_ROW;
+  const val = HEATMAP_DATA[fileIdx][weekIdx];
+  const isBoardMinutesZero = isBoardMinutes && val === 0;
+  if (isOmni && isWeek13) {
+    if (GS.activeNode === 'dataTrail') {
+      hlNode('dataTrail','n-active');
+      document.getElementById('ns-dataTrail').textContent = 'ANOMALY FOUND';
+      document.getElementById('cap-heatmap').classList.add('show');
+      brokerSay("There it is. Heavy use, then access stops cold. That file was buried.",'bm-win');
+    } else if (GS.locked.has('dataTrail')) {
+      brokerSay("That's already confirmed. Move on to the next target.",'bm-d');
+    } else {
+      brokerSay("Interesting find — select DATA TRAIL on the board before you log it.",'bm-err');
+    }
+  } else if (isOmni) {
+    brokerSay("That file saw heavy use. Watch how it ends — the pattern shifts.",'bm-d');
+  } else if (isBoardMinutesZero) {
+    GS.errors++;
+    deductBudget(500, 'decoy');
+    brokerSay("No activity that week. Find a file that was hot, then went dark.",'bm-err');
+  } else {
+    GS.errors++;
+    deductBudget(500, 'decoy');
+    brokerSay(DECOY_MSGS[Math.floor(Math.random()*DECOY_MSGS.length)],'bm-err');
+    setTimeout(() => brokerSay(DECOY_BUDGET_MSGS[Math.floor(Math.random()*DECOY_BUDGET_MSGS.length)],'bm-err'), 800);
+  }
+}
+
+function buildVaultHeatmap() {
+  const body = document.getElementById('wb-vault-heatmap');
+  if (!body) return;
+  let heatmapHTML = '<table class="heatmap-tbl"><thead><tr><th></th>';
+  for (let w = 1; w <= 13; w++) heatmapHTML += `<th>W${w}</th>`;
+  heatmapHTML += '</tr></thead><tbody>';
+  HEATMAP_FILES.forEach((fn, fi) => {
+    heatmapHTML += `<tr><td class="heatmap-fname">${fn}</td>`;
+    for (let w = 0; w < 13; w++) {
+      const n = HEATMAP_DATA[fi][w];
+      const bg = heatmapColor(n);
+      heatmapHTML += `<td class="heatmap-cell" title="Week ${w+1} · ${fn} · ${n} accesses" style="background:${bg};cursor:pointer" data-f="${fi}" data-w="${w}" onclick="heatmapCellClick(${fi},${w})"></td>`;
+    }
+    heatmapHTML += '</tr>';
+  });
+  heatmapHTML += '</tbody></table>';
+
+  const tab1 = `<div class="chart-wrap" style="position:relative">
+    <div class="chart-ttl">DataVault — File Access Frequency · Q3 2003</div>
+    <div class="chart-sub">Weekly access count by file · IT Security Report</div>
+    <div class="heatmap-wrap">${heatmapHTML}</div>
+    <div class="chart-anom-panel" id="cap-heatmap">
+      <div class="cap-ttl"><i class="fas fa-magnifying-glass"></i> PATTERN ANOMALY CONFIRMED</div>
+      <div class="cap-txt">CLASSIFIED_INITIATIVE.enc was accessed heavily for 10 weeks then access was deliberately killed in Week 13. Someone wanted this file to disappear.</div>
+      <button class="cap-btn" onclick="document.getElementById('cap-heatmap').classList.remove('show');openCal('dataTrail')">LOG AS EVIDENCE →</button>
+    </div>
+  </div>`;
+
+  const tab2 = `<div class="chart-wrap">
+    <div class="chart-ttl">Total Q3 Accesses by File</div>
+    <div class="chart-sub">Sum of all 13 weeks · Summary Stats</div>
+    <div class="chart-canvas-wrap" style="height:200px"><canvas id="chartVaultSummary"></canvas></div>
+  </div>`;
+
+  body.innerHTML = `
+    <div class="xp-tabs">
+      <button class="xtab active" onclick="switchTab('wb-vault-heatmap',0)">All Files</button>
+      <button class="xtab" onclick="switchTab('wb-vault-heatmap',1)">Summary Stats</button>
+    </div>
+    <div class="xtab-panel active" id="wvh0">${tab1}</div>
+    <div class="xtab-panel" id="wvh1">${tab2}</div>`;
+
+  setTimeout(() => {
+    const ctx = document.getElementById('chartVaultSummary');
+    if (ctx) {
+      const totals = HEATMAP_DATA.map(r => r.reduce((a,b)=>a+b,0));
+      CHARTS['wb-vault-heatmap_1'] = new Chart(ctx, {
+        type:'bar',
+        data:{labels:HEATMAP_FILES,datasets:[{label:'Accesses',data:totals,backgroundColor:'#4a7fc1',borderRadius:3}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{grid:{color:'rgba(0,0,0,.06)'}},y:{grid:{display:false},ticks:{font:{size:9}}}}}
+      });
+    }
+  }, 120);
+}
+
+/* ─── Tab Switcher (FIX 4: resize charts) ─── */
+function switchTab(wbId, idx) {
+  const body = document.getElementById(wbId);
+  const tabs   = body.querySelectorAll('.xtab');
+  const panels = body.querySelectorAll('.xtab-panel');
+  tabs.forEach((t,i)   => t.classList.toggle('active', i === idx));
+  panels.forEach((p,i) => p.classList.toggle('active', i === idx));
+  const key = `${wbId}_${idx}`;
+  if (CHARTS[key]) setTimeout(() => CHARTS[key].resize(), 30);
+}
+
+/* ═══ WINDOW MANAGEMENT ═══ */
+function openWin(id) {
+  const w = document.getElementById(id);
+  if (!w) return;
+  w.classList.add('visible');
+  GS.openWins.add(id);
+  bringFront(id);
+  setTbBtn(id, true);
+}
+
+function closeWin(id) {
+  const w = document.getElementById(id);
+  if (!w) return;
+  w.classList.remove('visible');
+  GS.openWins.delete(id);
+  setTbBtn(id, false);
+}
+
+function toggleWin(id) { GS.openWins.has(id) ? closeWin(id) : openWin(id); }
+
+function bringFront(id) {
+  if (typeof id !== 'string') return;
+  const w = document.getElementById(id);
+  if (!w || !w.classList.contains('xp-win')) return;
+  GS.zTop++;
+  w.style.zIndex = GS.zTop;
+}
+
+const TB_MAP = {'win-it':'tbw-it','win-finance':'tbw-finance','win-hr':'tbw-hr','win-vault':'tbw-vault'};
+function setTbBtn(wid, on) {
+  const bid = TB_MAP[wid];
+  if (bid) document.getElementById(bid).classList.toggle('tb-on', on);
+}
+
+/* ═══ DRAG ═══ */
+function dragWin(e, id) {
+  if (e.target.classList.contains('xp-btn')) return;
+  bringFront(id);
+  const win   = document.getElementById(id);
+  const panel = document.getElementById('desktop-panel');
+  const pR    = panel.getBoundingClientRect();
+  const sx = e.clientX, sy = e.clientY;
+  const wx0 = win.offsetLeft, wy0 = win.offsetTop;
+  function onMove(e) {
+    let nx = wx0 + (e.clientX - sx), ny = wy0 + (e.clientY - sy);
+    nx = Math.max(0, Math.min(nx, pR.width  - win.offsetWidth));
+    ny = Math.max(0, Math.min(ny, pR.height - 30 - win.offsetHeight));
+    win.style.left = nx+'px'; win.style.top = ny+'px';
+  }
+  function onUp() { document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  e.preventDefault();
+}
+
+/* ═══ GAME INTERACTIONS ═══ */
+const DECOY_MSGS = [
+  "Nothing there. That file's clean.",
+  "Wrong file. Stay focused.",
+  "Dead end. Don't waste time on it.",
+  "Nothing relevant. Keep searching."
+];
+const DECOY_BUDGET_MSGS = [
+  "That was $500. Be more careful.",
+  "Wrong file. $500 gone.",
+  "Nothing useful — and we're $500 lighter."
+];
+function handleDecoy(msg) {
+  GS.errors++;
+  deductBudget(500, 'decoy');
+  brokerSay(DECOY_MSGS[Math.floor(Math.random()*DECOY_MSGS.length)],'bm-err');
+  setTimeout(() => brokerSay(DECOY_BUDGET_MSGS[Math.floor(Math.random()*DECOY_BUDGET_MSGS.length)],'bm-err'), 800);
+}
+
+const WRONG_CLICK_BUDGET_MSGS = [
+  "Wrong data point. $750 gone.",
+  "Not the anomaly. $750.",
+  "Incorrect — and that cost $750. Read the source again."
+];
+function wrongDataPoint() {
+  const msgs=["That value is in range. Find the outlier.","Normal reading. Look for what doesn't belong."];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+function wrongClickDeduct() {
+  GS.errors++;
+  deductBudget(750, 'click');
+  brokerSay(wrongDataPoint(),'bm-err');
+  setTimeout(() => brokerSay(WRONG_CLICK_BUDGET_MSGS[Math.floor(Math.random()*WRONG_CLICK_BUDGET_MSGS.length)],'bm-err'), 800);
+}
+
+function barClick(idx) {
+  if (!GS.hackDone) return;
+  if (idx === 8) { /* September */
+    if (GS.activeNode === 'compute') {
+      hlNode('compute','n-active');
+      document.getElementById('ns-compute').textContent = 'ANOMALY FOUND';
+      document.getElementById('cap').classList.add('show');
+    } else if (GS.locked.has('compute')) {
+      brokerSay("That's already confirmed. Move on to the next target.",'bm-d');
+    } else {
+      brokerSay("Good eye — but select COMPUTE on the board before you log evidence.",'bm-err');
+    }
+  } else {
+    wrongClickDeduct();
+  }
+}
+
+function tblClick(nodeId, type) {
+  if (!GS.hackDone) return;
+  if (type === 'a') {
+    if (GS.activeNode === nodeId) {
+      hlNode(nodeId,'n-active');
+      document.getElementById('ns-'+nodeId).textContent = 'ANOMALY FOUND';
+      setTimeout(() => openCal(nodeId), 200);
+    } else if (GS.locked.has(nodeId)) {
+      brokerSay("That's already confirmed. Move on to the next target.",'bm-d');
+    } else {
+      const gateMsgs = {
+        funding:  "That's the anomaly. Select Funding on the board before you log it.",
+        personnel:"Correct. Select Personnel on the board before you log it."
+      };
+      brokerSay(gateMsgs[nodeId] || "Select the matching lead on the board first.",'bm-err');
+    }
+  } else {
+    wrongClickDeduct();
+  }
+}
+
+/* ═══ FINANCE AUDIT OPENER ═══ */
+function openFinanceAudit() {
+  if (!GS.hackDone) return;
+  openWin('win-finance-audit');
+  if (GS.calNode === 'funding') {
+    const node = NODES['funding'];
+    const crossRefIndices = node.params.map((p,i) => p.crossRef ? i : -1).filter(i => i >= 0);
+    const stuckOnCrossRef = crossRefIndices.some(idx => {
+      const solvedBefore = node.params.slice(0, idx).every((_,i) => GS.chipIdx[i] === node.params[i].ans);
+      const unsolved = GS.chipIdx[idx] !== node.params[idx].ans;
+      return solvedBefore && unsolved;
+    });
+    if (stuckOnCrossRef) {
+      setTimeout(() => brokerSay("Read the draft carefully — the cross-reference is in there.",'bm-ok'), 1500);
+    }
+  }
+}
+
+/* ═══ HEADCOUNT XLS OPENER ═══ */
+function openHeadcount() {
+  if (!GS.hackDone) return;
+  openWin('win-headcount');
+  if (CHARTS['headcount']) return;
+  setTimeout(() => {
+    const ctx = document.getElementById('chartHeadcount');
+    if (!ctx) return;
+    /* Avg overtime hours per employee per division (scatter hours ÷ headcount) */
+    /* Display uses cube-root scale so near-zero divisions remain visible; tooltips show real values */
+    const avgHours = [0.2,0.6,23,0.3,1.6,0.3,0.5,2.0,1.3,13.2];
+    const cbrtData = avgHours.map(v => Math.cbrt(v));
+    CHARTS['headcount'] = new Chart(ctx, {
+      type:'polarArea',
+      data:{
+        labels:['Sales & Mktg','Engineering (Std)','Eng. Classified','Finance','IT Operations','Operations','Legal & Compliance','Product Development','R&D (Std)','Eng. Project Alpha'],
+        datasets:[{
+          data:cbrtData,
+          backgroundColor:[
+            'rgba(74,127,193,.75)','rgba(26,79,200,.75)','rgba(106,58,154,.75)',
+            'rgba(46,125,50,.75)','rgba(10,159,216,.75)','rgba(0,150,136,.75)',
+            'rgba(138,90,0,.75)','rgba(255,152,0,.75)','rgba(67,160,71,.75)',
+            'rgba(96,125,139,.75)'
+          ],
+          borderWidth:1,borderColor:'rgba(255,255,255,.5)'
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'right',labels:{font:{size:9},color:'#2a3a4a',boxWidth:12,padding:6}},
+          tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${avgHours[ctx.dataIndex]}h avg`}}
+        },
+        scales:{r:{ticks:{display:false},grid:{color:'rgba(0,0,0,.07)'}}}
+      }
+    });
+  }, 100);
+}
+
+/* ═══ HR AUTH LOG OPENER ═══ */
+function openHrAuth() {
+  if (!GS.hackDone) return;
+  openWin('win-hr-auth');
+  /* If player is in cal for personnel and stuck on param 4 (cross-ref Q), reward exploration */
+  if (GS.calNode === 'personnel') {
+    const node = NODES['personnel'];
+    const stuckOnParam4 = node.params.slice(0,3).every((_,i) => GS.chipIdx[i] === node.params[i].ans)
+                          && GS.chipIdx[3] !== node.params[3].ans;
+    if (stuckOnParam4) {
+      setTimeout(() => brokerSay("Authorisation trail — cross-check the name against overtime.",'bm-ok'), 1500);
+    }
+  }
+}
+
+/* ═══ VAULT FILE OPENERS ═══ */
+function openVaultHeatmap() {
+  if (!GS.hackDone) return;
+  openWin('win-vault-heatmap');
+}
+
+function openVaultAudit() {
+  if (!GS.hackDone) return;
+  openWin('win-vault-audit');
+  if (GS.calNode === 'dataTrail') {
+    const node = NODES['dataTrail'];
+    const crossRefIndices = node.params.map((p,i) => p.crossRef ? i : -1).filter(i => i >= 0);
+    const stuckOnCrossRef = crossRefIndices.some(idx => {
+      const solvedBefore = node.params.slice(0, idx).every((_,i) => GS.chipIdx[i] === node.params[i].ans);
+      const unsolved = GS.chipIdx[idx] !== node.params[idx].ans;
+      return solvedBefore && unsolved;
+    });
+    if (stuckOnCrossRef) {
+      setTimeout(() => brokerSay("Find the file row, then read across the department columns.",'bm-ok'), 1500);
+    }
+  }
+}
+
+/* ═══ FIX 2: NODE CLICK — guided flow enforcement ═══ */
+function nodeClick(nid) {
+  if (GS.locked.has(nid)) return;
+  /* Only allow clicking the current step's node */
+  const stepNode = NODE_ORDER[GS.currentStep];
+  if (nid !== stepNode) {
+    brokerSay("Finish the active lead first.",'bm-err');
+    return;
+  }
+  /* Clear any previous active node */
+  if (GS.activeNode && GS.activeNode !== nid && !GS.locked.has(GS.activeNode)) {
+    hlNode(GS.activeNode,'n-idle');
+    document.getElementById('ns-'+GS.activeNode).textContent = 'CLICK TO INVESTIGATE';
+    const pi = document.getElementById(NODES[GS.activeNode].iconId);
+    if (pi) pi.classList.remove('di-mission');
+  }
+  GS.activeNode = nid;
+  hlNode(nid,'n-mission');
+  document.getElementById('ns-'+nid).textContent = 'INVESTIGATING...';
+  const icon = document.getElementById(NODES[nid].iconId);
+  if (icon) icon.classList.add('di-mission');
+  const short = NODES[nid].clue.length > 90 ? NODES[nid].clue.slice(0,90)+'...' : NODES[nid].clue;
+  document.getElementById('step-banner').textContent = `${NODES[nid].label} LEAD ACTIVE — ${short}`;
+  document.getElementById('eb-hint').textContent = `TARGET: ${NODES[nid].label}`;
+  brokerSay(NODES[nid].clue,'bm-ok');
+}
+
+function hlNode(nid, cls) { document.getElementById('node-'+nid).className = 'node '+cls; }
+
+/* ═══ FIX 3: CALIBRATION — chip selector ═══ */
+function openCal(nid) {
+  GS.calNode = nid;
+  const node = NODES[nid];
+  GS.chipIdx = new Array(node.params.length).fill(null);
+  document.getElementById('cp-node').textContent = `VERIFY LEAD: ${node.label}`;
+  const container = document.getElementById('cp-params');
+  container.innerHTML = '';
+  container.className = node.params.length >= 4 ? 'cp-params cp-compact' : 'cp-params';
+  node.params.forEach((p,i) => {
+    const div = document.createElement('div');
+    div.className = 'cp-param';
+    const chipsHTML = p.opts.map((opt,j) =>
+      `<button class="cp-chip" id="cpc${i}_${j}" onclick="selectChip(${i},${j})">${opt}</button>`
+    ).join('');
+    div.innerHTML = `
+      <div class="cp-plbl">${p.label}</div>
+      <div class="cp-chips">${chipsHTML}</div>
+      <div class="cp-err" id="cpe${i}"></div>`;
+    container.appendChild(div);
+  });
+  document.getElementById('cal-panel').classList.add('open');
+}
+
+function selectChip(paramIdx, chipIdx) {
+  const p = NODES[GS.calNode].params[paramIdx];
+  GS.chipIdx[paramIdx] = chipIdx;
+  p.opts.forEach((_,j) => {
+    const chip = document.getElementById(`cpc${paramIdx}_${j}`);
+    if (!chip) return;
+    chip.classList.remove('cp-sel','cp-correct','cp-wrong');
+    if (j === chipIdx) chip.classList.add('cp-sel');
+  });
+  document.getElementById('cpe'+paramIdx).classList.remove('show');
+}
+
+function confirmCal() {
+  const node = NODES[GS.calNode];
+  let allOk = true;
+  node.params.forEach((p,i) => {
+    if (GS.chipIdx[i] !== p.ans) {
+      allOk = false;
+      const ce = document.getElementById('cpe'+i);
+      ce.textContent = p.err; ce.classList.add('show');
+      if (GS.chipIdx[i] !== null) {
+        const wChip = document.getElementById(`cpc${i}_${GS.chipIdx[i]}`);
+        if (wChip) { wChip.classList.remove('cp-sel'); wChip.classList.add('cp-wrong'); }
+      }
+    } else {
+      const okChip = document.getElementById(`cpc${i}_${p.ans}`);
+      if (okChip) { okChip.classList.remove('cp-sel'); okChip.classList.add('cp-correct'); }
+    }
+  });
+const WRONG_CAL_MSGS = [
+  "Incorrect. $1,000 gone. Re-read the source data.",
+  "Wrong. That calibration cost $1,000.",
+  "Not a match. $1,000 — check the file again."
+];
+  if (allOk) {
+    setTimeout(() => {
+      document.getElementById('cal-panel').classList.remove('open');
+      lockNode(GS.calNode);
+      GS.calNode = null;
+    }, 380);
+  } else {
+    GS.errors++;
+    deductBudget(1000, 'cal');
+    brokerSay("Calibration doesn't match the data. Try again.",'bm-err');
+    setTimeout(() => brokerSay(WRONG_CAL_MSGS[Math.floor(Math.random()*WRONG_CAL_MSGS.length)],'bm-err'), 800);
+  }
+}
+
+function abortCal() {
+  document.getElementById('cal-panel').classList.remove('open');
+  if (GS.calNode) {
+    hlNode(GS.calNode,'n-mission');
+    document.getElementById('ns-'+GS.calNode).textContent = 'INVESTIGATING...';
+    GS.calNode = null;
+    brokerSay("Understood. Recheck the file when you're ready.",'bm-d');
+  }
+}
+
+/* ═══ FIX 2: LOCK NODE — guided flow advancement ═══ */
+function lockNode(nid) {
+  GS.locked.add(nid);
+  GS.activeNode = null;
+  hlNode(nid,'n-locked');
+  document.getElementById('ns-'+nid).textContent = '✓ LOCKED';
+  document.getElementById('ep-'+nid).classList.add('filled');
+  const icon = document.getElementById(NODES[nid].iconId);
+  if (icon) { icon.classList.remove('di-mission'); icon.classList.add('di-locked'); }
+  const svg = document.getElementById('cable-svg');
+  svg.querySelectorAll('path').forEach(p => p.remove());
+  brokerSay(NODES[nid].lockMsg,'bm-win');
+  const zexAfterLock = {
+    compute: "Server load like that doesn't happen by accident. Infrastructure confirmed — provisionally. Keep going.",
+    funding: "$7.1M with no department owner. Someone went to a lot of trouble to hide that line.",
+    personnel: "2,940 hours on a redacted project. That's not a side initiative. That's a team.",
+    dataTrail: "Access pattern doesn't lie. Heavy use, then a hard cutoff. That file was active, important — and deliberately buried."
+  };
+  if (zexAfterLock[nid]) setTimeout(() => zexSay(zexAfterLock[nid]), 3500);
+
+  GS.currentStep++;
+
+  if (GS.locked.size === 4) {
+    /* After dataTrail-lock zex (3500ms), enable CONFIRM INTEL and finale lines */
+    setTimeout(() => {
+      const sb = document.getElementById('synth-btn');
+      sb.classList.add('ready'); sb.disabled = false;
+      document.getElementById('step-banner').textContent = 'All leads confirmed — Hit CONFIRM INTEL to lock in the OMNI footprint';
+      document.getElementById('eb-step').textContent = 'ALL 4 LEADS CONFIRMED ✓';
+      setTimeout(() => brokerSay("All four leads confirmed. You can lock the footprint now.", 'bm-ok'), 400);
+      setTimeout(() => zexSay("Compute, funding, personnel, data trail. That's not noise. That's infrastructure. I'll need exploit code before I commit — but this is enough to start."), 1800);
+    }, 4200);
+  } else {
+    const nextNode  = NODE_ORDER[GS.currentStep];
+    const nextLabel = NODES[nextNode].label;
+    /* Advance the next node after a short delay */
+    setTimeout(() => {
+      document.getElementById('node-'+nextNode).className = 'node n-next';
+      document.getElementById('ns-'+nextNode).textContent = 'YOUR TURN →';
+      document.getElementById('eb-step').textContent = `LEAD ${GS.currentStep+1} OF 4`;
+      const nextPrompts = {
+        funding:  "Funding is next. Select it on the board when you're ready.",
+        personnel:"Personnel lead unlocked. Select it on the board.",
+        dataTrail:"Last lead: DATA TRAIL. Select it on the board."
+      };
+      brokerSay(nextPrompts[nextNode] || `Next lead: ${nextLabel}`,'bm-ok');
+    }, 800);
+    document.getElementById('step-banner').textContent = `${NODES[nid].label} confirmed ✓ — Select the next lead to continue`;
+    document.getElementById('eb-hint').textContent = '';
+  }
+}
+
+/* ═══ FIX 5: VOSS — BISCUIT TELEGRAM STYLE ═══ */
+function brokerSay(msg, cls) {
+  const wrap = document.getElementById('broker-body');
+  if (!wrap) return;
+  const type = cls || 'bm-d';
+  /* Show "Voss is typing..." in header */
+  const statusEl = document.getElementById('bk-status');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#00FF41;font-family:&quot;DM Sans&quot;,sans-serif;font-size:12px">Voss is typing...</span>';
+
+  const twrap = document.createElement('div');
+  twrap.className = 'bm-typing-wrap';
+  twrap.innerHTML = '<div class="bm-typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>';
+  wrap.appendChild(twrap);
+  wrap.scrollTop = wrap.scrollHeight;
+
+  setTimeout(() => {
+    twrap.remove();
+    if (statusEl) statusEl.innerHTML = '';
+
+    const now   = new Date();
+    const ts    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    GS.lastSender = 'Voss';
+
+    const group = document.createElement('div');
+    group.className = 'bm-group';
+    const senderLabel = document.createElement('div');
+    senderLabel.className = 'bm-sender';
+    senderLabel.textContent = 'VOSS';
+    const bubble = document.createElement('div');
+    bubble.className = 'bm-bubble ' + type;
+    bubble.innerHTML = msg.split('\n').join('<br>');
+    const tsEl = document.createElement('div');
+    tsEl.className = 'bm-ts';
+    tsEl.textContent = ts;
+    group.appendChild(senderLabel);
+    group.appendChild(bubble);
+    group.appendChild(tsEl);
+    wrap.appendChild(group);
+    wrap.scrollTop = wrap.scrollHeight;
+  }, 700);
+}
+
+function zexSay(text) {
+  const body = document.getElementById('broker-body');
+  if (!body) return;
+
+  const senderEl = document.createElement('div');
+  senderEl.className = 'bm-sender';
+  senderEl.style.color = 'var(--purple-light)';
+  senderEl.textContent = 'ZEX';
+
+  const group = document.createElement('div');
+  group.className = 'bm-group';
+  group.appendChild(senderEl);
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bm-bubble bm-h';
+  bubble.textContent = text;
+
+  const ts = document.createElement('div');
+  ts.className = 'bm-ts';
+  ts.textContent = new Date().toTimeString().slice(0, 5);
+
+  group.appendChild(bubble);
+  group.appendChild(ts);
+  body.appendChild(group);
+  body.scrollTop = body.scrollHeight;
+  GS.lastSender = 'ZEX';
+}
+
+/* ═══ HINT — Voss hint flow ═══ */
+function requestHint() {
+  if (GS.hintCooldown) return;
+  if (!GS.activeNode) { brokerSay('Select a target on the board first.','bm-err'); return; }
+  if (GS.locked.has(GS.activeNode)) { brokerSay("That one's already confirmed. Pick another target.",'bm-d'); return; }
+
+  /* Special case: cross-reference params — no deduction, no help */
+  const crossRefNoHint = {personnel:"No shortcut on that parameter. Cross-check the HR files yourself.", funding:"That answer is in the board report. I can't spell it out.", dataTrail:"Cross-check the vault audit. You're on your own for that field."};
+  if (GS.calNode && crossRefNoHint[GS.calNode]) {
+    const node = NODES[GS.calNode];
+    const crossRefIndices = node.params.map((p,i) => p.crossRef ? i : -1).filter(i => i >= 0);
+    const stuckOnCrossRef = crossRefIndices.some(idx => {
+      const solvedBefore = node.params.slice(0, idx).every((_,i) => GS.chipIdx[i] === node.params[i].ans);
+      const unsolved = GS.chipIdx[idx] !== node.params[idx].ans;
+      return solvedBefore && unsolved;
+    });
+    if (stuckOnCrossRef) {
+      brokerSay(crossRefNoHint[GS.calNode],'bm-d');
+      return; /* no deduction, no cooldown */
+    }
+  }
+
+  GS.hintsUsed++;
+  deductBudget(2500, 'hint');
+  brokerSay("Pulling the intel. This costs us — use it.",'bm-d');
+  setTimeout(() => brokerSay(NODES[GS.activeNode].hint,'bm-h'), 1600);
+  GS.hintCooldown = true;
+  const btn = document.getElementById('hint-btn');
+  const cd  = document.getElementById('hint-cd');
+  btn.disabled = true;
+  cd.classList.add('show');
+  let rem = 30;
+  cd.textContent = rem + 's';
+  const interval = setInterval(() => {
+    rem--;
+    cd.textContent = rem + 's';
+    if (rem <= 0) {
+      clearInterval(interval);
+      GS.hintCooldown = false;
+      btn.disabled = false;
+      cd.classList.remove('show');
+    }
+  }, 1000);
+}
+
+/* ═══ BUDGET ENGINE ═══ */
+function deductBudget(amount, type) {
+  GS.budget = Math.max(0, GS.budget - amount);
+  if (type === 'decoy') GS.decoyPenalties += amount;
+  else if (type === 'click') GS.clickPenalties += amount;
+  else if (type === 'cal')   GS.calPenalties  += amount;
+  else if (type === 'hint')  GS.hintPenalties += amount;
+  updateBudgetDisplay();
+  showBudgetToast(amount);
+  checkBudgetThresholds();
+}
+
+function updateBudgetDisplay() {
+  const el = document.getElementById('budget');
+  if (!el) return;
+  const b = GS.budget;
+  el.innerHTML = '<i class="fas fa-wallet"></i> $' + b.toLocaleString();
+  el.classList.remove('budget-green','budget-amber','budget-red','budget-flash');
+  void el.offsetWidth; // force reflow before re-adding flash
+  if (b >= 30000) el.classList.add('budget-green');
+  else if (b >= 15000) el.classList.add('budget-amber');
+  else el.classList.add('budget-red');
+  el.classList.add('budget-flash');
+  setTimeout(() => el.classList.remove('budget-flash'), 400);
+}
+
+function showBudgetToast(amount) {
+  const el = document.getElementById('budget');
+  const rect = el ? el.getBoundingClientRect() : {top:54, left:window.innerWidth-160};
+  const t = document.createElement('div');
+  t.className = 'budget-toast';
+  t.textContent = '−$' + amount.toLocaleString();
+  t.style.top  = (rect.top + 4) + 'px';
+  t.style.left = (rect.left + rect.width/2 - 30) + 'px';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1300);
+}
+
+function checkBudgetThresholds() {
+  const b = GS.budget;
+  const fmt = '$' + b.toLocaleString();
+  if (b < 5000 && !BUDGET_WARNED[5000]) {
+    BUDGET_WARNED[5000] = true;
+    setTimeout(() => brokerSay(`${fmt} left. That's nearly gone. Every wrong click from here costs us.`, 'bm-err'), 1500);
+  } else if (b < 15000 && !BUDGET_WARNED[15000]) {
+    BUDGET_WARNED[15000] = true;
+    setTimeout(() => brokerSay(`Getting low — ${fmt} remaining. Be deliberate.`, 'bm-err'), 1500);
+  } else if (b < 30000 && !BUDGET_WARNED[30000]) {
+    BUDGET_WARNED[30000] = true;
+    setTimeout(() => brokerSay(`${fmt} left. We can't afford to be sloppy.`, 'bm-err'), 1500);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══ CONFIRM INTEL ANIMATION ═══ */
+function startSynth() {
+  if (GS.locked.size < 4) return;
+  const overlay = document.getElementById('synth-overlay');
+  overlay.style.display = 'flex';
+  const svg = document.getElementById('synth-svg');
+  const outerR = 46;
+  const centerR = 72;
+  const npos = [
+    {lbl:'COMPUTE',x:115,y:95},{lbl:'FUNDING',x:585,y:95},
+    {lbl:'PERSONNEL',x:115,y:405},{lbl:'DATA TRAIL',x:585,y:405}
+  ];
+  const cx=350, cy=250;
+  svg.innerHTML = `<defs><filter id="sg" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter></defs>`;
+  npos.forEach((n,i) => {
+    /* Calculate edge points so lines don't clip into circles */
+    const dx = cx - n.x, dy = cy - n.y;
+    const dist = Math.hypot(dx, dy);
+    const ux = dx/dist, uy = dy/dist;
+    /* Line starts at outer circle edge, ends at center circle edge */
+    const x1 = n.x + ux * outerR, y1 = n.y + uy * outerR;
+    const x2 = cx  - ux * centerR, y2 = cy  - uy * centerR;
+    const lineLen = Math.hypot(x2-x1, y2-y1);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke','#00FF41'); line.setAttribute('stroke-width','2');
+    line.setAttribute('filter','url(#sg)');
+    line.style.strokeDasharray=lineLen; line.style.strokeDashoffset=lineLen;
+    line.id='sl'+i; svg.appendChild(line);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x); c.setAttribute('cy',n.y); c.setAttribute('r',outerR);
+    c.setAttribute('fill','none'); c.setAttribute('stroke','#00FF41');
+    c.setAttribute('stroke-width','1.5'); c.setAttribute('filter','url(#sg)');
+    svg.appendChild(c);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',n.x); t.setAttribute('y',n.y+5);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#00FF41');
+    t.setAttribute('font-size','11'); t.setAttribute('font-family','Space Grotesk,sans-serif');
+    t.setAttribute('letter-spacing','1');
+    t.textContent = n.lbl; svg.appendChild(t);
+  });
+  const oc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  oc.setAttribute('cx',cx); oc.setAttribute('cy',cy); oc.setAttribute('r','0');
+  oc.setAttribute('fill','rgba(0,255,65,.10)'); oc.setAttribute('stroke','#00FF41');
+  oc.setAttribute('stroke-width','2.5'); oc.setAttribute('filter','url(#sg)');
+  oc.id='oc'; svg.appendChild(oc);
+  const ot1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ot1.setAttribute('x',cx); ot1.setAttribute('y',cy-4); ot1.setAttribute('text-anchor','middle');
+  ot1.setAttribute('fill','#00FF41'); ot1.setAttribute('font-size','30');
+  ot1.setAttribute('font-family','Space Grotesk,sans-serif'); ot1.setAttribute('font-weight','700');
+  ot1.setAttribute('letter-spacing','5');
+  ot1.setAttribute('opacity','0'); ot1.textContent='OMNI'; ot1.id='ot1'; svg.appendChild(ot1);
+  const ot2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ot2.setAttribute('x',cx); ot2.setAttribute('y',cy+22); ot2.setAttribute('text-anchor','middle');
+  ot2.setAttribute('fill','#8f44e8'); ot2.setAttribute('font-size','12');
+  ot2.setAttribute('font-family','Space Grotesk,sans-serif'); ot2.setAttribute('letter-spacing','4');
+  ot2.setAttribute('opacity','0');
+  ot2.textContent='CONFIRMED'; ot2.id='ot2'; svg.appendChild(ot2);
+
+  npos.forEach((_,i) => setTimeout(() => {
+    const ln = document.getElementById('sl'+i);
+    ln.style.transition='stroke-dashoffset 0.55s ease';
+    ln.style.strokeDashoffset='0';
+  }, 420+i*380));
+
+  setTimeout(() => {
+    let r=0;
+    const step=()=>{r=Math.min(r+2,centerR);oc.setAttribute('r',r);if(r<centerR)requestAnimationFrame(step);};
+    requestAnimationFrame(step);
+    setTimeout(()=>{
+      document.getElementById('ot1').style.transition='opacity 0.6s';
+      document.getElementById('ot1').setAttribute('opacity','1');
+      document.getElementById('ot2').style.transition='opacity 0.6s';
+      document.getElementById('ot2').setAttribute('opacity','1');
+    }, 600);
+  }, 420+4*380);
+
+  setTimeout(()=>document.getElementById('synth-done').classList.add('show'), 420+4*380+1200);
+  setTimeout(()=>{overlay.style.display='none';showDebrief();}, 420+4*380+4000);
+}
+
+/* ═══ DEBRIEF ═══ */
+function showDebrief() {
+  clearInterval(GS.timerInt);
+  const m=String(Math.floor(GS.timerSec/60)).padStart(2,'0');
+  const s=String(GS.timerSec%60).padStart(2,'0');
+  const acc = GS.errors===0 ? 100 : Math.round(4/(4+GS.errors)*100);
+  const b = GS.budget;
+  const bFmt = n => '$' + n.toLocaleString();
+  const budgetClass = b >= 30000 ? 'budget-green' : b >= 15000 ? 'budget-amber' : 'budget-red';
+  const rating = b >= 45000 ? 'FLAWLESS — not a penny wasted'
+    : b >= 35000 ? 'CLEAN RUN — minor expenses only'
+    : b >= 20000 ? 'SLOPPY — Voss is not impressed'
+    : b >= 10000 ? 'EXPENSIVE — we barely broke even'
+    : 'DISASTER — budget collapse';
+
+  document.getElementById('db-metrics').innerHTML = `
+    <div class="db-m"><div class="db-mv">${m}:${s}</div><div class="db-ml">TIME</div></div>
+    <div class="db-m"><div class="db-mv">${acc}%</div><div class="db-ml">ACCURACY</div></div>
+    <div class="db-m"><div class="db-mv">${GS.hintsUsed}</div><div class="db-ml">HINTS USED</div></div>
+    <div class="db-m"><div class="db-mv ${budgetClass}" style="font-size:clamp(18px,2vw,24px)">${bFmt(b)}</div><div class="db-ml">BUDGET REMAINING</div></div>`;
+
+  /* Budget breakdown — appended to db-card after metrics render */
+  setTimeout(() => {
+    const card = document.querySelector('.db-card');
+    if (!card || card.querySelector('.db-budget')) return;
+    const bd = document.createElement('div');
+    bd.className = 'db-budget';
+    bd.innerHTML = `
+      <div class="db-budget-ttl">BUDGET BREAKDOWN</div>
+      <div class="db-budget-row"><span>Starting budget</span><span>${bFmt(GS.budgetStart)}</span></div>
+      <div class="db-budget-row"><span>Decoy files opened</span><span style="color:var(--red)">−${bFmt(GS.decoyPenalties)}</span></div>
+      <div class="db-budget-row"><span>Wrong data clicks</span><span style="color:var(--red)">−${bFmt(GS.clickPenalties)}</span></div>
+      <div class="db-budget-row"><span>Wrong calibrations</span><span style="color:var(--red)">−${bFmt(GS.calPenalties)}</span></div>
+      <div class="db-budget-row"><span>Hints purchased</span><span style="color:var(--red)">−${bFmt(GS.hintPenalties)}</span></div>
+      <div class="db-budget-row db-total"><span>Budget remaining</span><span class="${budgetClass}">${bFmt(b)}</span></div>
+      <div class="db-rating">${rating}</div>`;
+    const nextBtn = card.querySelector('.db-next');
+    if (nextBtn) card.insertBefore(bd, nextBtn);
+    else card.appendChild(bd);
+  }, 200);
+
+  document.getElementById('debrief-overlay').style.display = 'flex';
+}
+
+function nextRound() {
+  showToast('Mission 2 coming soon — stay tuned!');
+}
+
+</script>
+</body>
+</html>

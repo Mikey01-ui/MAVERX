@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Data Heist: Operation OMNI — Round 2: The Scramble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --void: #1e0f1a; --void-pure: #000000; --green-stable: #00c41c; --green-matrix: #00FF41;
+    --purple: #5400ad; --purple-light: #8f44e8; --orange: #f79421; --pink: #d31972;
+    --white: #faf7f2; --panel-bg: #221829; --panel-border: rgba(0,196,28,0.35);
+    --grey-dim: #2e2e2e; --grey-mid: #444444; --grey-text: #cccccc; --grey-light: #edeae5;
+    --font-mono: 'Share Tech Mono', monospace; --font-display: 'Space Grotesk', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  html, body { width:100%; min-height:100%; overflow:auto; font-family:var(--font-body); background:var(--void); color:var(--white); }
+  .ambient-glow { position:fixed; inset:0; z-index:0; pointer-events:none; background:
+    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%); }
+  .scanlines { position:fixed; inset:0; z-index:10; pointer-events:none;
+    background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px); mix-blend-mode: multiply; }
+  .bg-grid { position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(rgba(0,196,28,0.11) 1px, transparent 1px), linear-gradient(90deg, rgba(0,196,28,0.11) 1px, transparent 1px);
+    background-size: 40px 40px; background-position: 0 36px; }
+  .corner { position:fixed; z-index:2; width:40px; height:40px; pointer-events:none; }
+  .corner--tl { top:10px; left:10px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+  .corner--tr { top:10px; right:10px; border-top:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
+  .corner--bl { bottom:10px; left:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+  .corner--br { bottom:10px; right:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
+  .status-bar { position:fixed; top:0; left:0; right:0; z-index:5; height:36px; padding:0 64px; display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid rgba(0,196,28,0.28); background:linear-gradient(180deg, rgba(30,15,26,0.9) 0%, transparent 100%); }
+  .status-left, .status-right { font-family:var(--font-mono); font-size:0.65rem; color:var(--green-stable); letter-spacing:0.08em; display:flex; gap:1.5rem; align-items:center; }
+  .status-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--green-stable); margin-right:6px; vertical-align:middle; }
+  .status-dot.live { background:var(--green-matrix); box-shadow:0 0 8px rgba(0,255,65,0.6); animation:blink 2.4s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .status-right span:last-child { color:var(--green-matrix); text-shadow:0 0 8px rgba(0,255,65,0.3); }
+  .page { position:relative; z-index:2; margin-top:36px; display:none; flex-direction:column; align-items:center; padding:clamp(0.5rem,1.5vh,1.5rem) 4vw clamp(1rem,2vh,2rem); min-height:calc(100vh - 36px); overflow:hidden; }
+  .page.active { display:flex; }
+  .page-eyebrow { font-family:var(--font-mono); font-size:clamp(0.46rem,0.6vw,0.65rem); color:var(--green-stable); letter-spacing:0.25em; text-transform:uppercase; margin-bottom:clamp(0.2rem,0.5vh,0.6rem); flex-shrink:0; animation:fadeUp 0.5s 0.1s both; }
+  .page-title { font-family:var(--font-display); font-size:clamp(1.2rem,2.8vh,2.6rem); font-weight:700; letter-spacing:-0.01em; margin-bottom:clamp(0.5rem,1.5vh,1.5rem); flex-shrink:0; animation:fadeUp 0.5s 0.2s both;
+    background:linear-gradient(135deg, var(--white) 60%, var(--purple-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .page-subtitle { font-family:var(--font-body); font-size:clamp(0.85rem,1.2vw,1.05rem); color:var(--grey-text); text-align:center; max-width:560px; margin-bottom:1rem; line-height:1.6; }
+  .intro-stats { font-family:var(--font-mono); font-size:clamp(0.5rem,0.65vw,0.7rem); color:var(--green-stable); letter-spacing:0.2em; margin-bottom:1.2rem; }
+  .content { width:min(920px,90vw); display:flex; flex-direction:column; gap:clamp(0.3rem,0.8vh,0.8rem); flex:1; justify-content:center; overflow:hidden; }
+  .broker-section { flex:0 0 auto; display:flex; flex-direction:column; animation:fadeUp 0.6s 0.3s both; }
+  .section-label { font-family:var(--font-mono); font-size:clamp(0.46rem,0.58vw,0.63rem); color:var(--purple-light); letter-spacing:0.22em; text-transform:uppercase; margin-bottom:clamp(0.2rem,0.6vh,0.6rem); flex-shrink:0; display:flex; align-items:center; gap:0.8rem; }
+  .section-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, rgba(84,0,173,0.42), transparent); }
+  .broker-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px; padding:clamp(1.2rem,2vh,2rem) clamp(1.4rem,2.5vw,2.5rem); position:relative; overflow:hidden;
+    box-shadow:0 0 60px rgba(84,0,173,0.14), 0 0 120px rgba(0,196,28,0.08), inset 0 1px 0 rgba(0,196,28,0.12); }
+  .broker-card::before { content:''; position:absolute; top:10px; left:10px; width:16px; height:16px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+  .broker-card::after { content:''; position:absolute; bottom:10px; right:10px; width:16px; height:16px; border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+  .broker-text { font-family:var(--font-body); font-size:clamp(0.8rem,1.1vw,1rem); line-height:1.75; color:var(--grey-light); font-weight:300; }
+  .broker-text p { margin-bottom:clamp(0.6em,1vh,0.9em); }
+  .broker-text strong { color:var(--orange); font-weight:600; }
+  .ops-section { flex:0 0 auto; display:flex; flex-direction:column; animation:fadeUp 0.6s 0.3s both; }
+  .steps-grid { display:grid; grid-template-columns:repeat(3,1fr); align-items:stretch; gap:clamp(0.8rem,1.5vw,1.5rem); }
+  .step-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px; padding:clamp(1rem,1.6vh,1.8rem) clamp(1rem,1.4vw,1.6rem); position:relative; transition:border-color 0.3s, box-shadow 0.3s; box-shadow:0 0 38px rgba(84,0,173,0.09); height:100%; display:flex; flex-direction:column; }
+  .step-number { font-family:var(--font-display); font-size:clamp(1.6rem,2.5vh,2.4rem); font-weight:700; color:var(--green-matrix); line-height:1; margin-bottom:0.4rem; }
+  .step-title { font-family:var(--font-mono); font-size:clamp(0.5rem,0.62vw,0.68rem); color:var(--purple-light); letter-spacing:0.18em; text-transform:uppercase; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(0,196,28,0.28); }
+  .step-desc { font-family:var(--font-body); font-size:clamp(0.78rem,1vw,0.95rem); line-height:1.65; color:var(--grey-text); font-weight:300; flex:1; }
+  .atlas-note { font-size:clamp(0.72rem,0.95vw,0.88rem); color:var(--orange); margin-top:0.8rem; font-style:italic; }
+  .button-section { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:0.5rem; margin-top:clamp(0.3rem,1vh,1rem); animation:fadeUp 0.5s 0.5s both; }
+  .button-label { font-family:var(--font-mono); font-size:clamp(0.42rem,0.55vw,0.6rem); color:var(--green-stable); letter-spacing:0.2em; text-transform:uppercase; }
+  .btn-next { width:clamp(200px,22vw,300px); padding:clamp(0.6rem,1.1vh,1rem) 2vw; background:var(--orange); border:1px solid var(--orange); color:var(--void); font-family:var(--font-display); font-size:clamp(0.85rem,1.1vw,1.05rem); font-weight:600; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; transition:background 0.25s, transform 0.25s; }
+  .btn-next:hover { background:#ffa234; transform:translateY(-1px); }
+  .btn-inner { display:flex; align-items:center; justify-content:center; gap:0.6rem; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @media (max-width:680px){ .steps-grid{grid-template-columns:1fr} .status-bar{padding:0 1.5rem} }
+  #gp-root { position:fixed; inset:0; z-index:100; }
+  html.gp-html-active { overflow:hidden; height:100%; }
+  :root { --void:#1e0f1a; --panel-bg:#221829; --border:#1e3524; --border-b:#2d5b36; --panel-border:rgba(0,196,28,.35);
+    --green-stable:#00c41c; --green-matrix:#00FF41; --purple:#5400ad; --purple-light:#8f44e8; --orange:#f79421; --pink:#d31972;
+    --text-w:#faf7f2; --text-d:rgba(0,196,28,.45); --font-mono:'Share Tech Mono',monospace; --font-display:'Space Grotesk',sans-serif; --font-body:'DM Sans',sans-serif;
+    --bg:var(--void); --bg-p:var(--panel-bg); --text:var(--green-stable); --text-b:var(--text-w); --cyan:var(--green-stable); --amber:var(--orange); --green:var(--green-matrix); --red:var(--pink); }
+  #gp-root *,#gp-root *::before,#gp-root *::after{box-sizing:border-box}
+  body.gp-gameplay-active{font-family:var(--font-body);background:var(--void);color:var(--text);font-size:clamp(13px,1.4vw,16px);width:100vw;height:100vh;overflow:hidden;user-select:none}
+  body.gp-gameplay-active::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,196,28,0.11) 1px,transparent 1px),linear-gradient(90deg,rgba(0,196,28,0.11) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  body.gp-gameplay-active::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:1}
+  button{cursor:pointer}button:focus{outline:none}
+  #game::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%)}
+  #game{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available}
+  #hdr{min-height:52px;background:linear-gradient(180deg, rgba(34,24,41,.96) 0%, rgba(30,15,26,.94) 100%);border-bottom:1px solid rgba(0,196,28,.28);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 12px;flex-shrink:0;z-index:3;gap:8px;box-shadow:inset 0 1px 0 rgba(0,196,28,.08)}
+  .hdr-left{font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,2.8vw,14px);color:var(--cyan);letter-spacing:.06em;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .hdr-center{text-align:center;font-family:'Space Grotesk',sans-serif;font-size:clamp(10px,2.6vw,13px);color:var(--purple-light);letter-spacing:.12em;min-width:0;padding:0 4px}
+  .hdr-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;font-family:'Share Tech Mono';font-size:clamp(10px,2.8vw,14px);color:var(--text)}
+  .hdr-det{font-family:'DM Sans',sans-serif;font-size:clamp(10px,1vw,12px);color:var(--grey-text);display:flex;align-items:center;gap:6px}
+  .det-bar-wrap{width:72px;height:6px;background:rgba(0,0,0,.35);border-radius:3px;overflow:hidden;border:1px solid rgba(0,196,28,.2)}
+  .det-bar-fill{height:100%;width:0%;background:var(--green-stable);transition:width .3s, background .3s}
+  .det-bar-fill.amber{background:var(--orange)}
+  .det-bar-fill.red{background:var(--pink)}
+  #timer{color:var(--text-b)}
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:livePulse 1.5s ease-in-out infinite}
+  @keyframes livePulse{0%,100%{opacity:1}50%{opacity:.4}}
+  #step-banner{min-height:38px;background:rgba(84,0,173,0.10);border-bottom:1px solid rgba(0,196,28,.22);display:flex;align-items:center;padding:6px 10px;padding-left:max(10px,env(safe-area-inset-left));font-size:clamp(11px,2.8vw,15px);color:var(--text-b);letter-spacing:.3px;flex-shrink:0;z-index:3;line-height:1.3}
+  #step-banner::before{content:'▶ ';color:var(--orange);margin-right:6px;flex-shrink:0}
+  #main-row{display:flex;flex:1;overflow:hidden;min-height:0;align-items:stretch}
+  #desktop-panel{flex:1 1 58%;min-width:0;position:relative;overflow:hidden;background:linear-gradient(180deg,#0a0c10 0%,#0f1419 50%)}
+  .nexus-app{display:flex;flex-direction:column;position:absolute;inset:0;bottom:28px;font-family:var(--font-mono)}
+  .nexus-topbar{height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0c1016;border-bottom:1px solid #1a2a3a}
+  .nexus-tb-left{font-size:11px;color:#4a8aa0;letter-spacing:0.5px}
+  .nexus-tb-center{font-size:10px;color:#5a7a8a}
+  .nexus-tb-user{font-size:10px;color:#6a7a8a}
+  .nexus-body{display:flex;flex:1;min-height:0}
+  .nexus-sidebar{width:180px;flex-shrink:0;background:#0c1016;border-right:1px solid #1a2a3a;overflow-y:auto;padding:8px 0;font-size:11px;color:#8ab0c0}
+  .nx-tree-item{padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;border-left:3px solid transparent}
+  .nx-tree-item:hover{background:rgba(26,58,74,0.4)}
+  .nx-tree-item.sel{background:rgba(26,58,74,0.75);border-left-color:#4a8aa0;color:#c8ddf0}
+  .nx-tree-item.dim{color:#4a5a6a;cursor:not-allowed}
+  .nx-tree-sub{margin-left:14px}
+  .nexus-main{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;background:#0f1419;color:#5a6a7a;font-size:13px;padding:20px;text-align:center}
+  .nexus-main.has-win{align-items:stretch;justify-content:stretch;padding:0}
+  #nexus-taskbar{position:absolute;bottom:0;left:0;right:0;height:28px;background:#0c1016;border-top:1px solid #1a2a3a;display:flex;align-items:center;padding:0 8px;font-size:10px;color:#6a7a8a}
+  .nx-win{position:absolute;display:none;flex-direction:column;min-width:280px;min-height:200px;border:1px solid #2a4a5a;border-radius:4px;background:#0f1419;box-shadow:4px 4px 24px rgba(0,0,0,.5);z-index:100;overflow:hidden}
+  .nx-win.visible{display:flex}
+  .nx-win-tb{min-height:32px;background:linear-gradient(180deg,#1a3040,#0f1f28);display:flex;align-items:center;padding:4px 8px;cursor:default;user-select:none;border-bottom:1px solid #1a2a3a}
+  .nx-win-title{flex:1;font-size:11px;color:#8ab0c0}
+  .nx-win-btns{display:flex;gap:2px}
+  .nx-btn{width:22px;height:20px;border:1px solid #3a5a6a;background:#1a2a3a;color:#c8ddf0;font-size:11px;border-radius:2px}
+  .nx-btn:hover{filter:brightness(1.15)}
+  .nx-win-body{flex:1;overflow:auto;display:flex;flex-direction:row;min-height:0}
+  .nx-fields{flex:0 0 48%;min-width:200px;border-right:1px solid #1a2a3a;padding:10px;overflow-y:auto}
+  .nx-dataset-hdr{font-size:9px;letter-spacing:3px;color:#4a8aa0;border-bottom:1px solid #1a2a3a;padding-bottom:6px;margin-bottom:8px}
+  .nx-row{display:flex;border-bottom:1px solid #1a2a3a;font-size:10px}
+  .nx-row:nth-child(even){background:#111c24}
+  .nx-lbl{flex:0 0 120px;color:#4a8aa0;text-align:right;padding:6px 8px;font-family:'Courier New',Courier,monospace}
+  .nx-val{flex:1;color:#c8ddf0;padding:6px 8px;font-family:'Courier New',Courier,monospace;font-size:11px;word-break:break-all}
+  .nx-val.clickable{cursor:pointer;text-decoration:underline dotted}
+  .nx-val.clickable:hover{color:#fff}
+  .nx-viz{flex:1;padding:10px;min-width:0;background:#0a1018}
+  .nx-export-sub{display:none;margin-top:6px;border:1px solid #1a2a3a}
+  .nx-export-sub.open{display:block}
+  .nx-exp-row{display:flex;font-size:9px;padding:4px 6px;border-bottom:1px solid #1a2a3a;cursor:pointer}
+  .nx-exp-row:hover{background:#1a2a3a}
+  .chart-canvas-wrap{position:relative;height:200px}
+  #right{flex:1 1 42%;min-width:min(100%,260px);display:flex;flex-direction:column;background:linear-gradient(180deg, rgba(34,24,41,.98) 0%, rgba(30,15,26,.98) 100%);border-left:1px solid rgba(0,196,28,.28);overflow:hidden;min-height:0;container-type:inline-size;container-name:rside}
+  /* Dataset matching: compact, no internal scroll — chat panel scrolls instead */
+  #eboard{display:flex;flex-direction:column;flex:0 0 auto;padding:4px 8px 6px;border-bottom:1px solid rgba(0,196,28,.22);overflow:hidden;min-height:0;align-items:stretch;gap:0}
+  .map-sub{font-family:'Share Tech Mono';font-size:8px;color:var(--amber);letter-spacing:.12em;text-align:center;margin:0 0 4px}
+  .det-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-family:'Space Grotesk',sans-serif;font-size:10px;color:var(--purple-light)}
+  #detection-pct{font-family:'Share Tech Mono';color:var(--green-matrix)}
+  .map-wrap{position:relative;width:100%;margin:0 0 4px}
+  .map-wrap.map-wrap--dept{height:auto;margin:0 0 2px;align-self:stretch}
+  #map-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .map-grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:4px;position:relative;z-index:2;height:100%;padding:4px}
+  /* Department cards: do NOT inherit 3× 1fr rows + height:100% from .map-grid — that caused a huge empty row */
+  .map-grid.map-grid--dept{height:auto;min-height:0;grid-template-rows:auto;grid-template-columns:repeat(4,minmax(0,1fr));padding:2px;gap:4px;align-items:stretch}
+  .map-cell{display:flex;align-items:center;justify-content:center}
+  .node-core{opacity:0.55}
+  .node-core.active{opacity:1;animation:nPulse 1.5s ease-in-out infinite}
+  .eb-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:2px 0 4px;border-bottom:1px solid rgba(84,0,173,.28)}
+  .eb-htitle{font-family:'Space Grotesk',sans-serif;font-size:clamp(9px,1vw,11px);color:var(--purple-light);letter-spacing:.1em;line-height:1.2}
+  #eb-hint{font-size:clamp(8px,.95vw,10px);color:var(--amber);font-family:'Share Tech Mono'}
+  #eb-step{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--purple-light);letter-spacing:.08em;text-align:center;margin:0 0 4px;line-height:1.25}
+  .node{border:1px solid rgba(143,68,232,.35);border-radius:4px;padding:4px 3px;text-align:center;cursor:default;transition:border-color .2s;background:rgba(43,32,52,.88);min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+  .node:hover{border-color:var(--purple-light)}
+  .node-icon{font-size:clamp(13px,2.8vw,16px);margin-bottom:0;color:var(--purple-light);line-height:1}
+  .node-name{font-family:'Space Grotesk',sans-serif;font-size:clamp(8px,1.8vw,10px);color:var(--text-b);font-weight:600;letter-spacing:0;line-height:1.15}
+  .node-status{font-size:clamp(7px,1.6vw,9px);color:rgba(143,68,232,.75);font-family:'Share Tech Mono';line-height:1.15}
+  .n-mission{border-color:var(--amber)!important;animation:nPulse 1.5s ease-in-out infinite}
+  .n-active{border-color:var(--amber)!important;animation:nPulse 1.5s ease-in-out infinite}
+  .n-locked{border-color:var(--green)!important;background:rgba(0,255,65,.08);cursor:default}
+  .n-start{border-color:var(--orange)!important;animation:orangePulse 1.5s ease-in-out infinite}
+  .n-next{border-color:var(--orange)!important;animation:orangePulse 1.5s ease-in-out infinite}
+  @keyframes nPulse{0%,100%{box-shadow:0 0 6px rgba(255,144,0,.3)}50%{box-shadow:0 0 18px rgba(255,144,0,.75)}}
+  @keyframes orangePulse{0%,100%{box-shadow:0 0 6px rgba(247,148,33,.35)}50%{box-shadow:0 0 22px rgba(247,148,33,.9)}}
+  .n-dimmed{opacity:0.45;pointer-events:none}
+  .key-frag-lbl{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--green-stable);text-align:center;margin:0 0 4px;letter-spacing:.1em;line-height:1.2}
+  .eb-progress{display:flex;gap:3px;margin:0 0 6px;height:3px;padding:0}
+  .ep-seg{flex:1;background:rgba(84,0,173,.15);border-radius:2px}
+  .ep-seg.filled{background:var(--green)}
+  #synth-btn{width:100%;margin:0;padding:6px 8px;background:rgba(0,196,28,.06);color:var(--text-d);border:1px solid rgba(0,196,28,.18);font-family:'Space Grotesk',sans-serif;font-size:clamp(9px,1.8vw,11px);letter-spacing:.06em;cursor:not-allowed;border-radius:3px;flex-shrink:0;line-height:1.25}
+  #synth-btn.ready{background:rgba(247,148,33,.1);color:var(--orange);border-color:var(--orange);cursor:pointer;animation:synthPulse 1.5s ease-in-out infinite}
+  @keyframes synthPulse{0%,100%{box-shadow:0 0 6px rgba(247,148,33,.2)}50%{box-shadow:0 0 22px rgba(247,148,33,.7)}}
+  #broker-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+  .broker-hdr{min-height:0;background:var(--panel-bg);border-bottom:1px solid rgba(0,196,28,.22);display:flex;align-items:center;padding:8px 14px 10px;gap:10px;flex-shrink:0}
+  .bk-avatar{width:34px;height:34px;border-radius:50%;background:#2f2238;border:1px solid rgba(0,196,28,.16);display:flex;align-items:center;justify-content:center;font-size:17px}
+  .bk-info{flex:1;min-width:0}
+  .bk-name{color:var(--text-w);font-size:clamp(12px,1.3vw,15px);font-weight:600;font-family:'DM Sans',sans-serif}
+  .bk-members{display:flex;flex-wrap:wrap;gap:2px;font-size:clamp(10px,1vw,12px);font-family:'DM Sans',sans-serif;line-height:1.35}
+  .bk-member.online{color:var(--green-matrix)}
+  .bk-member.offline{color:rgba(100,100,100,.55)}
+  .bk-sep{color:rgba(100,100,100,.4);font-size:10px}
+  .bk-icons{margin-left:auto;color:var(--green-stable);font-size:15px}
+  #broker-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;min-height:0;background:var(--void)}
+  .bm-sep{display:flex;justify-content:center;margin:4px 0 14px}
+  .bm-sep-pill{background:rgba(43,32,52,.92);color:var(--green-stable);font-size:11px;padding:3px 14px;border-radius:12px;border:1px solid rgba(0,196,28,.18)}
+  .bm-sender{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.5px;color:var(--purple-light);margin-bottom:6px;padding-left:4px}
+  .bm-group{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:16px;min-width:0}
+  .bm-bubble{align-self:flex-start;display:block;width:100%;max-width:min(420px,100%);padding:14px 18px;border-radius:14px 14px 14px 3px;line-height:1.65;font-family:'DM Sans',sans-serif;font-size:clamp(12px,1.25vw,15px);overflow-wrap:break-word;animation:bubbleIn 220ms ease forwards;opacity:0}
+  @keyframes bubbleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .bm-ts{align-self:flex-end;font-size:10px;color:rgba(0,196,28,0.72);margin-top:4px;font-family:'DM Sans',sans-serif}
+  .bm-ts::after{content:' ✓'}
+  .bm-bubble.bm-d{background:rgba(43,32,52,.92);color:var(--text-w);border:1px solid rgba(0,196,28,.10)}
+  .bm-bubble.bm-ok{background:rgba(0,196,28,.08);color:#cfead2;border-left:2px solid rgba(0,196,28,.55)}
+  .bm-bubble.bm-err{background:rgba(211,25,114,.08);color:#efb5cf;border-left:2px solid rgba(211,25,114,.35)}
+  .bm-bubble.bm-win{background:rgba(0,255,65,.07);color:#d6f4dd;border-left:2px solid rgba(0,255,65,.38)}
+  .bm-bubble.bm-h{background:rgba(143,68,232,.12);color:#dbc7f6;border-left:2px solid rgba(143,68,232,.40)}
+  .bm-bubble.bm-atlas{background:rgba(247,148,33,.08);color:#f5d9a8;border-left:2px solid rgba(247,148,33,.40)}
+  .bm-typing-wrap{margin-bottom:16px}
+  .bm-typing{background:rgba(43,32,52,.92);padding:14px 18px;border-radius:14px;display:inline-flex;gap:5px;border:1px solid rgba(0,196,28,.10)}
+  .tdot{width:6px;height:6px;border-radius:50%;background:var(--green-stable);animation:tBounce 1.1s ease-in-out infinite}
+  .tdot:nth-child(2){animation-delay:.18s}.tdot:nth-child(3){animation-delay:.36s}
+  @keyframes tBounce{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-5px);opacity:1}}
+  .broker-footer{padding:0 0 max(10px,env(safe-area-inset-bottom,0));border-top:1px solid rgba(0,196,28,.22);flex-shrink:0;background:var(--panel-bg)}
+  .broker-input-bar{display:flex;align-items:center;padding:8px 14px 10px;gap:10px}
+  #broker-input{flex:1;background:#2f2238;border:1px solid rgba(0,196,28,.16);border-radius:18px;color:var(--green-stable);font-size:clamp(12px,1.2vw,14px);padding:0 14px;height:34px;cursor:not-allowed}
+  #hint-btn{width:32px;height:32px;background:transparent;border:none;font-size:19px;color:#f5c518;cursor:pointer}
+  .hint-tooltip{position:absolute;bottom:calc(100% + 6px);left:0;background:rgba(34,24,41,.96);color:#dbc7f6;font-size:11px;padding:4px 8px;border-radius:4px;opacity:0;pointer-events:none;border:1px solid rgba(143,68,232,.55)}
+  .hint-wrap:hover .hint-tooltip{opacity:1}
+  #hint-cd{position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:8px;border-radius:10px;padding:1px 4px;display:none}
+  #hint-cd.show{display:block}
+  #hack-overlay{position:absolute;inset:0;background:#000;z-index:200;padding:40px;font-family:'Share Tech Mono';font-size:13px;line-height:2;display:none}
+  #hack-overlay.active{display:block}
+  .ht{opacity:0;transition:opacity .3s}.ht.show{opacity:1}
+  #cal-panel{position:absolute;right:0;top:0;bottom:28px;width:min(295px,100%);max-width:100%;background:rgba(34,24,41,.98);border-left:2px solid var(--purple-light);z-index:310;transform:translateX(100%);transition:transform .34s;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.4)}
+  #cal-panel.open{transform:translateX(0)}
+  #cal-toggle{display:none;position:absolute;left:-26px;top:50%;transform:translateY(-50%);width:26px;height:54px;background:rgba(34,24,41,.98);border:2px solid var(--purple-light);border-right:none;border-radius:6px 0 0 6px;align-items:center;justify-content:center;cursor:pointer;color:var(--purple-light);font-size:14px}
+  .cp-hdr{padding:12px 14px;border-bottom:1px solid rgba(0,196,28,.18)}
+  .cp-node{font-size:12px;color:var(--purple-light);letter-spacing:1px;margin-bottom:4px}
+  .cp-body{flex:1;overflow-y:auto;padding:8px 12px}
+  .cp-params{display:flex;flex-direction:column;gap:12px}
+  .cp-params.cp-compact{gap:11px}
+  .cp-plbl{font-size:11px;color:var(--text-b);margin-bottom:6px}
+  .cp-chips{display:flex;flex-wrap:wrap;gap:5px}
+  .cp-chip{padding:5px 10px;border:1.5px solid rgba(0,196,28,.22);border-radius:20px;background:rgba(43,32,52,.88);color:var(--green-stable);font-family:'Share Tech Mono';font-size:10px;cursor:pointer}
+  .cp-chip:hover{border-color:var(--purple-light)}
+  .cp-chip.cp-sel{border-color:var(--purple-light);color:var(--purple-light)}
+  .cp-chip.cp-correct{border-color:var(--green);color:var(--green)}
+  .cp-chip.cp-wrong{border-color:var(--red)}
+  .cp-err{font-size:9px;color:var(--red);margin-top:4px;display:none}.cp-err.show{display:block}
+  .cp-foot{padding:10px 12px;border-top:1px solid var(--border-b)}
+  .cp-ok{width:100%;padding:10px;background:rgba(247,148,33,.1);border:1px solid var(--orange);color:var(--orange);font-weight:700;cursor:pointer;border-radius:3px}
+  .chart-anom-panel{position:absolute;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .chart-anom-panel.show{display:flex}
+  .cap-ttl{font-size:13px;color:var(--orange);letter-spacing:2px;margin-bottom:10px}
+  .cap-txt{font-size:12px;color:#fff;text-align:center;max-width:280px;line-height:1.6;margin-bottom:16px}
+  .cap-btn{background:var(--orange);color:var(--void);border:none;font-weight:700;padding:10px 20px;cursor:pointer;border-radius:3px}
+  .xp-rh{position:absolute;z-index:200;user-select:none}
+  .xp-rh-e{right:0;top:8px;bottom:8px;width:5px;cursor:e-resize}
+  .xp-rh-s{bottom:0;left:8px;right:8px;height:5px;cursor:s-resize}
+  .xp-rh-se{bottom:0;right:0;width:14px;height:14px;cursor:se-resize}
+  #cable-svg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+  #toast{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:rgba(143,68,232,.94);color:#fff;font-size:12px;padding:8px 18px;border-radius:4px;z-index:600;opacity:0;transition:opacity .2s}
+  #toast.show{opacity:1}
+  #keyforge-overlay{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:450;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  #keyforge-overlay.show{display:flex}
+  #keyforge-term{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green-matrix);line-height:1.8;max-width:min(560px,92vw);white-space:pre-wrap}
+  #keyforge-box{border:1px solid var(--green-stable);padding:16px;margin-top:16px;font-size:12px;line-height:1.7;display:none}
+  #gameover-overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:460;display:none;align-items:center;justify-content:center;padding:20px}
+  #gameover-overlay.show{display:flex}
+  .go-card{max-width:480px;background:var(--panel-bg);border:1px solid var(--pink);padding:24px;border-radius:8px;text-align:center}
+  #debrief-overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:455;display:none;align-items:center;justify-content:center;padding:16px}
+  .db-card{max-width:680px;width:100%;background:var(--bg-p);border:1px solid rgba(0,255,65,.55);border-radius:10px;padding:clamp(1.2rem,2.5vh,2rem);position:relative}
+  .db-badge{font-size:11px;color:var(--green);letter-spacing:3px;margin-bottom:6px}
+  .db-head{font-size:clamp(16px,1.8vw,22px);color:var(--text-w);margin-bottom:16px}
+  .db-metrics{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  .db-m{flex:1;min-width:100px;text-align:center}
+  .db-mv{font-size:clamp(18px,2vw,24px);color:var(--purple-light);font-weight:700}
+  .db-ml{font-size:10px;color:var(--text);margin-top:4px;letter-spacing:1px}
+  .db-rw-ttl{font-size:11px;color:var(--amber);letter-spacing:2px;margin:12px 0 8px}
+  .db-rw-txt{font-size:14px;line-height:1.72;color:var(--text-b)}
+  .db-quote{font-family:'Share Tech Mono';font-size:12px;color:var(--green-stable);border-left:2px solid var(--green-stable);padding-left:12px;margin-top:12px}
+  .db-next{width:100%;margin-top:14px;padding:12px;background:rgba(247,148,33,.1);border:1px solid var(--orange);color:var(--orange);font-weight:700;cursor:pointer;border-radius:4px}
+  #budget.budget-green{color:var(--green)}#budget.budget-amber{color:var(--amber)}#budget.budget-red{color:var(--red)}
+  .budget-toast{position:fixed;font-size:14px;font-weight:700;color:var(--red);z-index:601;animation:budgetFloat 2.4s ease forwards}
+  @keyframes budgetFloat{0%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+  .db-budget{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .db-budget-ttl{font-size:11px;color:var(--amber);letter-spacing:2px;margin-bottom:8px}
+  .db-budget-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0}
+  .db-budget-row.db-total{border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-weight:700}
+  .db-rating{margin-top:10px;font-size:12px;color:var(--purple-light);text-align:center}
+  .heatmap-tbl{font-size:8px;border-collapse:collapse;width:100%}
+  .heatmap-tbl th,.heatmap-tbl td{border:1px solid #1a2a3a;padding:2px}
+  #hack-overlay .ht{display:block}
+  .ht-g{color:#00ff41}.ht-a{color:#ffb000}.ht-r{color:#ff4040}.ht-o{color:#ff8800}
+  .ht-cur{display:inline-block;width:10px;height:18px;background:#00ff41;animation:curBlink .7s step-end infinite;vertical-align:middle}
+  @keyframes curBlink{0%,100%{opacity:1}50%{opacity:0}}
+  .nx-win.xwin-max{left:0!important;top:40px!important;width:100%!important;height:calc(100% - 68px)!important}
+  #wallpaper{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 20%,rgba(84,0,173,.08),transparent),linear-gradient(180deg,#0a0e14 0%,#0f1419 100%);z-index:0}
+  .r2-layout{display:flex;position:absolute;inset:0;bottom:28px;z-index:1;font-family:var(--font-mono);min-width:0}
+  .r2-router{width:min(220px,34vw);min-width:min(100%,160px);flex-shrink:0;background:#0c1016;border-right:1px solid #1a2a3a;overflow-y:auto;padding:8px 0;font-size:11px;color:#8ab0c0;-webkit-overflow-scrolling:touch}
+  .r2-r-hdr{font-size:9px;letter-spacing:2px;color:#4a8aa0;padding:6px 10px;border-bottom:1px solid #1a2a3a;position:sticky;top:0;background:#0c1016;z-index:1}
+  .r2-file{padding:8px 10px;cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;min-width:0}
+  .r2-file span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .r2-file:hover{background:rgba(26,58,74,0.4)}
+  .r2-file.sel{background:rgba(26,58,74,0.75);border-left-color:#4a8aa0;color:#c8ddf0}
+  .r2-file.done{opacity:.55}
+  .r2-inspector{flex:1;display:flex;flex-direction:column;min-width:0;background:#0f1419;overflow:hidden}
+  .r2-ins-hdr{padding:8px 12px;border-bottom:1px solid #1a2a3a;font-size:clamp(10px,2.5vw,12px);color:#8ab0c0;word-break:break-word;flex-shrink:0;min-width:0;background:linear-gradient(180deg,#101820 0%,#0c1016 100%)}
+  .r2-ins-body{flex:1;overflow:auto;padding:12px;font-size:clamp(10px,2.6vw,12px);color:#c8ddf0;-webkit-overflow-scrolling:touch;min-height:0;padding-right:max(12px,env(safe-area-inset-right))}
+  .r2-meta-row{display:flex;border-bottom:1px solid #1a2a3a;font-size:10px;align-items:flex-start}
+  .r2-meta-row:nth-child(even){background:#111c24}
+  .r2-ml{flex:0 0 clamp(100px,28vw,130px);color:#4a8aa0;text-align:right;padding:6px 8px;font-family:'Courier New',monospace}
+  .r2-mv{flex:1;padding:6px 8px;font-family:'Courier New',monospace;word-break:break-word;min-width:0}
+  .r2-schema-wrap{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .r2-schema-lbl{font-size:9px;color:#4a8aa0;letter-spacing:1px;margin-bottom:6px;width:100%}
+  .schema-tag{display:inline-block;margin:0;padding:4px 10px;border:1px solid #2a4a5a;border-radius:3px;font-size:clamp(9px,2.4vw,10px);font-family:'Courier New',monospace;color:#a8c8d8;background:#0a1218;max-width:100%;word-break:break-word}
+  .r2-sample{margin-top:12px}
+  .r2-sample-cap{font-size:9px;color:#6a7a8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  .r2-sample-tbl{width:100%;border-collapse:collapse;font-family:Tahoma,sans-serif;font-size:10px;background:#fff;color:#222;border:1px solid #888}
+  .r2-sample-tbl td{border:1px solid #aaa;padding:4px 6px}
+  .r2-sample-tbl td:first-child{color:#444;width:38%}
+  .r2-route-bar{padding:10px 12px;border-top:1px solid #1a2a3a;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#0c1016}
+  .r2-route-bar span{font-size:10px;color:#5a7a8a;margin-right:4px}
+  .r2-rb{padding:6px 12px;border:1px solid #3a5a6a;background:#1a2a3a;color:#c8ddf0;font-size:10px;border-radius:2px;cursor:pointer}
+  .r2-rb:hover{border-color:#4a8aa0}
+  .r2-rb:disabled{opacity:.35;cursor:not-allowed}
+  .bm-bubble.bm-zex{background:rgba(168,85,247,.08);color:#e9d5ff;border-left:2px solid rgba(168,85,247,.45)}
+  #budget.budget-red{animation:budgetPulse 1.5s ease-in-out infinite}
+  @keyframes budgetPulse{0%,100%{opacity:1}50%{opacity:.55}}
+  #budget.budget-flash{animation:budgetShake .4s ease,budgetRedFlash .4s ease!important}
+  @keyframes budgetShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+  @keyframes budgetRedFlash{0%,100%{filter:none}40%{filter:brightness(2) drop-shadow(0 0 8px var(--red))}}
+  .map-grid--dept .map-cell{min-width:0;display:flex;align-items:stretch}
+  .map-grid--dept .node{min-height:48px;width:100%;padding:4px 2px}
+  .map-grid--dept .node-name{font-size:clamp(7px,1.5vw,9px)}
+  .map-grid--dept .node-status{font-size:clamp(6px,1.4vw,8px)}
+  /* ——— Responsive gameplay ——— */
+  @media (max-width:1200px){
+    #desktop-panel{flex:1 1 55%}
+    #right{flex:1 1 45%;min-width:min(100%,260px)}
+  }
+  @media (max-width:1024px){
+    #main-row{flex-direction:column;overflow:hidden;min-height:0;flex:1}
+    #desktop-panel{flex:1 1 52%;min-height:0;overflow:hidden;width:100%}
+    #right{flex:1 1 48%;min-height:0;overflow:hidden;border-left:none;border-top:1px solid rgba(0,196,28,.28);width:100%}
+    #eboard{flex:0 0 auto;overflow:hidden}
+    #broker-wrap{flex:1;min-height:0}
+  }
+  @media (max-width:768px){
+    .broker-footer{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+    #hdr{grid-template-columns:1fr;grid-template-rows:auto auto auto;text-align:center;gap:6px;padding:10px;padding-top:max(10px,env(safe-area-inset-top))}
+    .hdr-left,.hdr-center,.hdr-right{justify-self:center;width:100%}
+    .hdr-right{justify-content:center}
+    .r2-layout{flex-direction:column;bottom:32px}
+    .r2-router{width:100%;max-height:min(200px,28vh);min-height:120px;border-right:none;border-bottom:1px solid #1a2a3a}
+    .r2-inspector{flex:1;min-height:min(45vh,360px)}
+    #desktop-panel{display:flex;flex-direction:column}
+    #wallpaper{position:absolute}
+    .r2-layout{position:relative;flex:1;min-height:0}
+    #nexus-taskbar{position:relative;flex-shrink:0}
+    #cal-panel{bottom:0;left:0;width:100%;max-width:100%;border-left:none;border-top:2px solid var(--purple-light)}
+    #cal-toggle{left:50%;transform:translate(-50%,-100%);top:0;border-radius:6px 6px 0 0;border:2px solid var(--purple-light);border-bottom:none}
+  }
+  @container rside (max-width:300px){
+    .map-grid.map-grid--dept{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto}
+    .map-grid--dept .node{min-height:44px}
+  }
+  @media (max-width:420px){
+    .map-grid.map-grid--dept{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto;gap:4px}
+    .map-grid--dept .node{min-height:46px}
+  }
+  @media (max-width:540px){
+    .eb-hdr{flex-direction:column;align-items:flex-start;gap:4px}
+    .bk-members{font-size:9px!important;line-height:1.4}
+    .bk-sep{display:none}
+    .bk-member{display:inline-block;margin-right:6px}
+  }
+  @media (max-width:400px){
+    #synth-btn{font-size:10px;padding:8px 6px}
+  }
+  @media (max-width:520px){
+    .r2-meta-row{flex-direction:column}
+    .r2-ml{text-align:left;flex:none;width:100%;padding-bottom:0}
+    .r2-mv{padding-top:2px}
+  }
+</style>
+</head>
+<body>
+<div id="intro-root">
+<div class="ambient-glow"></div>
+<div class="scanlines"></div>
+<div class="bg-grid"></div>
+<div class="corner corner--tl"></div><div class="corner corner--tr"></div><div class="corner corner--bl"></div><div class="corner corner--br"></div>
+<div class="status-bar">
+  <div class="status-left"><span><span class="status-dot live"></span>TERMINAL ACTIVE</span><span id="clock">--:--:--</span></div>
+  <div class="status-right"><span>OP-OMNI / v2.4.1</span><span>ENCRYPTED</span></div>
+</div>
+<div class="page active" id="page1">
+  <div class="page-eyebrow">OPERATION OMNI — ROUND 02 OF 05</div>
+  <div class="page-title">THE SCRAMBLE</div>
+  <p class="page-subtitle">◈ OPERATION OMNI ◈</p>
+  <p class="intro-stats">10 DATASETS · 4 DEPARTMENTS · 847 PEOPLE</p>
+  <div class="button-section"><button class="btn-next" onclick="goToPage(2)"><div class="btn-inner"><span>Continue</span><span class="btn-arrow">→</span></div></button></div>
+</div>
+<div class="page" id="page2">
+  <div class="page-eyebrow">// Intelligence Brief</div>
+  <div class="page-title">Pre-Mission Brief</div>
+  <div class="content">
+    <div class="broker-section">
+      <div class="section-label">// Voss</div>
+      <div class="broker-card">
+        <div class="broker-text">
+          <p>OMNI is confirmed. But a footprint isn't enough. You can't hold anyone accountable for something you can't fully explain.</p>
+          <p>We need to map OMNI's data supply chain — which departments fed data into it, who signed off, who knew. That's what builds a case.</p>
+          <p>Zex intercepted Marshall's governance registry before he could finish wiping it. Ten datasets, no department assignments — he scrambled the ownership records on his way out the door.</p>
+          <p>The raw metadata is still intact. Source systems, steward names, lineage chains, schema fields. Everything you need to reconstruct who owns what — if you know how to read it.</p>
+          <p>Read the metadata carefully. The data tells the story. Some of it you won't expect.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="button-section"><button class="btn-next" onclick="goToPage(3)"><div class="btn-inner"><span>Continue</span><span class="btn-arrow">→</span></div></button></div>
+</div>
+<div class="page" id="page3">
+  <div class="page-eyebrow">// How It Works</div>
+  <div class="page-title">Operational Protocol</div>
+  <div class="content">
+    <div class="ops-section">
+      <div class="section-label">// Network Router</div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-title">OPEN A FILE</div>
+          <div class="step-desc">Click any dataset in the Network Router. The Inspector shows full metadata: source system, data steward, lineage, classification, schema. Read all of it — not just the obvious fields.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-title">FOLLOW THE STEWARD</div>
+          <div class="step-desc">The Data Steward field tells you who is accountable. Follow the reporting chain — not the source system name. Where data comes from is not the same as who is responsible for it.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-title">ROUTE &amp; VERIFY</div>
+          <div class="step-desc">Route to the correct department. When all files for a department are confirmed, a Security Verification fires. Answer correctly to extract the token. Some answers require you to have read carefully.</div>
+        </div>
+      </div>
+      <p class="atlas-note">Something in the data connects these files beyond department ownership. You may find it before the round is over.</p>
+    </div>
+  </div>
+  <div class="button-section">
+    <div class="button-label">// Ready?</div>
+    <button class="btn-next" id="btn-breach" onclick="startBreachGame()"><div class="btn-inner"><span>Enter registry</span><span class="btn-arrow">→</span></div></button>
+  </div>
+</div>
+</div>
+
+<div id="gp-root" style="display:none">
+<div id="game" style="display:flex;flex-direction:column">
+  <div id="hdr">
+    <div class="hdr-left"><i class="fas fa-terminal"></i> MASTERMIND TERMINAL | OPERATION OMNI</div>
+    <div class="hdr-center">ROUND 02 OF 05 / THE SCRAMBLE</div>
+    <div class="hdr-right">
+      <span id="budget" class="budget-green">💰 $50,000</span>
+      <span style="color:var(--border)">|</span>
+      <span id="timer">00:00</span>
+      <span class="live-dot"></span><span style="letter-spacing:1px">LIVE</span>
+    </div>
+  </div>
+  <div id="step-banner">Select a dataset in the Network Router to inspect metadata.</div>
+  <div id="main-row">
+    <div id="desktop-panel">
+      <div id="wallpaper"></div>
+      <div class="r2-layout">
+        <div class="r2-router">
+          <div class="r2-r-hdr">NETWORK ROUTER</div>
+          <div id="r2-file-list"></div>
+        </div>
+        <div class="r2-inspector">
+          <div class="r2-ins-hdr" id="r2-ins-hdr">INSPECTOR — Select a dataset</div>
+          <div class="r2-ins-body" id="r2-ins-body"><span style="color:#5a6a7a">Click any dataset in the Network Router to load metadata.</span></div>
+          <div class="r2-route-bar" id="r2-route-bar" style="display:none"><span>Route to department:</span></div>
+            </div>
+          </div>
+      <div id="nexus-taskbar">GOVERNANCE REGISTRY · Intercepted · Read-only</div>
+
+      <div id="hack-overlay">
+        <span class="ht ht-g" id="ht1">OPERATION OMNI — ROUND 02 OF 05</span>
+        <span class="ht ht-g" id="ht2">THE SCRAMBLE</span>
+        <span class="ht" id="ht3">Auth: <span class="ht-a">r.marshall@megacorp.com</span> · <span class="ht-g">OK</span></span>
+        <span class="ht" id="ht4">Registry mirror: <span class="ht-g">READ-ONLY</span></span>
+        <span class="ht ht-o" id="ht5">⚠  Session logged. Move carefully.</span>
+        <span class="ht" id="ht6">Window: <span class="ht-r">12 minutes</span></span>
+        <span class="ht" id="ht7"><span class="ht-cur"></span></span>
+      </div>
+
+      <div id="cal-panel">
+        <button id="cal-toggle" onclick="toggleCalPanel()">›</button>
+        <div class="cp-hdr"><div class="cp-node" id="cp-node">SECURITY VERIFICATION</div><div style="font-size:11px;color:var(--text);opacity:.85">Select values from the evidence.</div></div>
+        <div class="cp-body"><div class="cp-params" id="cp-params"></div></div>
+        <div class="cp-foot"><button class="cp-ok" onclick="confirmCal()">✓ CONFIRM LOCK</button></div>
+      </div>
+    </div>
+
+    <div id="right">
+      <div id="eboard">
+        <div class="eb-hdr"><div><div class="eb-htitle">DEPARTMENT ROUTING</div><div class="map-sub">OMNI DATA SUPPLY CHAIN</div></div><span id="eb-hint"></span></div>
+        <div class="map-wrap map-wrap--dept">
+          <div class="map-grid map-grid--dept">
+            <div class="map-cell"><div class="node n-idle" id="node-finance"><div class="node-icon"><i class="fas fa-sack-dollar"></i></div><div class="node-name">FINANCE</div><div class="node-status" id="ns-finance">0 / 2 routed</div></div></div>
+            <div class="map-cell"><div class="node n-idle" id="node-operations"><div class="node-icon"><i class="fas fa-gears"></i></div><div class="node-name">OPERATIONS</div><div class="node-status" id="ns-operations">0 / 3 routed</div></div></div>
+            <div class="map-cell"><div class="node n-idle" id="node-it"><div class="node-icon"><i class="fas fa-server"></i></div><div class="node-name">IT</div><div class="node-status" id="ns-it">0 / 3 routed</div></div></div>
+            <div class="map-cell"><div class="node n-idle" id="node-compliance"><div class="node-icon"><i class="fas fa-scale-balanced"></i></div><div class="node-name">COMPLIANCE</div><div class="node-status" id="ns-compliance">0 / 2 routed</div></div></div>
+          </div>
+        </div>
+        <div id="eb-step">DATASETS CONFIRMED: <span id="routed-total">0</span> / 10</div>
+        <div class="key-frag-lbl" id="key-frag-lbl">KEY FRAGMENTS: <span id="frag-count">0</span> / 4</div>
+        <div class="eb-progress"><div class="ep-seg" id="ep-finance"></div><div class="ep-seg" id="ep-operations"></div><div class="ep-seg" id="ep-it"></div><div class="ep-seg" id="ep-compliance"></div></div>
+        <button id="synth-btn" disabled onclick="startKeyForge()"><i class="fas fa-key"></i> ⬡ COMPILE KEY — SECURE ALL 4 TOKENS</button>
+      </div>
+      <div id="broker-wrap">
+        <div class="broker-hdr">
+          <div class="bk-avatar"><i class="fas fa-shield-halved"></i></div>
+          <div class="bk-info">
+            <div class="bk-name">Operation Channel</div>
+            <div class="bk-members" id="bk-members">
+              <span class="bk-member online" data-name="Voss">Voss — 🟢 online</span><span class="bk-sep"> · </span>
+              <span class="bk-member online" data-name="Zex">Zex — 🟢 online</span><span class="bk-sep"> · </span>
+              <span class="bk-member offline" data-name="Atlas">Atlas — ⚫ offline</span><span class="bk-sep"> · </span>
+              <span class="bk-member offline" data-name="Nova">Nova — ⚫ offline</span><span class="bk-sep"> · </span>
+              <span class="bk-member offline" data-name="Kade">Kade — ⚫ offline</span>
+            </div>
+          </div>
+          <div class="bk-icons"><i class="fas fa-magnifying-glass"></i> &nbsp; <i class="fas fa-lock"></i></div>
+        </div>
+        <div id="bk-status" style="padding:0 14px 8px;font-size:11px;min-height:14px;color:var(--green-matrix)"></div>
+        <div id="broker-body"><div class="bm-sep"><div class="bm-sep-pill">Today</div></div></div>
+        <div class="broker-footer">
+          <div class="broker-input-bar">
+            <div class="hint-wrap">
+              <button id="hint-btn" onclick="requestHint()"><i class="fas fa-lightbulb"></i></button>
+              <div class="hint-tooltip">Request hint · costs $2,500</div>
+              <div id="hint-cd"></div>
+            </div>
+            <input id="broker-input" type="text" placeholder="Operation Channel — listen only" disabled>
+            <button class="mic-btn"><i class="fas fa-microphone"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="keyforge-overlay"><pre id="keyforge-term"></pre><div id="keyforge-box"></div></div>
+
+<div id="gameover-overlay">
+  <div class="go-card">
+    <div class="db-badge" style="color:var(--pink)">DETECTION LIMIT</div>
+    <div class="db-head">NEXUS FLAGGED THE SESSION. MIRROR DROPPED.</div>
+    <p style="color:var(--grey-text);line-height:1.6;margin:12px 0">Detection risk reached 100%. The operation is blown for this window.</p>
+    <button class="db-next" onclick="document.getElementById('gameover-overlay').classList.remove('show');showDebrief(true)">DEBRIEF →</button>
+  </div>
+</div>
+
+<div id="debrief-overlay" style="display:none">
+  <div class="db-card">
+    <div class="db-badge" id="db-badge">ROUND 02 — COMPLETE</div>
+    <div class="db-head" id="db-head-title">THE SCRAMBLE — KEY COMPILED</div>
+    <div class="db-metrics" id="db-metrics"></div>
+    <div class="db-rw-ttl">REAL-WORLD TRANSLATION</div>
+    <div class="db-rw-txt" id="db-rw-body"></div>
+    <button class="db-next" onclick="nextRound()">CONTINUE TO ROUND 3 — THE HUMAN SHIELD →</button>
+  </div>
+</div>
+
+<svg id="cable-svg"><defs><filter id="cable-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs></svg>
+<div id="toast"></div>
+</div>
+
+<script>
+'use strict';
+
+/** I18N — extend as needed; NL marked TODO where approximate */
+const I18N_EN = {
+  stepBannerIdle: 'Select a dataset in the Network Router to inspect metadata.',
+  compileBtn: '⬡ COMPILE KEY — SECURE ALL 4 TOKENS',
+  debriefNext: 'CONTINUE TO ROUND 3 — THE HUMAN SHIELD →'
+};
+const I18N_NL = {
+  stepBannerIdle: 'Selecteer een dataset in de Network Router om metadata te bekijken.', // TODO NL
+  compileBtn: '⬡ COMPILÉER SLEUTEL — 4 TOKENS', // TODO NL
+  debriefNext: 'DOOR NAAR RONDE 3 — THE HUMAN SHIELD →' // TODO NL
+};
+let UI_LANG = 'en';
+function t(key) { return (UI_LANG === 'nl' ? I18N_NL : I18N_EN)[key] || I18N_EN[key] || key; }
+
+const GS = {
+  chipIdx: [],
+  budget: 50000, budgetStart: 50000,
+  wrongRoutes: 0, calErrors: 0,
+  hintPenalties: 0, hintsUsed: 0,
+  brokerOpen: true, hackDone: false, hintCooldown: false,
+  timerSec: 0, timerInt: null,
+  gameOver: false,
+  selectedId: null,
+  routed: {},
+  tokens: { finance: false, operations: false, it: false, compliance: false },
+  calDone: { finance: false, operations: false, it: false, compliance: false },
+  firstOpen: true,
+  wrongRot: 0,
+  wrongRouteBudgetRot: 0,
+  wrongCalBudgetRot: 0,
+  budgetWarn30: false, budgetWarn15: false,
+  atlasOnline: false,
+  compileStarted: false
+};
+
+const BUDGET_WARNED = { 30000: false, 15000: false };
+
+const DEPT_NEED = { finance: 2, operations: 3, it: 3, compliance: 2 };
+const DEPT_LABEL = { finance: 'Finance', operations: 'Operations', it: 'IT', compliance: 'Compliance' };
+
+const WRONG_ROUTE_GENERIC = [
+  'Wrong department. Follow the reporting chain in the Data Steward field — not the source system name.',
+  "Not quite. The steward's reporting line tells you who is accountable. Read it again.",
+  "Wrong. Don't route by where the data came from. Route by who is responsible for it.",
+  'Incorrect. Some of these are designed to mislead — the metadata settles it every time.'
+];
+
+const WRONG_ROUTE_BUDGET = [
+  'That cost us $750. Read the steward field before you route.',
+  'Wrong department — $750. The metadata has the answer.',
+  '$750 gone. Follow the reporting chain.'
+];
+
+const WRONG_CAL_BUDGET = [
+  '$1,000. The answer is in the Inspector — go back and check.',
+  'Incorrect. $1,000 lighter. The metadata settles every question.'
+];
+
+const DATASETS = [
+  {
+    id: 'vendor_inv',
+    file: 'Vendor_Invoice_Ledger_Q3.dat',
+    dept: 'finance',
+    sourceSystem: 'Accounts Payable Engine (SAP FI)',
+    steward: 'Chief Financial Officer — reports to Board Audit Committee',
+    lineage: 'Invoice capture → AP Engine (SAP FI) → Finance GL consolidation',
+    classification: 'Confidential — Financial',
+    records: '2,890',
+    lastAccess: '01-Oct-2003 — r.marshall',
+    schema: ['invoice_id', 'vendor_id', 'amount_usd', 'posting_date', 'approval_chain', 'tax_code']
+  },
+  {
+    id: 'gl_snap',
+    file: 'GL_Account_Balance_Snapshot_Q3.dat',
+    dept: 'finance',
+    sourceSystem: 'General Ledger Core (Oracle)',
+    steward: 'Chief Financial Officer — reports to Board Audit Committee',
+    lineage: 'GL Core → Finance reporting mart → Regulatory filing archive',
+    classification: 'Confidential — Financial',
+    records: '18,204',
+    lastAccess: '29-Sep-2003 — system batch',
+    schema: ['account_id', 'balance_q3', 'currency', 'entity_code', 'rollup_flag']
+  },
+  {
+    id: 'workforce',
+    file: 'Workforce_Shift_Log.dat',
+    dept: 'operations',
+    sourceSystem: 'Workforce Management System v4',
+    steward: 'VP Field Operations — reports to Chief Operating Officer',
+    lineage: 'Site time clocks → WMS Core → HR Integration Layer',
+    classification: 'Internal',
+    records: '12,400',
+    lastAccess: '30-Sep-2003 — wms_batch',
+    schema: ['employee_id', 'site_id', 'shift_start', 'shift_end', 'hours_worked', 'termination_risk_score', 'payroll_id']
+  },
+  {
+    id: 'device_fleet',
+    file: 'Device_Fleet_Telemetry.dat',
+    dept: 'operations',
+    sourceSystem: 'IoT Edge Aggregator East',
+    steward: 'Facilities & Operations Manager — reports to Chief Operating Officer',
+    lineage: 'Edge nodes → IoT aggregator → Ops dashboard → Maintenance ticketing',
+    classification: 'Internal',
+    records: '902,110',
+    lastAccess: '01-Oct-2003 — iot_svc',
+    schema: ['device_uid', 'lat', 'lon', 'battery_pct', 'firmware_ver', 'alert_state']
+  },
+  {
+    id: 'warehouse',
+    file: 'Warehouse_Shipment_Velocity_Q3.dat',
+    dept: 'operations',
+    sourceSystem: 'Supply Chain Control Tower',
+    steward: 'VP Supply Chain — reports to Chief Operating Officer',
+    lineage: 'WMS picks → Control tower → Carrier APIs → Ops KPI store',
+    classification: 'Internal',
+    records: '44,200',
+    lastAccess: '28-Sep-2003 — scm_nightly',
+    schema: ['shipment_id', 'dock_id', 'sku_count', 'velocity_index', 'sla_flag']
+  },
+  {
+    id: 'web_sess',
+    file: 'Web_Session_Analytics.dat',
+    dept: 'it',
+    sourceSystem: 'Customer Web Analytics Cluster',
+    steward: 'IT Security & Digital Infrastructure — reports to Chief Technology Officer',
+    lineage: 'Web tier logs → UTM enrichment → IT Data Pipeline → Enterprise BI warehouse',
+    classification: 'Confidential — Security',
+    records: '14,640',
+    lastAccess: '30-Sep-2003 — sec_etl',
+    schema: ['session_id', 'utm_source', 'utm_medium', 'landing_page', 'duration_sec']
+  },
+  {
+    id: 'campaign',
+    file: 'Campaign_Spend_Monitor.dat',
+    dept: 'it',
+    sourceSystem: 'Marketing Performance Hub',
+    steward: 'IT Security & Digital Infrastructure — reports to Chief Technology Officer',
+    lineage: 'Marketing feeds → IT Data Pipeline → BI warehouse → Executive dashboards',
+    classification: 'Internal',
+    records: '3,102',
+    lastAccess: '27-Sep-2003 — bi_svc',
+    schema: ['campaign_id', 'spend_usd', 'channel', 'pipeline_stage', 'roi_est']
+  },
+  {
+    id: 'api_log',
+    file: 'API_Access_Log_Central.dat',
+    dept: 'it',
+    sourceSystem: 'API Gateway — Enterprise',
+    steward: 'IT Security & Digital Infrastructure — reports to Chief Technology Officer',
+    lineage: 'API Gateway → Central log store → SIEM correlation → Retention 90d',
+    classification: 'Confidential — Security',
+    records: '221,900',
+    lastAccess: '01-Oct-2003 — siem_ingest',
+    schema: ['request_id', 'caller_app', 'endpoint', 'latency_ms', 'status_code']
+  },
+  {
+    id: 'customer_master',
+    file: 'Customer_Master_Registry.dat',
+    dept: 'compliance',
+    sourceSystem: 'Customer Identity Platform',
+    steward: 'Chief Compliance Officer — Data Protection Office — reports to General Counsel',
+    lineage: 'CRM feeds → Identity platform → Consent registry → DPO audit trail',
+    classification: 'Internal — Restricted',
+    records: '128,400',
+    lastAccess: 'j.kelso@megacorp.com — 05-Oct-2003 — dpo_audit',
+    schema: ['customer_id', 'pii_tier', 'consent_flag', 'last_review', 'region']
+  },
+  {
+    id: 'support_case',
+    file: 'Support_Case_Archive.dat',
+    dept: 'compliance',
+    sourceSystem: 'Enterprise Service Management',
+    steward: 'Chief Compliance Officer — Data Protection Office — reports to General Counsel',
+    lineage: 'Helpdesk intake → Case workflow → Legal hold index → Archive tier',
+    classification: 'Confidential — Legal',
+    records: '4,200',
+    lastAccess: '15-Sep-2003 — helpdesk_export',
+    schema: ['case_id', 'filed_by', 'category', 'status', 'resolved_by', 'filed_date']
+  }
+];
+
+const CAL_PARAMS = {
+  finance: [
+    { label: 'Who holds executive stewardship of financial transaction records?', opts: ['Chief Operating Officer', 'Chief Financial Officer', 'Chief Technology Officer', 'Chief Compliance Officer'], ans: 1, err: 'Check the Data Steward fields in the Finance files — they all report to the same executive.' },
+    { label: 'What source system does Vendor_Invoice_Ledger_Q3.dat originate from?', opts: ['Order Management Platform', 'Accounts Payable Engine (SAP FI)', 'Pricing Management System', 'Customer Data Platform'], ans: 1, err: 'Open Vendor_Invoice_Ledger_Q3.dat in the Inspector. The Source System field states it exactly.' },
+    { label: 'Vendor_Invoice_Ledger_Q3.dat was last accessed by r.marshall on which date — and what is unusual about that?', opts: ['28-Sep-2003 — routine access', '01-Oct-2003 — his retirement day', '14-Oct-2003 — post-departure access', '05-Oct-2003 — audit review'], ans: 1, err: 'Check the Last Accessed field in Vendor_Invoice_Ledger_Q3.dat. Marshall accessed the AP system on a specific significant day.' }
+  ],
+  operations: [
+    { label: 'What is the final destination in the Workforce_Shift_Log lineage chain?', opts: ['IT Security Monitoring', 'HR Integration Layer', 'Payroll System', 'Supply Chain Analytics Platform'], ans: 1, err: 'Open Workforce_Shift_Log.dat — the Data Lineage field ends with the destination system.' }, /* ans index 1 = HR Integration Layer */
+    { label: 'The Workforce_Shift_Log schema contains a field that does not belong to the Workforce Management System. What is it called?', opts: ['shift_duration_sec', 'termination_risk_score', 'employee_id', 'site_id'], ans: 1, err: 'Read every schema field in Workforce_Shift_Log.dat carefully. One of them was not part of the original system.' },
+    { label: 'Who is the Data Steward for Device_Fleet_Telemetry.dat?', opts: ['IT Network Administrator', 'IoT Platform Engineer', 'Facilities & Operations Manager', 'Chief Technology Officer'], ans: 2, err: 'Open Device_Fleet_Telemetry.dat — the Data Steward field names the role exactly.' }
+  ],
+  it: [
+    { label: 'How many records does Web_Session_Analytics.dat contain?', opts: ['5,490', '9,000', '14,640', '18,000'], ans: 2, err: 'Open Web_Session_Analytics.dat — the Records field shows the exact count.' },
+    { label: 'Despite containing utm_source and utm_medium marketing parameters, Web_Session_Analytics is owned by IT. What principle does this illustrate?', opts: ['Data origin determines ownership', 'Infrastructure ownership overrides data origin', 'Marketing always owns customer data', 'Classification level determines stewardship'], ans: 1, err: 'The steward is IT Security & Digital Infrastructure — not Marketing. The platform is IT infrastructure. Who owns the platform owns the data.' },
+    { label: 'Campaign_Spend_Monitor flows through which core IT component before reaching the BI warehouse?', opts: ['Finance ERP Reconciliation Module', 'IT Data Pipeline', 'HR Payroll Engine', 'Legal Document Archive'], ans: 1, err: 'Open Campaign_Spend_Monitor.dat — read the full Data Lineage field. The IT component is named explicitly.' }
+  ],
+  compliance: [
+    { label: 'What classification label is shown on Customer_Master_Registry.dat?', opts: ['Internal', 'Confidential', 'Internal — Restricted', 'Restricted — GDPR Regulated'], ans: 2, err: 'Open Customer_Master_Registry.dat — the Classification badge shows the exact label.' },
+    { label: 'Who is the Data Steward for the Customer Master Registry?', opts: ['VP Sales & CRM', 'Chief Technology Officer', 'Chief Compliance Officer — Data Protection Office', 'Head of Marketing'], ans: 2, err: 'Open Customer_Master_Registry.dat — the Data Steward field names the role and office.' },
+    { label: 'Support Case CASE-2847 was a data access request. Who personally closed it and denied the escalation?', opts: ['IT Director', 'HR Director', 'Chief Compliance Officer', 'R. Marshall'], ans: 3, err: 'Open Support_Case_Archive.dat and read the sample record. The resolved_by field names the person.' }
+  ]
+};
+
+function updateClock() {
+  const el = document.getElementById('clock');
+  if (el) el.textContent = new Date().toTimeString().slice(0, 8);
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function goToPage(pageNum) {
+  document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+  document.getElementById('page' + pageNum).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startBreachGame() {
+  const intro = document.getElementById('intro-root');
+  const gp = document.getElementById('gp-root');
+  if (intro) intro.style.display = 'none';
+  if (gp) {
+    gp.style.display = 'block';
+    document.documentElement.classList.add('gp-html-active');
+    document.body.classList.add('gp-gameplay-active');
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => startGame()));
+}
+
+function startGame() {
+  document.getElementById('game').style.display = 'flex';
+  buildFileList();
+  startTimer();
+  runHackSequence();
+}
+
+function startTimer() {
+  GS.timerInt = setInterval(() => {
+    GS.timerSec++;
+    const m = String(Math.floor(GS.timerSec / 60)).padStart(2, '0');
+    const s = String(GS.timerSec % 60).padStart(2, '0');
+    document.getElementById('timer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+function runHackSequence() {
+  const ho = document.getElementById('hack-overlay');
+  ho.classList.add('active');
+  const delays = [300, 620, 960, 1280, 1600, 1930, 2260];
+  ['ht1', 'ht2', 'ht3', 'ht4', 'ht5', 'ht6', 'ht7'].forEach((id, i) => {
+    setTimeout(() => { const e = document.getElementById(id); if (e) e.classList.add('show'); }, delays[i]);
+  });
+  setTimeout(() => {
+    ho.style.transition = 'opacity 0.7s ease';
+    ho.style.opacity = '0';
+    setTimeout(() => {
+      ho.classList.remove('active');
+      ho.style.opacity = '';
+      ho.style.transition = '';
+      revealDesktop();
+    }, 720);
+  }, 3350);
+}
+
+function revealDesktop() {
+  GS.hackDone = true;
+  setTimeout(() => brokerSay(
+    "We're in. Marshall's registry — intercepted mid-wipe. Ten files, no owners assigned. He thought he had time.",
+    'bm-d'
+  ), 800);
+  setTimeout(() => brokerSay(
+    'Use the Inspector. Read the Data Steward field before anything else. Who is accountable for this data — not where it came from.',
+    'bm-ok'
+  ), 2500);
+  setTimeout(() => zexSay(
+    "I've seen this registry before. Marshall used it to track everything. If the answers are anywhere they're in here."
+  ), 4500);
+}
+
+function buildFileList() {
+  const list = document.getElementById('r2-file-list');
+  list.innerHTML = '';
+  DATASETS.forEach(ds => {
+    const row = document.createElement('div');
+    row.className = 'r2-file';
+    row.dataset.id = ds.id;
+    row.innerHTML = '<span>📄</span><span>' + ds.file + '</span>';
+    row.onclick = () => selectDataset(ds.id);
+    list.appendChild(row);
+  });
+}
+
+function selectDataset(id) {
+  if (!GS.hackDone || GS.gameOver) return;
+  GS.selectedId = id;
+  document.querySelectorAll('.r2-file').forEach(el => {
+    el.classList.toggle('sel', el.dataset.id === id);
+    el.classList.toggle('done', !!GS.routed[el.dataset.id]);
+  });
+  const ds = DATASETS.find(d => d.id === id);
+  if (!ds) return;
+  if (GS.firstOpen) {
+    GS.firstOpen = false;
+    setBanner('Inspect the metadata — read every field before you route');
+  }
+  document.getElementById('r2-ins-hdr').textContent = 'INSPECTOR — ' + ds.file;
+  let html = '';
+  const rows = [
+    ['Source System', ds.sourceSystem],
+    ['Data Steward', ds.steward],
+    ['Data Lineage', ds.lineage],
+    ['Classification', ds.classification],
+    ['Records', ds.records],
+    ['Last Accessed', ds.lastAccess]
+  ];
+  rows.forEach(([k, v]) => {
+    html += '<div class="r2-meta-row"><div class="r2-ml">' + k + '</div><div class="r2-mv">' + v + '</div></div>';
+  });
+  html += '<div class="r2-schema-wrap"><div class="r2-schema-lbl">SCHEMA FIELDS</div>';
+  ds.schema.forEach(f => { html += '<span class="schema-tag">' + f + '</span>'; });
+  html += '</div>';
+  if (ds.id === 'support_case') {
+    html += '<div class="r2-sample">' +
+      '<div class="r2-sample-cap">SAMPLE RECORD — 1 of 4,200</div>' +
+      '<table class="r2-sample-tbl" cellpadding="0" cellspacing="0">' +
+      '<tr><td>case_id</td><td>CASE-2847</td></tr>' +
+      '<tr><td>filed_by</td><td>EMP-2847</td></tr>' +
+      '<tr><td>category</td><td>Data Access Request</td></tr>' +
+      '<tr><td>status</td><td>CLOSED — escalation denied</td></tr>' +
+      '<tr><td>resolved_by</td><td>r.marshall</td></tr>' +
+      '<tr><td>filed_date</td><td>12-Sep-2003</td></tr>' +
+      '</table></div>';
+  }
+  document.getElementById('r2-ins-body').innerHTML = html;
+  const bar = document.getElementById('r2-route-bar');
+  bar.style.display = 'flex';
+  bar.innerHTML = '<span>Route to department:</span>';
+  const routed = GS.routed[id];
+  if (routed) {
+    const b = document.createElement('span');
+    b.style.cssText = 'color:#5a7a8a;font-size:10px';
+    b.textContent = 'Already routed to ' + DEPT_LABEL[routed];
+    bar.appendChild(b);
+    return;
+  }
+  ['finance', 'operations', 'it', 'compliance'].forEach(dep => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'r2-rb';
+    btn.textContent = DEPT_LABEL[dep];
+    btn.onclick = () => tryRoute(id, dep);
+    bar.appendChild(btn);
+  });
+}
+
+function setBanner(msg) {
+  const el = document.getElementById('step-banner');
+  if (el) el.textContent = msg;
+}
+
+function tryRoute(id, dep) {
+  const ds = DATASETS.find(d => d.id === id);
+  if (!ds || GS.routed[id]) return;
+  if (dep !== ds.dept) {
+    GS.wrongRoutes++;
+    deductBudget(750, 'route');
+    brokerSay(WRONG_ROUTE_GENERIC[GS.wrongRot % WRONG_ROUTE_GENERIC.length], 'bm-err');
+    GS.wrongRot++;
+    handleWrongRouteSpecific(ds, dep);
+    setTimeout(() => brokerSay(WRONG_ROUTE_BUDGET[GS.wrongRouteBudgetRot % WRONG_ROUTE_BUDGET.length], 'bm-err'), 800);
+    GS.wrongRouteBudgetRot++;
+    return;
+  }
+  GS.routed[id] = dep;
+  document.querySelector('.r2-file[data-id="' + id + '"]').classList.add('done');
+  const n = Object.keys(GS.routed).length;
+  const rt = document.getElementById('routed-total');
+  if (rt) rt.textContent = String(n);
+  const total = 10;
+  let msg = 'Correct. <strong>' + ds.file + '</strong> → ' + DEPT_LABEL[dep] + '. ' + n + '/' + total + ' confirmed.';
+  if (ds.id === 'workforce' && dep === 'operations') {
+    msg = 'Correct. <strong>Workforce_Shift_Log.dat</strong> → Operations. ' + n + '/' + total + ' confirmed.';
+  }
+  brokerSay(msg, 'bm-ok', 200);
+  updateDeptNodes();
+  setTimeout(() => postRouteSuccess(ds), 350);
+}
+
+function postRouteSuccess(ds) {
+  if (ds.id === 'workforce' && ds.dept === 'operations') {
+    setTimeout(() => atlasSay('That field is not native to the Workforce Management System.'), 1800);
+    setTimeout(() => atlasSay('Someone added it. After deployment.'), 1800 + 4200);
+  }
+  if (ds.id === 'customer_master' && ds.dept === 'compliance') {
+    setTimeout(() => atlasSay('I know this system.'), 800);
+    setTimeout(() => {
+      atlasSay('I built it.');
+      if (!GS.atlasOnline) {
+        const atl = document.querySelector('[data-name="Atlas"]');
+        if (atl) {
+          atl.classList.replace('offline', 'online');
+          atl.textContent = 'Atlas — 🟢 online';
+        }
+        GS.atlasOnline = true;
+      }
+    }, 800 + 3000);
+  }
+  if (ds.id === 'support_case' && ds.dept === 'compliance') {
+    setTimeout(() => brokerSay(
+      'Someone tried to find out what data the company held on them. Marshall closed it himself.',
+      'bm-d'
+    ), 1200);
+  }
+  maybeDeptComplete(ds.dept);
+  selectDataset(ds.id);
+}
+
+function handleWrongRouteSpecific(ds, dep) {
+  if (ds.id === 'device_fleet' && dep === 'it') {
+    brokerSay(
+      'IoT data but the steward is Facilities & Operations Manager — not IT. Physical asset monitoring is an operational function.',
+      'bm-err'
+    );
+  } else if (ds.id === 'web_sess' && (dep === 'finance' || dep === 'operations')) {
+    brokerSay(
+      'The UTM parameters look like marketing data but the platform belongs to IT Security & Digital Infrastructure. The infrastructure owner is the steward — not the team that generates the data.',
+      'bm-err'
+    );
+  } else if (ds.id === 'campaign' && dep === 'finance') {
+    brokerSay(
+      'Marketing generates this but look at the lineage — it flows through the IT Data Pipeline before it reaches BI. IT owns the infrastructure.',
+      'bm-err'
+    );
+  }
+}
+
+function updateDeptNodes() {
+  const counts = { finance: 0, operations: 0, it: 0, compliance: 0 };
+  DATASETS.forEach(d => {
+    if (GS.routed[d.id] === d.dept) counts[d.dept]++;
+  });
+  Object.keys(DEPT_NEED).forEach(d => {
+    const el = document.getElementById('ns-' + d);
+    if (el) el.textContent = counts[d] + ' / ' + DEPT_NEED[d] + ' routed';
+  });
+}
+
+function maybeDeptComplete(dept) {
+  let ok = 0, need = DEPT_NEED[dept];
+  DATASETS.forEach(d => {
+    if (d.dept === dept && GS.routed[d.id] === dept) ok++;
+  });
+  if (ok < need || GS.calDone[dept] || GS.tokens[dept]) return;
+  const msgs = {
+    finance: ['All Finance files confirmed. Running Security Verification — three questions. The answers are in the metadata you already read.', 'bm-sys', 200],
+    operations: ['All Operations files confirmed. Security Verification running. One of these questions is about something you may have noticed in the schema.', 'bm-sys', 200],
+    it: ['All IT files confirmed. Security Verification running. Focus on the ownership principle — not the data content.', 'bm-sys', 200],
+    compliance: ['All Compliance files confirmed. Security Verification running. Read the questions carefully — one of them is about what you found in the case archive.', 'bm-sys', 200]
+  };
+  const m = msgs[dept];
+  brokerSay(m[0], m[1], m[2]);
+  setTimeout(() => openCal(dept), 900);
+}
+
+function openCal(dept) {
+  GS.calDept = dept;
+  const params = CAL_PARAMS[dept];
+  GS.chipIdx = new Array(params.length).fill(null);
+  document.getElementById('cp-node').textContent = 'VERIFY: ' + DEPT_LABEL[dept].toUpperCase();
+  const container = document.getElementById('cp-params');
+  container.innerHTML = '';
+  container.className = params.length >= 4 ? 'cp-params cp-compact' : 'cp-params';
+  params.forEach((p, i) => {
+    const div = document.createElement('div');
+    const chipsHTML = p.opts.map((opt, j) =>
+      '<button type="button" class="cp-chip" id="cpc' + i + '_' + j + '" onclick="selectChip(' + i + ',' + j + ')">' + opt + '</button>'
+    ).join('');
+    div.innerHTML = '<div class="cp-plbl">' + p.label + '</div><div class="cp-chips">' + chipsHTML + '</div><div class="cp-err" id="cpe' + i + '"></div>';
+    container.appendChild(div);
+  });
+  document.getElementById('cal-toggle').style.display = 'flex';
+  document.getElementById('cal-panel').classList.add('open');
+}
+
+function selectChip(paramIdx, chipIdx) {
+  const params = CAL_PARAMS[GS.calDept];
+  const p = params[paramIdx];
+  GS.chipIdx[paramIdx] = chipIdx;
+  p.opts.forEach((_, j) => {
+    const chip = document.getElementById('cpc' + paramIdx + '_' + j);
+    if (!chip) return;
+    chip.classList.remove('cp-sel', 'cp-correct', 'cp-wrong');
+    if (j === chipIdx) chip.classList.add('cp-sel');
+  });
+  const ce = document.getElementById('cpe' + paramIdx);
+  if (ce) ce.classList.remove('show');
+}
+
+function confirmCal() {
+  const dept = GS.calDept;
+  const params = CAL_PARAMS[dept];
+  let allOk = true;
+  params.forEach((p, i) => {
+    if (GS.chipIdx[i] !== p.ans) {
+      allOk = false;
+      const ce = document.getElementById('cpe' + i);
+      if (ce) {
+        ce.textContent = p.err;
+        ce.classList.add('show');
+      }
+      if (GS.chipIdx[i] != null) {
+        const wChip = document.getElementById('cpc' + i + '_' + GS.chipIdx[i]);
+        if (wChip) {
+          wChip.classList.remove('cp-sel');
+          wChip.classList.add('cp-wrong');
+        }
+      }
+    } else {
+      const okChip = document.getElementById('cpc' + i + '_' + p.ans);
+      if (okChip) {
+        okChip.classList.remove('cp-sel');
+        okChip.classList.add('cp-correct');
+      }
+    }
+  });
+  if (allOk) {
+    setTimeout(() => {
+      document.getElementById('cal-panel').classList.remove('open');
+      document.getElementById('cal-toggle').style.display = 'none';
+      GS.calDone[dept] = true;
+      GS.tokens[dept] = true;
+      onTokenAcquired(dept);
+    }, 400);
+  } else {
+    GS.calErrors++;
+    deductBudget(1000, 'cal');
+    brokerSay(
+      'Not correct. The answer is in the metadata you already read — go back to the Inspector and check.',
+      'bm-err'
+    );
+    setTimeout(() => brokerSay(WRONG_CAL_BUDGET[GS.wrongCalBudgetRot % WRONG_CAL_BUDGET.length], 'bm-err'), 800);
+    GS.wrongCalBudgetRot++;
+  }
+}
+
+function onTokenAcquired(dept) {
+  document.getElementById('ep-' + dept).classList.add('filled');
+  const fc = document.getElementById('frag-count');
+  const ntok = Object.values(GS.tokens).filter(Boolean).length;
+  if (fc) fc.textContent = String(ntok);
+  const msgs = {
+    finance: ['Finance token acquired. 1/4 fragments secured.', 'bm-sys', 200],
+    operations: ['Operations token acquired. 2/4 fragments secured.', 'bm-sys', 200],
+    it: ['IT token acquired. 3/4 fragments secured.', 'bm-sys', 200],
+    compliance: ['Compliance token acquired. 4/4 fragments secured. Compile when ready.', 'bm-sys', 200]
+  };
+  brokerSay(msgs[dept][0], msgs[dept][1], msgs[dept][2]);
+  if (dept === 'operations') {
+    setTimeout(() => zexSay(
+      'That termination_risk_score field. OMNI has already written back into the operational systems. The contamination goes deeper than Round 1 showed.'
+    ), 1000);
+  }
+  if (dept === 'compliance') {
+    setTimeout(() => zexSay(
+      'CASE-2847. Marshall personally closed a data access request from one of his own employees. Two weeks before he locked the vault.'
+    ), 1200);
+  }
+  if (ntok === 4) {
+    setTimeout(() => brokerSay(
+      "All four tokens secured. Compile the key. Let's see what we've been building toward.",
+      'bm-ok'
+    ), 600);
+    const sb = document.getElementById('synth-btn');
+    sb.classList.add('ready');
+    sb.disabled = false;
+  }
+}
+
+function toggleCalPanel() {
+  const panel = document.getElementById('cal-panel');
+  const toggle = document.getElementById('cal-toggle');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    toggle.textContent = '‹';
+  } else {
+    panel.classList.add('open');
+    toggle.textContent = '›';
+  }
+}
+
+function brokerSay(msg, cls, delayMs) {
+  const wrap = document.getElementById('broker-body');
+  if (!wrap) return;
+  const startDelay = delayMs != null ? delayMs : 0;
+  const type = cls || 'bm-d';
+  const statusEl = document.getElementById('bk-status');
+  setTimeout(() => {
+  if (statusEl) statusEl.innerHTML = '<span style="color:#00FF41;font-family:&quot;DM Sans&quot;,sans-serif;font-size:12px">Voss is typing...</span>';
+  const twrap = document.createElement('div');
+  twrap.className = 'bm-typing-wrap';
+  twrap.innerHTML = '<div class="bm-typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>';
+  wrap.appendChild(twrap);
+  wrap.scrollTop = wrap.scrollHeight;
+  setTimeout(() => {
+    twrap.remove();
+    if (statusEl) statusEl.innerHTML = '';
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const group = document.createElement('div');
+    group.className = 'bm-group';
+    const senderLabel = document.createElement('div');
+    senderLabel.className = 'bm-sender';
+    senderLabel.style.color = 'var(--green-matrix)';
+    senderLabel.textContent = 'VOSS';
+    const bubble = document.createElement('div');
+    bubble.className = 'bm-bubble ' + type;
+    bubble.innerHTML = msg.split('\n').join('<br>');
+    const tsEl = document.createElement('div');
+    tsEl.className = 'bm-ts';
+    tsEl.textContent = ts;
+    group.appendChild(senderLabel);
+    group.appendChild(bubble);
+    group.appendChild(tsEl);
+    wrap.appendChild(group);
+    wrap.scrollTop = wrap.scrollHeight;
+  }, 700);
+  }, startDelay);
+}
+
+function zexSay(text, delay) {
+  const body = document.getElementById('broker-body');
+  if (!body) return;
+  const d = delay != null ? delay : 0;
+  const statusEl = document.getElementById('bk-status');
+  setTimeout(() => {
+    if (statusEl) statusEl.innerHTML = '<span style="color:#a855f7;font-family:&quot;DM Sans&quot;,sans-serif;font-size:12px">Zex is typing...</span>';
+  const twrap = document.createElement('div');
+  twrap.className = 'bm-typing-wrap';
+  twrap.innerHTML = '<div class="bm-typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>';
+  body.appendChild(twrap);
+  body.scrollTop = body.scrollHeight;
+  setTimeout(() => {
+    twrap.remove();
+      if (statusEl) statusEl.innerHTML = '';
+      const ts = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+    const senderEl = document.createElement('div');
+    senderEl.className = 'bm-sender';
+      senderEl.style.color = '#a855f7';
+    senderEl.textContent = 'ZEX';
+    const group = document.createElement('div');
+    group.className = 'bm-group';
+    group.appendChild(senderEl);
+    const bubble = document.createElement('div');
+      bubble.className = 'bm-bubble bm-zex';
+      bubble.innerHTML = text.split('\n').join('<br>');
+    const tsEl = document.createElement('div');
+    tsEl.className = 'bm-ts';
+    tsEl.textContent = ts;
+    group.appendChild(bubble);
+    group.appendChild(tsEl);
+    body.appendChild(group);
+    body.scrollTop = body.scrollHeight;
+  }, 575);
+  }, d);
+}
+
+function atlasSay(text, delay) {
+  const body = document.getElementById('broker-body');
+  if (!body) return;
+  const d = delay != null ? delay : 0;
+  const statusEl = document.getElementById('bk-status');
+  setTimeout(() => {
+    if (statusEl) statusEl.innerHTML = '<span style="color:#f79421;font-family:&quot;DM Sans&quot;,sans-serif;font-size:12px">Atlas is typing...</span>';
+  const twrap = document.createElement('div');
+  twrap.className = 'bm-typing-wrap';
+  twrap.innerHTML = '<div class="bm-typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>';
+  body.appendChild(twrap);
+  body.scrollTop = body.scrollHeight;
+  setTimeout(() => {
+    twrap.remove();
+    if (statusEl) statusEl.innerHTML = '';
+    const senderEl = document.createElement('div');
+    senderEl.className = 'bm-sender';
+      senderEl.style.color = '#f79421';
+    senderEl.textContent = 'ATLAS';
+    const group = document.createElement('div');
+    group.className = 'bm-group';
+    group.appendChild(senderEl);
+    const bubble = document.createElement('div');
+    bubble.className = 'bm-bubble bm-atlas';
+      bubble.innerHTML = text.split('\n').join('<br>');
+    const tsEl = document.createElement('div');
+    tsEl.className = 'bm-ts';
+    tsEl.textContent = String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    group.appendChild(bubble);
+    group.appendChild(tsEl);
+    body.appendChild(group);
+    body.scrollTop = body.scrollHeight;
+  }, 575);
+  }, d);
+}
+
+function requestHint() {
+  if (GS.hintCooldown || GS.gameOver) return;
+  if (!GS.selectedId || GS.routed[GS.selectedId]) {
+    brokerSay('Select a file you have not routed yet.', 'bm-err');
+    return;
+  }
+  const ds = DATASETS.find(d => d.id === GS.selectedId);
+  if (!ds) return;
+  GS.hintsUsed++;
+  deductBudget(2500, 'hint');
+  brokerSay('Fine. This costs us — but here it is.', 'bm-h');
+  const hint = 'Steward chain points to ' + DEPT_LABEL[ds.dept] + '. Compare with the Data Lineage field.';
+  setTimeout(() => brokerSay(hint, 'bm-h'), 600);
+  setTimeout(() => brokerSay('Fine. $2,500 for this. Use it.', 'bm-d'), 800);
+  GS.hintCooldown = true;
+  const btn = document.getElementById('hint-btn');
+  const cd = document.getElementById('hint-cd');
+  btn.disabled = true;
+  cd.classList.add('show');
+  let rem = 30;
+  cd.textContent = rem + 's';
+  const interval = setInterval(() => {
+    rem--;
+    cd.textContent = rem + 's';
+    if (rem <= 0) {
+      clearInterval(interval);
+      GS.hintCooldown = false;
+      btn.disabled = false;
+      cd.classList.remove('show');
+    }
+  }, 1000);
+}
+
+function deductBudget(amount, type) {
+  GS.budget = Math.max(0, GS.budget - amount);
+  if (type === 'route') GS.clickPenalties = (GS.clickPenalties || 0) + amount;
+  else if (type === 'cal') GS.calPenalties = (GS.calPenalties || 0) + amount;
+  else if (type === 'hint') GS.hintPenalties = (GS.hintPenalties || 0) + amount;
+  updateBudgetDisplay();
+  showBudgetToast(amount);
+  checkBudgetThresholds();
+}
+
+function updateBudgetDisplay() {
+  const el = document.getElementById('budget');
+  if (!el) return;
+  const b = GS.budget;
+  el.textContent = '💰 $' + b.toLocaleString();
+  el.classList.remove('budget-green', 'budget-amber', 'budget-red', 'budget-flash');
+  void el.offsetWidth;
+  if (b >= 30000) el.classList.add('budget-green');
+  else if (b >= 15000) el.classList.add('budget-amber');
+  else el.classList.add('budget-red');
+  el.classList.add('budget-flash');
+  setTimeout(() => el.classList.remove('budget-flash'), 400);
+}
+
+function showBudgetToast(amount) {
+  const el = document.getElementById('budget');
+  const rect = el ? el.getBoundingClientRect() : { top: 54, left: 400, width: 100 };
+  const t = document.createElement('div');
+  t.className = 'budget-toast';
+  t.textContent = '−$' + amount.toLocaleString();
+  t.style.top = rect.top + 4 + 'px';
+  t.style.left = rect.left + rect.width / 2 - 30 + 'px';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1300);
+}
+
+function checkBudgetThresholds() {
+  const b = GS.budget;
+  const fmt = '$' + b.toLocaleString();
+  let delay15 = 0;
+  if (b < 30000 && !BUDGET_WARNED[30000]) {
+    BUDGET_WARNED[30000] = true;
+    brokerSay("We're at " + fmt + ". Read before you route — we can't keep burning this.", 'bm-err');
+    if (b < 15000) delay15 = 500;
+  }
+  if (b < 15000 && !BUDGET_WARNED[15000]) {
+    BUDGET_WARNED[15000] = true;
+    setTimeout(() => brokerSay(fmt + ' left. Every wrong move from here costs us more than money.', 'bm-err'), delay15);
+  }
+}
+
+function startKeyForge() {
+  const ntok = Object.values(GS.tokens).filter(Boolean).length;
+  if (ntok < 4 || GS.gameOver || GS.compileStarted) return;
+  GS.compileStarted = true;
+  const ov = document.getElementById('keyforge-overlay');
+  const term = document.getElementById('keyforge-term');
+  const box = document.getElementById('keyforge-box');
+  ov.classList.add('show');
+  term.textContent = '';
+  box.style.display = 'none';
+  box.innerHTML = '';
+  term.style.fontFamily = "'Share Tech Mono',monospace";
+  term.style.color = '#00FF41';
+  const mainLines = [
+    '> DECRYPTION INITIALISING...',
+    '> TARGET: PROJECT_OMNI_DATASET.enc',
+    '> SIZE: 847 GB',
+    '>',
+    '> READING HEADER METADATA...',
+    '>',
+    '> OMNI — PRIMARY FUNCTION:',
+    '> PREDICTIVE WORKFORCE OPTIMISATION',
+    '>',
+    '> TRAINING DATA: MegaCorp employee records',
+    '> EMPLOYEES IN SCOPE: 4,847',
+    '> CONSENT STATUS: [NOT REQUIRED]',
+    '>',
+    '> DEPLOYMENT TARGET: Q1 2004',
+    '> WEEKS REMAINING: 12',
+    '>',
+    '> CURRENT STATUS:',
+    '> FLAGGED EMPLOYEES: 847'
+  ];
+  const lastTwo = [
+    '> TERMINATION EVENTS SCHEDULED: Q1 2004',
+    '> NOTIFICATION TO EMPLOYEES: [NONE]'
+  ];
+  let i = 0;
+  function addLine() {
+    if (i < mainLines.length) {
+      term.textContent += mainLines[i] + '\n';
+      i++;
+      setTimeout(addLine, 400);
+    } else {
+      setTimeout(() => {
+        term.textContent += lastTwo[0] + '\n';
+        setTimeout(() => {
+          term.textContent += lastTwo[1] + '\n';
+          setTimeout(runCompileChat, 1200);
+        }, 400);
+          }, 600);
+    }
+  }
+  function runCompileChat() {
+    ov.classList.remove('show');
+    zexSay("They built a machine to fire people.\nAnd trained it on the people it's going to fire.", 0);
+    brokerSay(
+      "847 people. None of them know. They went to work this morning not knowing a system scored them while they slept.",
+      'bm-d',
+      2200
+    );
+    setTimeout(() => atlasSay(
+      'The stewardship chains I designed were meant to protect this data. Every classification level, every lineage record — I built those so something like this couldn\'t happen.'
+    ), 5500);
+    setTimeout(() => atlasSay(
+      'Marshall used my architecture to hide it.'
+    ), 9000);
+    setTimeout(() => atlasSay("I'm in."), 12000);
+    setTimeout(() => brokerSay(
+      'Round 3. We find out who the 847 are. Nova comes online.',
+      'bm-d'
+    ), 14000);
+    setTimeout(() => showDebrief(false), 16500);
+  }
+  addLine();
+}
+
+const DEBRIEF_RW_HTML =
+  'You mapped the data ownership of 10 intercepted datasets across four departments — reading metadata, stewardship chains, and lineage records to reconstruct who is accountable for what.' +
+  '<br><br>In the real world this is <strong style="color:var(--purple-light)">Data Governance and Stewardship</strong> — understanding that data ownership is not determined by where data comes from, but by who is responsible for it. The same principle used in GDPR compliance audits, data breach investigations, and corporate accountability frameworks.' +
+  '<br><br>847 MegaCorp employees have already been scored by OMNI. None of them know. Their own data was used without consent to build a system that will determine their employment in twelve weeks.' +
+  '<div class="db-quote" id="db-quote">"They built a machine to fire people. And trained it on the people it\'s going to fire." — Zex</div>';
+
+function computeScore() {
+  return Math.min(1000, Math.round(GS.budget / 50));
+}
+
+function showDebrief(fromGameOver) {
+  clearInterval(GS.timerInt);
+  const m = String(Math.floor(GS.timerSec / 60)).padStart(2, '0');
+  const s = String(GS.timerSec % 60).padStart(2, '0');
+  const score = computeScore();
+  const b = GS.budget;
+  const bFmt = n => '$' + n.toLocaleString();
+  const budgetClass = b >= 30000 ? 'budget-green' : b >= 15000 ? 'budget-amber' : 'budget-red';
+  let rating;
+  if (fromGameOver) rating = 'Session ended';
+  else if (score >= 900) rating = "CLEAN — Atlas noticed. He doesn't say it but he noticed.";
+  else if (score >= 750) rating = 'SOLID — minor errors, strong finish';
+  else if (score >= 500) rating = 'ROUGH — Zex has concerns about your attention to detail';
+  else rating = 'EXPENSIVE — 847 people are counting on better than this in Round 3';
+
+  document.getElementById('db-metrics').innerHTML =
+    '<div class="db-m"><div class="db-mv">' + m + ':' + s + '</div><div class="db-ml">TIME</div></div>' +
+    '<div class="db-m"><div class="db-mv">' + score + '</div><div class="db-ml">SCORE</div></div>' +
+    '<div class="db-m"><div class="db-mv">' + GS.wrongRoutes + '</div><div class="db-ml">WRONG ROUTES</div></div>' +
+    '<div class="db-m"><div class="db-mv ' + budgetClass + '">' + bFmt(b) + '</div><div class="db-ml">BUDGET REMAINING</div></div>';
+
+  const badge = document.getElementById('db-badge');
+  const wr = GS.wrongRoutes, ce = GS.calErrors, hu = GS.hintsUsed;
+  let extra = '';
+  if (wr > 0) {
+    extra += '<div class="db-rw-ttl">ROUTING ERRORS</div><div class="db-rw-txt">You misrouted ' + wr + ' dataset(s). The key pattern: follow the Data Steward\'s reporting chain — not the source system name. Where data comes from is not the same as who is accountable for it.</div>';
+  }
+  if (ce > 0) {
+    extra += '<div class="db-rw-ttl">VERIFICATION GAPS</div><div class="db-rw-txt">You missed ' + ce + ' verification answer(s). Every answer was visible in the Inspector metadata. The schema fields, last access logs, and sample records contain the full picture — if you read all of them.</div>';
+  }
+  if (hu > 0) {
+    extra += '<div class="db-rw-ttl">HINTS REQUESTED</div><div class="db-rw-txt">You used ' + hu + ' hint(s). The metadata is self-contained — the steward field and lineage chain answer every routing question. The sample records answer the rest.</div>';
+  }
+  if (wr === 0 && ce === 0 && hu === 0) {
+    extra += '<div class="db-rw-ttl">CLEAN RUN</div><div class="db-rw-txt">All 10 datasets routed correctly on first attempt. No verification errors. You read the metadata and followed the stewardship chains — that\'s exactly how data governance works in practice.</div>';
+  }
+
+  if (fromGameOver) {
+    if (badge) badge.textContent = 'ROUND 02 — ENDED';
+    document.getElementById('db-head-title').textContent = 'SESSION LOST';
+    document.getElementById('db-rw-body').innerHTML = 'The operation ended before the key was compiled.<br><br>' + DEBRIEF_RW_HTML + extra;
+  } else {
+    if (badge) badge.textContent = 'ROUND 02 — COMPLETE';
+    document.getElementById('db-head-title').textContent = 'THE SCRAMBLE — KEY COMPILED';
+    document.getElementById('db-rw-body').innerHTML = DEBRIEF_RW_HTML + extra;
+  }
+
+  setTimeout(() => {
+    const card = document.querySelector('.db-card');
+    if (!card || card.querySelector('.db-budget')) return;
+    const bd = document.createElement('div');
+    bd.className = 'db-budget';
+    bd.innerHTML =
+      '<div class="db-budget-ttl">BUDGET BREAKDOWN</div>' +
+      '<div class="db-budget-row"><span>Starting budget</span><span>' + bFmt(GS.budgetStart) + '</span></div>' +
+      '<div class="db-budget-row"><span>Penalties</span><span style="color:var(--red)">−' + bFmt(GS.budgetStart - b) + '</span></div>' +
+      '<div class="db-budget-row db-total"><span>Budget remaining</span><span class="' + budgetClass + '">' + bFmt(b) + '</span></div>' +
+      '<div class="db-rating">' + rating + '</div>';
+    const nextBtn = card.querySelector('.db-next');
+    if (nextBtn) card.insertBefore(bd, nextBtn);
+  }, 200);
+
+  document.getElementById('debrief-overlay').style.display = 'flex';
+  document.getElementById('gameover-overlay').classList.remove('show');
+}
+
+function nextRound() {
+  window.location.href = 'round3.html';
+}
+
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

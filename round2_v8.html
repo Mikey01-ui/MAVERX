@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Data Heist: Operation OMNI — Mission 2: Forging the Master Key</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --void: #1e0f1a;
+  --void-pure: #000000;
+  --green-stable: #00c41c;
+  --green-matrix: #00FF41;
+  --purple: #5400ad;
+  --purple-light: #8f44e8;
+  --orange: #f79421;
+  --pink: #d31972;
+  --white: #faf7f2;
+  --panel-bg: #221829;
+  --panel-border: rgba(0,196,28,0.35);
+  --grey-dim: #2e2e2e;
+  --grey-mid: #444444;
+  --grey-text: #cccccc;
+  --grey-light: #edeae5;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  /* gameplay aliases */
+  --bg:var(--void); --bg-p:var(--panel-bg); --bg-s:#2b2034;
+  --border:#1e3524; --border-b:#2d5b36;
+  --text:var(--green-stable); --text-b:var(--white); --text-d:rgba(0,196,28,.45);
+  --cyan:var(--green-stable); --amber:var(--orange); --green:var(--green-matrix); --red:var(--pink);
+}
+
+html { font-size: clamp(14px, 1.15vw, 20px); }
+html, body { width:100%; min-height:100%; overflow:auto; font-family:var(--font-body); background:var(--void); color:var(--white); }
+
+/* ── AMBIENT & BG ── */
+.ambient-glow { position:fixed; inset:0; z-index:0; pointer-events:none;
+  background: radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84,0,173,0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.11) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 20%, rgba(247,148,33,0.07) 0%, transparent 60%); }
+.scanlines { position:fixed; inset:0; z-index:10; pointer-events:none;
+  background:repeating-linear-gradient(to bottom,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);
+  mix-blend-mode:multiply; }
+.bg-grid { position:fixed; inset:0; z-index:0;
+  background-image: linear-gradient(rgba(0,196,28,0.11) 1px,transparent 1px), linear-gradient(90deg,rgba(0,196,28,0.11) 1px,transparent 1px);
+  background-size:40px 40px; background-position:0 36px; }
+.corner { position:fixed; z-index:2; width:40px; height:40px; pointer-events:none; }
+.corner--tl { top:10px; left:10px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+.corner--tr { top:10px; right:10px; border-top:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
+.corner--bl { bottom:10px; left:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
+.corner--br { bottom:10px; right:10px; border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
+
+/* ── STATUS BAR ── */
+.status-bar { position:fixed; top:0; left:0; right:0; z-index:5; height:36px; padding:0 64px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid rgba(0,196,28,0.28);
+  background:linear-gradient(180deg,rgba(30,15,26,0.9) 0%,transparent 100%); }
+.status-left, .status-right { font-family:var(--font-mono); font-size:0.65rem; color:var(--green-stable); letter-spacing:0.08em; display:flex; gap:1.5rem; align-items:center; }
+.status-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--green-stable); margin-right:6px; vertical-align:middle; }
+.status-dot.live { background:var(--green-matrix); box-shadow:0 0 8px rgba(0,255,65,0.6),0 0 20px rgba(0,255,65,0.2); animation:blink 2.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.status-right span:last-child { color:var(--green-matrix); text-shadow:0 0 8px rgba(0,255,65,0.3); }
+
+/* ── INTRO PAGES ── */
+.page { position:relative; z-index:2; margin-top:36px; display:none; flex-direction:column;
+  align-items:center; padding:1.5vh 6vw; height:calc(100vh - 36px); overflow:hidden; }
+.page.active { display:flex; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.page-eyebrow { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable);
+  letter-spacing:0.25em; text-transform:uppercase; margin-bottom:0.4vh; flex-shrink:0; animation:fadeUp 0.5s 0.1s both; }
+.page-title { font-family:var(--font-display); font-size:2rem; font-weight:700; letter-spacing:-0.01em;
+  margin-bottom:0.8vh; flex-shrink:0; animation:fadeUp 0.5s 0.2s both;
+  background:linear-gradient(135deg,var(--white) 60%,var(--purple-light) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+.content { width:min(88vw,1000px); display:flex; flex-direction:column; gap:1vh; flex:1; justify-content:center; overflow:hidden; }
+#page2 .content { width:min(88vw,1400px); }
+
+.section-label { font-family:var(--font-mono); font-size:0.55rem; color:var(--purple-light);
+  letter-spacing:0.22em; text-transform:uppercase; margin-bottom:0.5vh; flex-shrink:0;
+  display:flex; align-items:center; gap:0.8rem; }
+.section-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(84,0,173,0.42),transparent); }
+
+.brief-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px;
+  padding:1.2rem 2.5vw; position:relative; overflow:hidden;
+  box-shadow:0 0 60px rgba(84,0,173,0.14),0 0 120px rgba(0,196,28,0.08),inset 0 1px 0 rgba(0,196,28,0.12); }
+.brief-card::before { content:''; position:absolute; top:10px; left:10px; width:16px; height:16px;
+  border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+.brief-card::after { content:''; position:absolute; bottom:10px; right:10px; width:16px; height:16px;
+  border-bottom:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); pointer-events:none; }
+.brief-tag { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable);
+  letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.5vh; flex-shrink:0; display:flex; align-items:center; gap:0.6rem; }
+.brief-tag-dot { width:5px; height:5px; border-radius:50%; background:var(--green-matrix);
+  box-shadow:0 0 8px rgba(0,255,65,0.6),0 0 20px rgba(0,255,65,0.2); animation:blink 2.4s ease-in-out infinite; }
+.brief-text { font-family:var(--font-body); font-size:0.9rem; line-height:1.75; color:var(--grey-light); font-weight:300; }
+.brief-text p { margin-bottom:0.7vh; }
+.brief-text p:last-child { margin-bottom:0; }
+.brief-text strong { color:var(--orange); font-weight:600; }
+
+.steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(0.5rem,1vw,1rem); }
+.step-card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:2px;
+  padding:0.72rem 0.9rem; position:relative; transition:border-color .3s,box-shadow .3s,transform .3s;
+  box-shadow:0 0 38px rgba(84,0,173,0.09),inset 0 1px 0 rgba(0,196,28,0.08); display:flex; flex-direction:column; }
+.step-card::before { content:''; position:absolute; top:-1px; left:18%; right:18%; height:1px;
+  background:linear-gradient(90deg,transparent,var(--purple),transparent); opacity:0.72; pointer-events:none; }
+.step-card:hover { border-color:rgba(0,255,65,0.38); transform:translateY(-1px); box-shadow:0 0 36px rgba(0,255,65,0.07); }
+.step-number { font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:var(--green-matrix);
+  line-height:1; letter-spacing:-0.02em; margin-bottom:0.35vh; text-shadow:0 0 20px rgba(0,255,65,0.15); }
+.step-title { font-family:var(--font-mono); font-size:0.6rem; color:var(--purple-light);
+  letter-spacing:0.18em; text-transform:uppercase; margin-bottom:0.4vh; padding-bottom:0.35vh; border-bottom:1px solid rgba(0,196,28,0.28); }
+.step-desc { font-family:var(--font-body); font-size:0.82rem; line-height:1.6; color:var(--grey-text); font-weight:300; flex:1; }
+
+.button-section { flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+  gap:0.4vh; margin-top:0.8vh; animation:fadeUp 0.5s 0.5s both; }
+.button-label { font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable); letter-spacing:0.2em; text-transform:uppercase; }
+.btn-next { width:clamp(160px,18vw,280px); padding:0.65vh 2vw; background:var(--orange);
+  border:1px solid var(--orange); color:var(--void); font-family:var(--font-display);
+  font-size:0.9rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;
+  cursor:pointer; position:relative; overflow:hidden; transition:background .25s,box-shadow .25s,transform .25s; }
+.btn-next::before { content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transform:translateX(-100%); transition:transform .5s ease; pointer-events:none; }
+.btn-next:hover::before { transform:translateX(100%); }
+.btn-next:hover { background:#ffa234; transform:translateY(-1px); box-shadow:0 8px 32px rgba(247,148,33,0.25); }
+.btn-inner { display:flex; align-items:center; justify-content:center; gap:0.6rem; }
+.btn-arrow { font-size:1em; line-height:1; transition:transform .2s; }
+.btn-next:hover .btn-arrow { transform:translateX(4px); }
+
+/* page nav dots */
+.page-nav-dots { display:flex; gap:8px; margin-top:1.5vh; flex-shrink:0; }
+.pnd { width:8px; height:8px; border-radius:50%; background:rgba(0,196,28,0.25); cursor:pointer; transition:background .2s; }
+.pnd.active { background:var(--green-stable); }
+.slide-nav { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:12px; align-items:center; }
+.snav-btn { background:transparent; border:1px solid rgba(0,196,28,0.3); color:var(--green-stable);
+  font-family:var(--font-mono); font-size:0.65rem; padding:6px 14px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.snav-btn:hover { border-color:var(--green-stable); }
+#skip-intro { position:absolute; bottom:20px; right:40px; background:transparent;
+  border:1px solid rgba(0,196,28,0.2); color:rgba(0,196,28,0.5); font-family:var(--font-mono);
+  font-size:0.6rem; padding:6px 14px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+#skip-intro:hover { border-color:var(--green-stable); color:var(--green-stable); }
+
+/* ══════════════════════════════════════════════════════
+   GAMEPLAY ROOT
+══════════════════════════════════════════════════════ */
+#gp-root { position:fixed; inset:0; z-index:100; display:none; }
+#gp-root.active { display:block; }
+html.gp-html-active { overflow:hidden; height:100%; }
+
+/* gameplay bg */
+#gp-root::before { content:''; position:fixed; inset:0;
+  background-image: linear-gradient(rgba(0,196,28,0.11) 1px,transparent 1px), linear-gradient(90deg,rgba(0,196,28,0.11) 1px,transparent 1px);
+  background-size:40px 40px; pointer-events:none; z-index:0; }
+#gp-root::after { content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);
+  pointer-events:none; z-index:1; }
+#game { position:fixed; inset:0; z-index:2; display:flex; flex-direction:column; }
+#game::before { content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background: radial-gradient(ellipse 60% 50% at 30% 50%,rgba(84,0,173,0.16) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 60% at 70% 60%,rgba(0,196,28,0.11) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 20%,rgba(247,148,33,0.07) 0%,transparent 60%); }
+
+/* ── HEADER ── */
+#hdr { min-height:54px; background:linear-gradient(180deg,rgba(34,24,41,.96) 0%,rgba(30,15,26,.94) 100%);
+  border-bottom:1px solid rgba(0,196,28,.28); display:flex; align-items:center;
+  padding:6px 18px; flex-shrink:0; z-index:3; box-shadow:inset 0 1px 0 rgba(0,196,28,.08); }
+.hdr-left { font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--cyan); letter-spacing:1.5px; white-space:nowrap; }
+.hdr-center { flex:1; text-align:center; font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--purple-light); letter-spacing:2px; }
+.hdr-right { display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:clamp(13px,1.3vw,16px); color:var(--text); white-space:nowrap; }
+#timer { color:var(--text-b); }
+.live-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:livePulse 1.5s ease-in-out infinite; }
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.lang-toggle { display:flex; border:1px solid var(--border-b); border-radius:4px; overflow:hidden; }
+.lang-btn { padding:3px 9px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; background:transparent; color:var(--text-d); border:none; transition:all .2s; cursor:pointer; }
+.lang-btn.active { background:var(--cyan); color:var(--bg); font-weight:700; }
+.lang-btn:hover:not(.active) { color:var(--cyan); }
+
+/* detection */
+#det-display { font-family:var(--font-display); font-size:clamp(13px,1.3vw,16px); letter-spacing:1px; display:flex; align-items:center; gap:7px; transition:color .4s; }
+#det-display.det-green { color:var(--green); }
+#det-display.det-amber { color:var(--amber); }
+#det-display.det-red { color:var(--red); }
+.det-bar-wrap { width:clamp(44px,4.5vw,66px); height:5px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; border:1px solid rgba(255,255,255,.10); flex-shrink:0; }
+#det-bar { display:block; height:100%; width:0%; border-radius:2px; transition:width .5s ease,background .5s ease; }
+.det-bar-green { background:var(--green); }
+.det-bar-amber { background:var(--amber); }
+.det-bar-red { background:var(--red); box-shadow:0 0 8px var(--red); }
+
+#step-banner { height:44px; background:rgba(84,0,173,0.10); border-bottom:1px solid rgba(0,196,28,.22);
+  display:flex; align-items:center; padding:0 18px; font-size:clamp(14px,1.5vw,18px);
+  color:var(--text-b); letter-spacing:.4px; flex-shrink:0; z-index:3; box-shadow:inset 0 1px 0 rgba(255,255,255,.02); }
+#step-banner::before { content:'▶ '; color:var(--orange); margin-right:8px; flex-shrink:0; }
+#main-row { display:flex; flex:1; overflow:hidden; min-height:0; }
+
+/* ══════════════════════════════════════════════════════
+   DESKTOP PANEL — XP with color
+══════════════════════════════════════════════════════ */
+#desktop-panel { flex:0 0 62%; position:relative; overflow:hidden; background:#000; }
+#wallpaper { position:absolute; top:0; left:0; right:0; bottom:30px; opacity:0; transition:opacity .9s ease;
+  background:linear-gradient(to bottom,#4990d8 0%,#6aaede 18%,#8dc6eb 32%,#a8d6f5 40%,#c4e4fc 43%,#86c44a 44%,#5fa436 52%,#4e9030 60%,#3d7826 70%,#2d6020 82%,#1e4614 100%); }
+#wallpaper.visible { opacity:1; }
+
+/* Desktop Icons */
+.di { position:absolute; width:72px; text-align:center; cursor:pointer; padding:5px 4px;
+  border-radius:4px; opacity:0; transition:opacity .6s ease,box-shadow .3s; z-index:10; }
+.di.visible { opacity:1; }
+.di:hover { background:rgba(255,255,255,.18); }
+.di-icon { font-size:30px; line-height:1; display:block; margin-bottom:4px; color:#f0c538; filter:drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
+.di-label { font-family:'Tahoma',sans-serif; font-size:clamp(11px,1vw,12px); color:#fff;
+  text-shadow:1px 1px 3px #000,0 0 6px #000,-1px -1px 3px #000; word-break:break-word; line-height:1.25; }
+.di.di-mission { animation:iconPulse 1.2s ease-in-out infinite; }
+@keyframes iconPulse { 0%,100%{box-shadow:0 0 0 transparent} 50%{box-shadow:0 0 16px 5px rgba(255,160,0,.75);background:rgba(255,160,0,.12)} }
+
+/* Sticky Notes */
+.sticky { position:absolute; width:min(165px,calc(100vw - 48px)); padding:12px 14px 14px; font-family:'Tahoma',sans-serif;
+  font-size:clamp(11px,1vw,12px); line-height:1.62; box-shadow:3px 3px 10px rgba(0,0,0,.35);
+  border-radius:2px; opacity:0; transition:opacity .6s ease; z-index:5; white-space:pre-wrap; }
+.sticky.visible { opacity:1; }
+.sticky-yellow { background:#fdf18a; color:#333; transform:rotate(-1.8deg); }
+.sticky-pink { background:#f8b8c3; color:#333; transform:rotate(1.3deg); }
+.sticky-blue { background:#b8d6f9; color:#333; transform:rotate(-.8deg); }
+.sticky-hdr { font-weight:700; font-size:clamp(11px,1vw,12px); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ── XP WINDOWS ── */
+.xp-win { position:absolute; display:none; min-width:220px; min-height:80px; border:2px solid #0f2f8a;
+  border-radius:6px 6px 4px 4px; box-shadow:4px 4px 20px rgba(0,0,0,.65),1px 1px 0 rgba(255,255,255,.12) inset; z-index:100; overflow:hidden; }
+.xp-win.visible { display:flex; flex-direction:column; }
+/* Maximised — fill the desktop panel (minus taskbar) */
+.xp-win.xp-maximised { top:0!important; left:0!important; width:calc(100% - 1px)!important; bottom:30px!important; height:auto!important; border-radius:0; }
+/* SE resize grip */
+.xp-grip { position:absolute; bottom:22px; right:0; width:16px; height:16px; cursor:se-resize; z-index:201;
+  background-image:radial-gradient(circle 1.5px,rgba(80,80,80,.55) 100%,transparent 0);
+  background-size:4px 4px; clip-path:polygon(100% 0%,100% 100%,0% 100%); pointer-events:all; }
+.xp-tb { min-height:28px; background:linear-gradient(to bottom,#2b5edb 0%,#1239b4 35%,#1a4ac5 65%,#2b5edb 100%);
+  display:flex; align-items:center; padding:4px 6px 4px 9px; cursor:default; user-select:none; }
+.xp-title { flex:1; display:flex; align-items:center; gap:5px; font-family:'Tahoma',sans-serif;
+  font-size:clamp(11px,1vw,13px); font-weight:700; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,.5);
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.xp-ti { font-size:14px; flex-shrink:0; }
+.xp-btns { display:flex; gap:2px; margin-left:6px; flex-shrink:0; }
+.xp-btn { width:21px; height:19px; border-radius:3px; font-size:10px; font-weight:700; display:flex;
+  align-items:center; justify-content:center; color:#fff; font-family:'Tahoma',sans-serif; line-height:1; border:1px solid rgba(255,255,255,.25); }
+.xp-btn:hover { filter:brightness(1.25); }
+.xp-min,.xp-max { background:linear-gradient(to bottom,#6b99d3,#3a6db8); }
+.xp-cls { background:linear-gradient(to bottom,#d9534f,#b02a26); }
+.xp-cls:hover { background:linear-gradient(to bottom,#ef5350,#c62828); }
+.xp-menu { min-height:22px; background:#ece9d8; border-bottom:1px solid #aca899;
+  display:flex; align-items:center; padding:0 8px; font-family:'Tahoma',sans-serif; font-size:11px; color:#000; flex-shrink:0; }
+.xpm { padding:2px 8px; cursor:pointer; border-radius:2px; }
+.xpm:hover { background:#3375d6; color:#fff; }
+.xp-body { background:#fff; overflow-y:auto; overflow-x:hidden; flex:1; min-height:0;
+  scrollbar-width:thin; scrollbar-color:#888 #f0ede5; }
+.xp-body::-webkit-scrollbar { width:12px; }
+.xp-body::-webkit-scrollbar-thumb { background:#888; border:3px solid #f0ede5; border-radius:6px; }
+.xp-status { min-height:20px; background:#ece9d8; border-top:1px solid #aca899;
+  display:flex; align-items:center; padding:5px 10px; font-family:'Tahoma',sans-serif; font-size:clamp(10px,1vw,12px); color:#555; flex-shrink:0; gap:12px; }
+
+/* XP folder grid */
+.folder-grid { display:flex; flex-wrap:wrap; gap:12px 14px; padding:14px; background:#fff; min-height:140px; align-content:flex-start; }
+.fg-item { width:80px; padding:8px 6px; text-align:center; cursor:pointer; border-radius:3px; border:1px solid transparent; }
+.fg-item:hover { background:rgba(51,117,214,.1); border-color:rgba(51,117,214,.4); }
+.fg-icon { font-size:32px; line-height:1; margin-bottom:6px; }
+.fg-icon .fa-folder { color:#f0c538; }
+.fg-icon .fa-file-image { color:#c46210; }
+.fg-icon .fa-file-word { color:#2b579a; }
+.fg-icon .fa-file-excel { color:#207245; }
+.fg-icon .fa-file-pdf { color:#d42b2b; }
+.fg-icon .fa-file-audio { color:#7c4dff; }
+.fg-label { font-family:'Tahoma',sans-serif; font-size:11px; color:#111; word-break:break-word; line-height:1.3; }
+
+/* ── TASKBAR ── */
+#xp-taskbar { position:absolute; bottom:0; left:0; right:0; height:30px;
+  background:linear-gradient(to bottom,#245fd4,#1648b8); display:flex; align-items:center;
+  gap:2px; padding:0 4px; z-index:50; opacity:0; transition:opacity .6s ease; border-top:1px solid #3a7ae0; }
+#xp-taskbar.visible { opacity:1; }
+#start-btn { background:linear-gradient(to bottom,#3da641,#278d2a); border:1px solid #1e7a21;
+  border-radius:10px; padding:2px 10px 2px 5px; color:#fff; font-family:'Tahoma',sans-serif;
+  font-size:11px; font-weight:700; height:24px; display:flex; align-items:center; gap:4px; margin-right:6px; flex-shrink:0; }
+.tb-div { width:1px; height:22px; background:rgba(255,255,255,.15); margin:0 4px; flex-shrink:0; }
+.tb-wb { height:24px; min-width:90px; max-width:130px; background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12); border-radius:3px; color:#fff; font-family:'Tahoma',sans-serif;
+  font-size:11px; padding:0 7px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  display:flex; align-items:center; gap:4px; opacity:.5; transition:opacity .2s,background .2s; cursor:pointer; }
+.tb-wb.tb-on { opacity:1; background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.3); }
+#tb-clock { margin-left:auto; color:#fff; font-family:'Tahoma',sans-serif; font-size:11px; padding:0 8px; white-space:nowrap; flex-shrink:0; }
+
+/* ══════════════════════════════════════════════════════
+   TRIBUNAL WINDOW CONTENT
+══════════════════════════════════════════════════════ */
+.trib-header { background:#1a1a2e; padding:9px 14px; border-bottom:2px solid #b00; flex-shrink:0; }
+.trib-case-id { font-size:9px; color:#888; letter-spacing:1px; margin-bottom:2px; font-family:'Tahoma',sans-serif; }
+.trib-case-title { font-size:12px; font-weight:700; color:#fff; font-family:'Tahoma',sans-serif; }
+.trib-claimant { border:1px solid #ddd; margin:8px 10px; border-radius:3px; overflow:hidden; }
+.trib-claimant-hdr { padding:5px 10px; font-family:'Tahoma',sans-serif; font-size:10px; font-weight:700; letter-spacing:.5px; display:flex; align-items:center; gap:6px; }
+.trib-claimant-hdr.cl-a { background:#fff3cd; color:#856404; border-bottom:1px solid #f0d060; }
+.trib-claimant-hdr.cl-b { background:#cfe2ff; color:#084298; border-bottom:1px solid #9ec5fe; }
+.trib-claimant-body { padding:8px 10px; font-family:'Tahoma',sans-serif; font-size:11px; line-height:1.65; color:#333; background:#fff; }
+.trib-evidence { background:#f0ede4; border-top:1px solid #ccc; padding:5px 10px; font-family:'Tahoma',sans-serif; font-size:10px; color:#555; font-style:italic; }
+.trib-verdict-row { padding:8px 10px; background:#f8f5f0; border-top:1px solid #ccc; display:flex; gap:6px; flex-shrink:0; }
+.trib-btn { flex:1; padding:8px 4px; font-family:'Tahoma',sans-serif; font-size:11px; font-weight:700;
+  border-radius:3px; border:2px solid; cursor:pointer; display:flex; flex-direction:column;
+  align-items:center; gap:2px; transition:all .15s; line-height:1.25; }
+.trib-btn-a { background:#fff8e1; border-color:#f0c030; color:#555; }
+.trib-btn-a:hover { background:#ffe082; border-color:#e0a800; }
+.trib-btn-b { background:#e8f4fd; border-color:#5ba4cf; color:#555; }
+.trib-btn-b:hover { background:#bee3f8; border-color:#2980b9; }
+.trib-btn.wrong-shake { animation:wrongShake .32s ease; }
+@keyframes wrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+.trib-btn-name { font-size:10px; letter-spacing:.5px; }
+.trib-btn-role { font-size:9px; color:#777; font-weight:400; }
+.trib-ruling-done { background:#f0fdf4; border-top:2px solid #28a745; padding:8px 12px; font-family:'Tahoma',sans-serif; font-size:11px; color:#155724; line-height:1.65; }
+
+/* ── INSPECTOR WINDOW ── */
+.insp-empty { padding:24px 16px; text-align:center; font-family:'Tahoma',sans-serif; font-size:11px; color:#888; line-height:1.7; }
+.insp-file-hdr { background:#ddd; border-bottom:1px solid #bbb; padding:7px 10px; font-family:'Tahoma',sans-serif; display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.insp-file-icon { font-size:22px; }
+.insp-file-name { font-size:11px; font-weight:700; color:#000; }
+.insp-file-meta { font-size:10px; color:#666; }
+.insp-section-hdr { background:#e8e8e8; padding:4px 10px; font-family:'Tahoma',sans-serif; font-size:10px; font-weight:700; color:#333; letter-spacing:.5px; border-bottom:1px solid #ccc; border-top:1px solid #ddd; flex-shrink:0; }
+.insp-row { display:flex; padding:4px 10px; border-bottom:1px solid #eee; font-family:'Tahoma',sans-serif; font-size:11px; gap:8px; }
+.insp-key { color:#555; min-width:95px; flex-shrink:0; font-weight:700; }
+.insp-val { color:#000; word-break:break-word; flex:1; }
+.insp-val.highlight { color:#1a4dc8; font-weight:700; }
+.insp-val.warn { color:#b02a26; font-weight:700; }
+.insp-lineage { padding:6px 10px; font-family:'Tahoma',sans-serif; font-size:11px; display:flex; align-items:center; flex-wrap:wrap; gap:3px; }
+.lin-node { background:#e8f4fd; border:1px solid #9ec5fe; border-radius:2px; padding:2px 6px; color:#084298; font-size:10px; }
+.lin-arrow { color:#888; font-size:12px; }
+.insp-schema { display:flex; flex-wrap:wrap; gap:3px; padding:5px 10px 7px; }
+.insp-field { background:#fff; border:1px solid #ccc; border-radius:2px; padding:2px 5px; font-family:'Tahoma',sans-serif; font-size:10px; color:#333; }
+
+/* ── REGISTRY TABLE ── */
+.reg-table { width:100%; border-collapse:collapse; font-family:'Tahoma',sans-serif; font-size:11px; }
+.reg-table th { background:#e8e8e8; border-bottom:2px solid #bbb; border-right:1px solid #ddd; padding:4px 8px; text-align:left; color:#333; font-size:10px; font-weight:700; white-space:nowrap; }
+.reg-table td { border-bottom:1px solid #eee; border-right:1px solid #f0f0f0; padding:4px 8px; color:#222; vertical-align:top; cursor:pointer; }
+.reg-table tr:hover td { background:#f0f7ff; }
+.reg-table tr.reg-selected td { background:#d4e9ff; }
+.reg-badge { display:inline-block; padding:1px 5px; border-radius:8px; font-size:9px; font-weight:700; border:1px solid; }
+.badge-restricted { background:#fde8e8; border-color:#e53935; color:#b71c1c; }
+.badge-confidential { background:#fff3cd; border-color:#f0a500; color:#7a5800; }
+.badge-internal { background:#e8f5e9; border-color:#43a047; color:#1b5e20; }
+
+/* ══════════════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════════════ */
+#right { flex:1; display:flex; flex-direction:column;
+  background:linear-gradient(180deg,rgba(34,24,41,.98) 0%,rgba(30,15,26,.98) 100%);
+  border-left:1px solid rgba(0,196,28,.28); overflow:hidden; min-height:0; box-shadow:inset 1px 0 0 rgba(0,196,28,.08); }
+
+/* Key Forge / Evidence Board */
+#eboard { flex-shrink:0; padding:clamp(10px,2vh,16px) clamp(12px,2.5vw,20px); border-bottom:1px solid rgba(0,196,28,.22); }
+.eb-hdr { display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; margin-bottom:6px; border-bottom:1px solid rgba(84,0,173,.28); }
+.eb-htitle { font-family:var(--font-display); font-size:clamp(10px,1.1vw,13px); color:var(--purple-light); letter-spacing:1.5px; }
+.eb-grid { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.8vw,12px); margin-bottom:8px; }
+
+/* Calibration nodes — matching Round 1 style exactly */
+.lead { border:1.5px solid rgba(143,68,232,.30); border-radius:6px; padding:clamp(9px,1.3vh,14px) clamp(7px,0.9vw,12px);
+  text-align:center; cursor:pointer; transition:all .3s; background:rgba(43,32,52,.88);
+  min-height:76px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:inset 0 1px 0 rgba(0,196,28,.08); }
+.lead:hover { border-color:var(--purple-light); box-shadow:0 0 12px rgba(143,68,232,.22),inset 0 1px 0 rgba(0,196,28,.08); }
+.lead-icon { font-size:20px; margin-bottom:4px; color:var(--purple-light); }
+.lead-name { font-family:var(--font-display); font-size:11px; color:var(--text-b); font-weight:600; letter-spacing:1px; margin-bottom:3px; }
+.lead-status { font-size:clamp(9px,1vw,11px); color:rgba(200,180,255,.80); font-family:var(--font-mono); letter-spacing:.8px; }
+/* mission/active state — amber pulse */
+.n-mission { border-color:var(--amber)!important; animation:nPulse 1.5s ease-in-out infinite; }
+.n-mission .lead-status,.n-mission .lead-icon { color:var(--amber); }
+@keyframes nPulse { 0%,100%{box-shadow:0 0 6px rgba(255,144,0,.3)} 50%{box-shadow:0 0 18px rgba(255,144,0,.75)} }
+/* next/open state */
+.n-next { border-color:var(--orange)!important; animation:orangePulse 1.5s ease-in-out infinite; }
+.n-next .lead-status,.n-next .lead-name,.n-next .lead-icon { color:var(--orange); }
+@keyframes orangePulse { 0%,100%{box-shadow:0 0 6px rgba(247,148,33,.35)} 50%{box-shadow:0 0 22px rgba(247,148,33,.9)} }
+/* locked/done state — green */
+.n-locked { border-color:var(--green)!important; background:rgba(0,255,65,.08); animation:none!important; cursor:default; }
+.n-locked .lead-status,.n-locked .lead-name,.n-locked .lead-icon { color:var(--green); }
+.n-locked:hover { box-shadow:0 0 10px rgba(0,230,118,.25)!important; }
+/* dimmed (not yet reachable) — slightly brighter so text stays readable */
+.n-dimmed { opacity:.58; pointer-events:none; }
+
+.eb-progress { display:flex; gap:4px; margin-bottom:10px; height:4px; }
+.ep-seg { flex:1; background:rgba(84,0,173,.15); border-radius:3px; transition:background .6s; }
+.ep-seg.filled { background:var(--green); }
+#synth-btn { width:100%; padding:10px 12px; background:rgba(0,196,28,.06); color:var(--text-d);
+  border:1px solid rgba(0,196,28,.18); font-family:var(--font-display); font-size:clamp(11px,1.1vw,14px);
+  letter-spacing:2px; cursor:not-allowed; border-radius:4px; transition:all .3s; box-shadow:inset 0 1px 0 rgba(0,196,28,.05); }
+#synth-btn.ready { background:rgba(247,148,33,.1); color:var(--orange); border-color:var(--orange); cursor:pointer; animation:synthPulse 1.5s ease-in-out infinite; }
+#synth-btn.ready:hover { background:rgba(247,148,33,.2); }
+@keyframes synthPulse { 0%,100%{box-shadow:0 0 6px rgba(247,148,33,.2)} 50%{box-shadow:0 0 22px rgba(247,148,33,.7)} }
+
+/* ── MISSION CHANNEL (Telegram dark) ── */
+#voss-wrap { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+.voss-hdr { min-height:0; height:auto; background:var(--panel-bg); border-bottom:1px solid rgba(0,196,28,.22);
+  display:flex; align-items:center; padding:clamp(8px,1vh,11px) clamp(12px,1.4vw,20px); gap:10px; flex-shrink:0; user-select:none; box-shadow:inset 0 1px 0 rgba(0,196,28,.06); }
+.bk-avatar { width:32px; height:32px; border-radius:50%; background:#2f2238; border:1px solid rgba(0,196,28,.16); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.bk-info { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.bk-name { color:var(--text-b); font-size:clamp(12px,1.2vw,15px); font-weight:600; font-family:var(--font-body); line-height:1.2; }
+.bk-members { display:flex; flex-wrap:wrap; align-items:center; gap:2px; font-size:clamp(10px,.9vw,12px); font-family:var(--font-body); line-height:1.3; }
+.bk-member.online { color:var(--green-matrix); font-weight:500; }
+.bk-member.offline { color:rgba(100,100,100,.55); font-weight:500; }
+.bk-sep { color:rgba(100,100,100,.4); font-size:10px; }
+.bk-icons { display:flex; gap:8px; margin-left:auto; color:var(--green-stable); font-size:14px; flex-shrink:0; }
+#voss-body { flex:1; overflow-y:auto; padding:clamp(10px,1.2vh,14px) clamp(12px,1.6vw,22px); display:flex;
+  flex-direction:column; gap:0; min-height:0; background:var(--void);
+  scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+#voss-body::-webkit-scrollbar { width:4px; }
+#voss-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.bm-sep { display:flex; justify-content:center; margin:4px 0 12px; flex-shrink:0; }
+.bm-sep-pill { background:rgba(43,32,52,.92); color:var(--green-stable); font-family:var(--font-body); font-size:11px; padding:3px 14px; border-radius:12px; border:1px solid rgba(0,196,28,.18); }
+.bm-sender { font-family:var(--font-body); font-size:11px; letter-spacing:.5px; color:var(--purple-light); margin-bottom:5px; padding-left:4px; }
+.bm-group { display:flex; flex-direction:column; align-items:stretch; gap:0; margin-bottom:clamp(8px,1.5vh,14px); flex-shrink:0; min-width:0; }
+.bm-bubble { align-self:flex-start; display:block; width:100%; max-width:92%; min-width:0; box-sizing:border-box;
+  padding:clamp(10px,1.2vh,14px) clamp(12px,1.3vw,18px); border-radius:14px 14px 14px 3px; line-height:1.65;
+  font-family:var(--font-body); font-size:clamp(13px,1.25vw,16px); overflow-wrap:break-word;
+  animation:bubbleIn 220ms ease forwards; opacity:0; }
+@keyframes bubbleIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.bm-ts { align-self:flex-end; font-size:10px; color:rgba(0,196,28,.72); margin-top:3px; text-align:right; padding:0 5px 0 0; font-family:var(--font-body); white-space:nowrap; }
+.bm-ts::after { content:' ✓'; }
+.bm-bubble.bm-d  { background:rgba(43,32,52,.92); color:var(--text-b); border:1px solid rgba(0,196,28,.10); }
+.bm-bubble.bm-ok { background:rgba(0,196,28,.08); color:#cfead2; border-left:2px solid rgba(0,196,28,.55); }
+.bm-bubble.bm-err { background:rgba(211,25,114,.08); color:#efb5cf; border-left:2px solid rgba(211,25,114,.35); }
+.bm-bubble.bm-win { background:rgba(0,255,65,.07); color:#d6f4dd; border-left:2px solid rgba(0,255,65,.38); }
+.bm-bubble.bm-h  { background:rgba(143,68,232,.12); color:#dbc7f6; border-left:2px solid rgba(143,68,232,.40); }
+.bm-typing-wrap { margin-bottom:12px; flex-shrink:0; }
+.bm-typing { background:rgba(43,32,52,.92); padding:12px 16px; border-radius:14px 14px 14px 3px;
+  display:inline-flex; gap:5px; align-items:center; border:1px solid rgba(0,196,28,.10); }
+.tdot { width:6px; height:6px; border-radius:50%; background:var(--green-stable); animation:tBounce 1.1s ease-in-out infinite; }
+.tdot:nth-child(2) { animation-delay:.18s; }
+.tdot:nth-child(3) { animation-delay:.36s; }
+@keyframes tBounce { 0%,60%,100%{transform:translateY(0);opacity:.45} 30%{transform:translateY(-5px);opacity:1} }
+.voss-footer { border-top:1px solid rgba(0,196,28,.22); flex-shrink:0; background:var(--panel-bg); }
+.voss-input-bar { height:auto; display:flex; align-items:center; padding:clamp(7px,.9vh,11px) clamp(12px,1.4vw,20px); gap:10px; flex-shrink:0; }
+#voss-input { flex:1; background:#2f2238; border:1px solid rgba(0,196,28,.16); border-radius:18px;
+  color:var(--green-stable); font-family:var(--font-body); font-size:clamp(12px,1.2vw,14px);
+  font-style:italic; padding:0 16px; height:32px; cursor:not-allowed; outline:none; }
+#voss-input::placeholder { color:rgba(0,196,28,.58); opacity:1; }
+.hint-wrap { position:relative; flex-shrink:0; }
+#hint-btn { width:30px; height:30px; background:transparent; border:none; font-size:18px;
+  display:flex; align-items:center; justify-content:center; transition:transform .2s,filter .2s; padding:0; cursor:pointer;
+  color:#f5c518; filter:drop-shadow(0 0 5px rgba(245,197,24,.55)); }
+#hint-btn:hover:not(:disabled) { transform:scale(1.2); filter:drop-shadow(0 0 9px rgba(245,197,24,.9)); }
+#hint-btn:disabled { opacity:.35; cursor:not-allowed; filter:none; }
+.hint-tooltip { position:absolute; bottom:calc(100% + 7px); left:0; background:rgba(34,24,41,.96); color:#dbc7f6;
+  font-family:var(--font-body); font-size:clamp(11px,.9vw,13px); padding:5px 9px; border-radius:4px;
+  white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .2s; z-index:400;
+  border:1px solid rgba(143,68,232,.55); box-shadow:0 0 10px rgba(143,68,232,.3); }
+.hint-wrap:hover .hint-tooltip { opacity:1; }
+#hint-cd { position:absolute; top:-5px; right:-5px; background:#e74c3c; color:#fff; font-family:var(--font-display);
+  font-size:8px; border-radius:10px; min-width:17px; padding:1px 3px; text-align:center; display:none; line-height:1.5; pointer-events:none; }
+#hint-cd.show { display:block; }
+
+/* ── BOOT OVERLAY ── */
+#hack-overlay { position:fixed; inset:0; background:#000; z-index:200; padding:44px 48px;
+  font-family:var(--font-mono); font-size:14px; line-height:2.1; display:none; overflow:hidden; }
+#hack-overlay.active { display:block; }
+#hack-overlay::after { content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.025) 2px,rgba(0,255,65,.025) 4px); pointer-events:none; }
+.ht { opacity:0; display:block; transition:opacity .28s; }
+.ht.show { opacity:1; }
+.ht-g { color:#00ff41; } .ht-a { color:#ffb000; } .ht-r { color:#ff4040; } .ht-o { color:#ff8800; }
+.ht-cur { display:inline-block; width:10px; height:18px; background:#00ff41; animation:curBlink .7s step-end infinite; vertical-align:middle; }
+@keyframes curBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── TOAST ── */
+#toast { position:fixed; top:62px; left:50%; transform:translateX(-50%); background:rgba(143,68,232,.94);
+  color:#fff; font-family:var(--font-mono); font-size:clamp(11px,1.1vw,13px); padding:8px 20px;
+  border-radius:4px; z-index:600; pointer-events:none; opacity:0; transition:opacity .2s; white-space:nowrap; box-shadow:0 0 20px rgba(143,68,232,.25); }
+#toast.show { opacity:1; }
+
+/* ── VERIFY PANEL ── */
+#verify-panel { position:absolute; right:0; top:0; bottom:30px; width:262px;
+  background:rgba(34,24,41,.98); border-left:2px solid var(--purple-light); z-index:310;
+  transform:translateX(100%); transition:transform .34s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column; overflow:visible;
+  box-shadow:-20px 0 40px rgba(0,0,0,.35),-1px 0 0 rgba(0,196,28,.08); }
+#verify-panel.open { transform:translateX(0); }
+#verify-toggle { display:none; position:absolute; left:-26px; top:50%; transform:translateY(-50%);
+  width:26px; height:54px; background:rgba(34,24,41,.98);
+  border:2px solid var(--purple-light); border-right:none; border-radius:6px 0 0 6px;
+  align-items:center; justify-content:center; cursor:pointer; color:var(--purple-light);
+  font-size:14px; font-weight:700; z-index:309; transition:background .18s,color .18s;
+  box-shadow:-5px 0 16px rgba(0,0,0,.4); font-family:var(--font-mono); line-height:1; user-select:none; }
+#verify-toggle.show { display:flex; }
+#verify-toggle:hover { background:rgba(84,0,173,.35); color:var(--text-b); }
+.cp-hdr { padding:13px 15px 9px; border-bottom:1px solid rgba(0,196,28,.18); flex-shrink:0; }
+.cp-node { font-family:var(--font-display); font-size:clamp(11px,1.1vw,13px); color:var(--purple-light); letter-spacing:1.5px; margin-bottom:4px; }
+.cp-sub { font-size:clamp(11px,1.05vw,12px); color:var(--text); font-family:var(--font-body); line-height:1.4; }
+.cp-body { flex:1; overflow-y:auto; padding:10px 13px; min-height:0; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.cp-params { display:flex; flex-direction:column; gap:14px; }
+.cp-param { display:flex; flex-direction:column; gap:7px; }
+.cp-plbl { font-family:var(--font-display); font-size:clamp(10px,1vw,12px); color:var(--text-b); letter-spacing:.8px; line-height:1.45; }
+.cp-plbl .cp-note { font-family:var(--font-mono); font-size:10px; color:rgba(0,255,65,.72); font-weight:300; display:block; margin-top:3px; }
+/* arrow-selector chips */
+.cp-chips { display:flex; flex-direction:column; gap:5px; }
+.cp-chip { padding:7px 11px; border:1.5px solid rgba(0,196,28,.22); border-radius:4px;
+  background:rgba(43,32,52,.88); color:var(--green-stable); font-family:var(--font-mono);
+  font-size:clamp(10px,1vw,12px); cursor:pointer; transition:all .15s; text-align:left;
+  line-height:1.4; display:flex; align-items:center; gap:8px; }
+.cp-chip::before { content:'›'; font-size:14px; color:rgba(0,196,28,.4); flex-shrink:0; transition:color .15s; }
+.cp-chip:hover { border-color:var(--purple-light); color:var(--purple-light); background:rgba(143,68,232,.08); }
+.cp-chip:hover::before { color:var(--purple-light); }
+.cp-chip.cp-sel { border-color:var(--purple-light); color:var(--purple-light); background:rgba(143,68,232,.14); }
+.cp-chip.cp-sel::before { content:'›'; color:var(--purple-light); }
+.cp-chip.cp-correct { border-color:var(--green); color:var(--green); background:rgba(0,255,65,.08); pointer-events:none; }
+.cp-chip.cp-correct::before { content:'✓'; color:var(--green); }
+.cp-chip.cp-wrong { border-color:var(--red); color:var(--red); background:rgba(211,25,114,.08); pointer-events:none; }
+.cp-chip.cp-wrong::before { content:'✕'; color:var(--red); }
+.cp-chip.cp-disabled { opacity:.35; pointer-events:none; }
+.cp-err { font-family:var(--font-mono); font-size:clamp(9px,.85vw,10px); color:var(--red);
+  margin-top:5px; display:none; line-height:1.45; padding:4px 6px; border-left:1px solid var(--red);
+  background:rgba(211,25,114,.06); }
+.cp-err.show { display:block; }
+.cp-divider { height:1px; background:rgba(0,196,28,.12); margin:4px 0; }
+.cp-foot { padding:11px 14px; border-top:1px solid var(--border-b); flex-shrink:0; display:flex; gap:8px; }
+.cp-ok { flex:1; padding:10px 4px; background:rgba(247,148,33,.1); border:1px solid var(--orange);
+  color:var(--orange); font-family:var(--font-display); font-size:clamp(9px,.9vw,11px);
+  border-radius:3px; letter-spacing:.8px; font-weight:700; transition:all .2s; cursor:pointer; }
+.cp-ok:hover:not(:disabled) { background:rgba(247,148,33,.22); }
+.cp-ok:disabled { opacity:.35; cursor:not-allowed; }
+
+/* ── DEBRIEF ── */
+#debrief-overlay { position:fixed; inset:0; background:rgba(0,0,0,.96); z-index:455; display:none; align-items:center; justify-content:center; }
+#debrief-overlay.active { display:flex; }
+.db-card { width:700px; max-width:92vw; background:var(--panel-bg); border:1px solid rgba(0,255,65,.55);
+  border-radius:10px; padding:clamp(1.4rem,3vh,2.4rem) clamp(1.4rem,2.8vw,2.4rem);
+  box-shadow:0 0 70px rgba(84,0,173,.16),0 0 36px rgba(0,255,65,.10); position:relative; overflow:hidden; max-height:92vh; overflow-y:auto; }
+.db-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--purple),var(--green-stable),var(--purple)); opacity:.8; }
+.db-badge { font-family:var(--font-display); font-size:clamp(10px,1vw,12px); color:var(--green); letter-spacing:3px; margin-bottom:4px; }
+.db-head { font-family:var(--font-display); font-size:clamp(17px,1.8vw,22px); color:var(--text-b); letter-spacing:1px; margin-bottom:20px; }
+.db-metrics { display:flex; gap:14px; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+.db-m { text-align:center; flex:1; }
+.db-mv { font-family:var(--font-display); font-size:clamp(20px,2vw,26px); color:var(--purple-light); font-weight:700; }
+.db-ml { font-size:clamp(10px,1vw,12px); color:var(--text); letter-spacing:1.5px; margin-top:4px; }
+.db-rw-ttl { font-family:var(--font-display); font-size:clamp(10px,1vw,12px); color:var(--amber); letter-spacing:2px; margin-bottom:8px; }
+.db-rw-txt { font-size:clamp(13px,1.3vw,15px); color:var(--text-b); line-height:1.72; margin-bottom:16px; }
+.db-rw-txt strong { color:var(--cyan); font-weight:600; }
+.db-rw-txt em { color:var(--green); font-style:normal; font-weight:500; }
+.db-fb-item { padding:9px 13px; border-left:2px solid var(--border); margin-bottom:7px; font-size:clamp(12px,1.2vw,14px); line-height:1.65; color:var(--text-b); }
+.db-fb-item.fb-good { border-left-color:var(--green); color:#d6f4dd; }
+.db-fb-item.fb-warn { border-left-color:var(--amber); background:rgba(247,148,33,.04); }
+.db-quote { font-family:var(--font-mono); font-size:clamp(11px,1.1vw,13px); color:var(--green-stable);
+  border-left:2px solid var(--green-stable); padding-left:12px; margin-top:14px; line-height:1.7; }
+.db-next { width:100%; margin-top:12px; padding:14px; background:rgba(247,148,33,.1);
+  border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:clamp(11px,1.1vw,13px); font-weight:700; border-radius:4px; letter-spacing:1px; transition:all .2s; cursor:pointer; }
+.db-next:hover { background:rgba(247,148,33,.22); }
+
+</style>
+</head>
+<body>
+
+<div class="ambient-glow"></div>
+<div class="scanlines"></div>
+<div class="bg-grid"></div>
+<div class="corner corner--tl"></div>
+<div class="corner corner--tr"></div>
+<div class="corner corner--bl"></div>
+<div class="corner corner--br"></div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-left">
+    <span><span class="status-dot live"></span>LIVE SESSION</span>
+    <span>OPERATION OMNI</span>
+    <span>MISSION 02 / 05</span>
+  </div>
+  <div class="status-right">
+    <span>MASTERMIND TERMINAL</span>
+    <span>v2.1.0</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     INTRO PAGE 1 — Title + Stats
+═══════════════════════════════════════ -->
+<div class="page active" id="page1">
+  <div class="page-eyebrow">THE DATA HEIST · OPERATION OMNI</div>
+  <div class="page-title">Forging the Master Key</div>
+  <div class="content">
+    <div class="brief-section" style="animation:fadeUp .6s .3s both">
+      <div class="section-label">MISSION BRIEF</div>
+      <div class="brief-card">
+        <div class="brief-tag"><span class="brief-tag-dot"></span>ATLAS — ENCRYPTED CHANNEL</div>
+        <div class="brief-text">
+          <p>OMNI is confirmed — but the vault is sealed with a composite key. <strong>Four department access tokens</strong>, each locked behind an ownership dispute.</p>
+          <p>Marshall's governance system is still running. Inside: an active queue of unresolved conflicts — four datasets where two departments each claim ownership. Both arguments sound reasonable. One is wrong.</p>
+          <p>Your job is to <strong>settle each dispute using the metadata</strong>. The Data Steward field and lineage chain don't lie — everything else might. Resolve all four, compile the key, and we're through.</p>
+        </div>
+      </div>
+    </div>
+    <div class="detection-section" style="animation:fadeUp .6s .45s both">
+      <div class="section-label">DETECTION RISK</div>
+      <div class="brief-card" style="border-color:rgba(211,25,114,0.45);box-shadow:0 0 60px rgba(211,25,114,0.08),inset 0 1px 0 rgba(211,25,114,0.10)">
+        <div class="brief-tag" style="color:var(--pink)"><span class="brief-tag-dot" style="background:var(--pink);box-shadow:0 0 8px rgba(211,25,114,.6)"></span>SYSTEM ALERT</div>
+        <div class="brief-text">
+          <p>Each wrong ruling triggers a security flag. <strong>Wrong rulings, hints, and idle time all raise detection.</strong> If detection reaches 100% the session terminates.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-nav-dots"><div class="pnd active" onclick="goPage(0)"></div><div class="pnd" onclick="goPage(1)"></div><div class="pnd" onclick="goPage(2)"></div></div>
+  <div class="slide-nav">
+    <button class="snav-btn" id="p1-next" onclick="goPage(1)">NEXT ►</button>
+  </div>
+  <button id="skip-intro" onclick="startBoot()">SKIP INTRO →</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     INTRO PAGE 2 — How it works
+═══════════════════════════════════════ -->
+<div class="page" id="page2">
+  <div class="page-eyebrow">MISSION 02 — OPERATIONAL BRIEF</div>
+  <div class="page-title">How It Works</div>
+  <div class="content">
+    <div style="animation:fadeUp .6s .3s both">
+      <div class="section-label">STEPS</div>
+      <div class="steps-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-title">READ THE DISPUTE</div>
+          <div class="step-desc">Open the Governance Tribunal. Two departments claim the same dataset. Read both arguments carefully before opening anything.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-title">INSPECT THE EVIDENCE</div>
+          <div class="step-desc">Double-click the disputed file in the Data Registry. Find the Data Steward, lineage chain, and classification — one field settles every dispute.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-title">RULE ON OWNERSHIP</div>
+          <div class="step-desc">Pick the correct owner in the Tribunal. Wrong ruling raises detection and costs points. Correct ruling unlocks the verification step.</div>
+        </div>
+        <div class="step-card" style="border-color:rgba(143,68,232,.4)">
+          <div class="step-number" style="color:var(--purple-light)">04</div>
+          <div class="step-title">VERIFY &amp; EXTRACT</div>
+          <div class="step-desc">Answer two evidence questions in the verification panel — record count, lineage, steward, schema. All answers are in the Inspector. Correct answers extract the token.</div>
+        </div>
+      </div>
+    </div>
+    <div style="animation:fadeUp .6s .45s both">
+      <div class="section-label" style="margin-top:0.6vh">DISPUTE TYPES YOU'LL ENCOUNTER</div>
+      <div class="brief-card">
+        <div class="brief-text">
+          <p>Each dispute tests a different misconception about data ownership. Watch for: <strong>origin ≠ owner</strong> (who generates data is not who governs it) · <strong>usage ≠ owner</strong> (who reads the data is not who owns it) · <strong>lineage pipe ≠ owner</strong> (passing through a system is not stewardship) · <strong>regulatory override</strong> (GDPR-regulated data always falls under Compliance, regardless of origin).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-nav-dots"><div class="pnd" onclick="goPage(0)"></div><div class="pnd active" onclick="goPage(1)"></div><div class="pnd" onclick="goPage(2)"></div></div>
+  <div class="slide-nav">
+    <button class="snav-btn" onclick="goPage(0)">◄ PREV</button>
+    <button class="snav-btn" onclick="goPage(2)">NEXT ►</button>
+  </div>
+  <button id="skip-intro" onclick="startBoot()">SKIP INTRO →</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     INTRO PAGE 3 — Launch
+═══════════════════════════════════════ -->
+<div class="page" id="page3">
+  <div class="page-eyebrow">MISSION 02 — READY TO DEPLOY</div>
+  <div class="page-title">Four Disputes. One Key.</div>
+  <div class="content">
+    <div style="animation:fadeUp .6s .3s both">
+      <div class="section-label">OBJECTIVES</div>
+      <div class="steps-grid">
+        <div class="step-card" style="border-color:rgba(247,148,33,.3)">
+          <div class="step-number" style="color:var(--orange)">4</div>
+          <div class="step-title">OWNERSHIP DISPUTES</div>
+          <div class="step-desc">Resolve every conflict in the tribunal queue using evidence from the Dataset Inspector.</div>
+        </div>
+        <div class="step-card" style="border-color:rgba(0,255,65,.3)">
+          <div class="step-number" style="color:var(--green)">4</div>
+          <div class="step-title">DEPARTMENT TOKENS</div>
+          <div class="step-desc">CFO · COO · CTO · CCO — each unlocked by a correct ruling followed by passing two verification questions.</div>
+        </div>
+        <div class="step-card" style="border-color:rgba(143,68,232,.5)">
+          <div class="step-number" style="color:var(--purple-light)">1</div>
+          <div class="step-title">MASTER KEY</div>
+          <div class="step-desc">Compile all four tokens into the Master Key to gain vault access.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="button-section">
+    <div class="button-label">// ready to breach?</div>
+    <button class="btn-next" onclick="startBoot()">
+      <div class="btn-inner">BREACH THE DESKTOP <span class="btn-arrow">→</span></div>
+    </button>
+  </div>
+  <div class="page-nav-dots"><div class="pnd" onclick="goPage(0)"></div><div class="pnd" onclick="goPage(1)"></div><div class="pnd active" onclick="goPage(2)"></div></div>
+  <div class="slide-nav">
+    <button class="snav-btn" onclick="goPage(1)">◄ PREV</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     BOOT OVERLAY
+═══════════════════════════════════════ -->
+<div id="hack-overlay">
+  <div id="hack-terminal"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════
+     GAMEPLAY ROOT
+═══════════════════════════════════════ -->
+<div id="gp-root">
+<div id="game">
+
+  <div id="hdr">
+    <div class="hdr-left"><i class="fas fa-terminal"></i> MASTERMIND TERMINAL · OPERATION OMNI</div>
+    <div class="hdr-center">MISSION 02 OF 05 / FORGING THE MASTER KEY</div>
+    <div class="hdr-right">
+      <span id="det-display" class="det-green">
+        <span id="det-icon"><i class="fas fa-shield-alt"></i></span>
+        <span id="det-pct">0%</span>
+        <span class="det-bar-wrap"><span id="det-bar" class="det-bar-green"></span></span>
+        <span style="font-size:10px;letter-spacing:1.5px;opacity:.7">DARK</span>
+      </span>
+      <span style="color:rgba(0,196,28,.2);margin:0 4px">|</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('nl')">NL</button>
+      </div>
+      <span id="timer">00:00</span>
+      <span class="live-dot"></span>
+      <span style="letter-spacing:1px;font-size:10px">LIVE</span>
+    </div>
+  </div>
+
+  <div id="step-banner">Open the Governance Tribunal — read the active dispute, inspect the evidence file, then rule on ownership</div>
+
+  <div id="main-row">
+
+    <!-- ══ DESKTOP ══ -->
+    <div id="desktop-panel">
+      <div id="wallpaper"></div>
+
+      <!-- Icons -->
+      <div class="di di-mission visible" style="top:20px;left:12px" ondblclick="openWin('win-tribunal')">
+        <span class="di-icon"><i class="fas fa-gavel"></i></span>
+        <div class="di-label">Governance_Tribunal</div>
+      </div>
+      <div class="di visible" style="top:118px;left:12px" ondblclick="openWin('win-registry')">
+        <span class="di-icon"><i class="fas fa-folder"></i></span>
+        <div class="di-label">Data_Registry</div>
+      </div>
+      <div class="di visible" style="top:216px;left:12px" ondblclick="openWin('win-inspector')">
+        <span class="di-icon"><i class="fas fa-magnifying-glass"></i></span>
+        <div class="di-label">File_Inspector</div>
+      </div>
+      <div class="di visible" style="top:314px;left:12px" ondblclick="openWin('win-personal')">
+        <span class="di-icon"><i class="fas fa-folder" style="color:#f0c538"></i></span>
+        <div class="di-label">Marshall_Personal</div>
+      </div>
+      <div class="di visible" style="top:400px;left:12px">
+        <span class="di-icon" style="color:#888"><i class="fas fa-trash-alt"></i></span>
+        <div class="di-label">Recycle Bin</div>
+      </div>
+
+      <!-- Stickies -->
+      <div class="sticky sticky-yellow visible" style="top:18px;right:12px"><span class="sticky-hdr">THIS WEEK</span>SFO flight Fri 6am
+Jenkins call Wed
+Sub-Acct 7 → do NOT escalate
+Dentist Thurs</div>
+      <div class="sticky sticky-pink visible" style="top:200px;right:12px">CFO verbal 09/14
+$47.2M — keep off tracker
+do not log</div>
+      <div class="sticky sticky-blue visible" style="top:352px;right:12px">voicemail — Stanton 09/28
+847TB out.
+They have no idea.
+delete this</div>
+
+      <!-- ══ WIN: TRIBUNAL ══ -->
+      <div class="xp-win visible" id="win-tribunal" style="top:36px;left:86px;width:498px;z-index:112">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-tribunal')">
+          <span class="xp-ti"><i class="fas fa-gavel" style="color:#f0c538"></i></span>
+          <span class="xp-title">Governance_Tribunal.exe — Ownership Dispute</span>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="minWin('win-tribunal')">─</button>
+            <button class="xp-btn xp-max" onclick="maxWin('win-tribunal')">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-tribunal')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">Case</span><span class="xpm">Evidence</span><span class="xpm">View</span></div>
+        <div class="xp-body" style="height:320px" id="tribunal-body">
+          <div style="padding:28px 18px;text-align:center;font-family:'Tahoma',sans-serif;font-size:11px;color:#888;line-height:1.8">No case loaded.<br>Select a dispute from the queue on the right.</div>
+        </div>
+        <div class="xp-status"><span id="tribunal-status">No case loaded</span><span id="tribunal-counter" style="margin-left:auto;font-size:10px"></span></div>
+        <div class="xp-grip" onmousedown="resizeWin(event,'win-tribunal')"></div>
+      </div>
+
+      <!-- ══ WIN: INSPECTOR ══ -->
+      <div class="xp-win" id="win-inspector" style="top:115px;left:106px;width:432px;z-index:110">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-inspector')">
+          <span class="xp-ti"><i class="fas fa-magnifying-glass" style="color:#90caf9"></i></span>
+          <span class="xp-title">File_Inspector.exe — Metadata Viewer</span>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="minWin('win-inspector')">─</button>
+            <button class="xp-btn xp-max" onclick="maxWin('win-inspector')">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-inspector')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Inspect</span></div>
+        <div class="xp-body" style="height:280px" id="inspector-body">
+          <div class="insp-empty">Double-click any file in the Data Registry<br>to inspect its metadata here.</div>
+        </div>
+        <div class="xp-status"><span id="inspector-status">No file selected</span></div>
+        <div class="xp-grip" onmousedown="resizeWin(event,'win-inspector')"></div>
+      </div>
+
+      <!-- ══ WIN: REGISTRY ══ -->
+      <div class="xp-win" id="win-registry" style="top:195px;left:72px;width:458px;z-index:108">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-registry')">
+          <span class="xp-ti"><i class="fas fa-folder" style="color:#f0c538"></i></span>
+          <span class="xp-title">Data_Governance_Registry — C:\MegaCorp\Governance\</span>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="minWin('win-registry')">─</button>
+            <button class="xp-btn xp-max" onclick="maxWin('win-registry')">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-registry')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">View</span><span class="xpm">Tools</span></div>
+        <div class="xp-body" style="height:230px">
+          <table class="reg-table">
+            <thead><tr><th>FILENAME</th><th>CLAIMED BY</th><th>CLASS.</th><th>RECORDS</th></tr></thead>
+            <tbody id="reg-tbody"></tbody>
+          </table>
+        </div>
+        <div class="xp-status"><span id="registry-status">10 files — double-click to inspect</span></div>
+        <div class="xp-grip" onmousedown="resizeWin(event,'win-registry')"></div>
+      </div>
+
+      <!-- ══ WIN: MARSHALL PERSONAL (decoy) ══ -->
+      <div class="xp-win" id="win-personal" style="top:280px;left:128px;width:370px;z-index:106">
+        <div class="xp-tb" onmousedown="dragWin(event,'win-personal')">
+          <span class="xp-ti"><i class="fas fa-folder" style="color:#f0c538"></i></span>
+          <span class="xp-title">Marshall_Personal — C:\Users\DMarshall\Documents\</span>
+          <div class="xp-btns">
+            <button class="xp-btn xp-min" onclick="minWin('win-personal')">─</button>
+            <button class="xp-btn xp-max" onclick="maxWin('win-personal')">□</button>
+            <button class="xp-btn xp-cls" onclick="closeWin('win-personal')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menu"><span class="xpm">File</span><span class="xpm">Edit</span><span class="xpm">View</span></div>
+        <div class="xp-body" style="height:164px">
+          <div class="folder-grid">
+            <div class="fg-item" ondblclick="decoyOpen('img')"><div class="fg-icon"><i class="fas fa-file-image"></i></div><div class="fg-label">family_vacation_02.jpg</div></div>
+            <div class="fg-item" ondblclick="decoyOpen('doc')"><div class="fg-icon"><i class="fas fa-file-word"></i></div><div class="fg-label">Yacht_Quote_FY03.doc</div></div>
+            <div class="fg-item" ondblclick="decoyOpen('xls')"><div class="fg-icon"><i class="fas fa-file-excel"></i></div><div class="fg-label">Personal_Budget_2003.xls</div></div>
+            <div class="fg-item" ondblclick="decoyOpen('pdf')"><div class="fg-icon"><i class="fas fa-file-pdf"></i></div><div class="fg-label">Cayman_Property_NDA.pdf</div></div>
+            <div class="fg-item" ondblclick="decoyOpen('mp3')"><div class="fg-icon"><i class="fas fa-file-audio"></i></div><div class="fg-label">voicemail_stanton_928.mp3</div></div>
+          </div>
+        </div>
+        <div class="xp-status"><span>5 objects · Last modified: 29-Sep-2003</span></div>
+        <div class="xp-grip" onmousedown="resizeWin(event,'win-personal')"></div>
+      </div>
+
+      <!-- ══ VERIFY PANEL ══ -->
+      <div id="verify-panel">
+        <button id="verify-toggle" onclick="toggleVerify()" title="Toggle verification panel">›</button>
+        <div class="cp-hdr">
+          <div class="cp-node" id="vp-node">SECURITY VERIFICATION</div>
+          <div class="cp-sub" id="vp-sub">Answer the questions to extract the access token.</div>
+        </div>
+        <div class="cp-body">
+          <div class="cp-params" id="vp-params"></div>
+        </div>
+        <div class="cp-foot">
+          <button class="cp-ok" id="vp-confirm" onclick="confirmVerify()" disabled>▶ EXTRACT TOKEN</button>
+        </div>
+      </div>
+
+      <!-- Taskbar -->
+      <div id="xp-taskbar" class="visible">
+        <button id="start-btn">⊞ Start</button>
+        <div class="tb-div"></div>
+        <button class="tb-wb tb-on" id="tbw-tribunal" onclick="toggleWin('win-tribunal')"><i class="fas fa-gavel"></i> Tribunal</button>
+        <button class="tb-wb" id="tbw-registry" onclick="toggleWin('win-registry')"><i class="fas fa-folder"></i> Registry</button>
+        <button class="tb-wb" id="tbw-inspector" onclick="toggleWin('win-inspector')"><i class="fas fa-magnifying-glass"></i> Inspector</button>
+        <button class="tb-wb" id="tbw-personal" onclick="toggleWin('win-personal')"><i class="fas fa-folder"></i> Personal</button>
+        <div id="tb-clock"></div>
+      </div>
+    </div><!-- end desktop -->
+
+    <!-- ══ RIGHT PANEL ══ -->
+    <div id="right">
+      <div id="eboard">
+        <div class="eb-hdr">
+          <span class="eb-htitle">KEY FORGE</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--amber)" id="eb-count">0 / 4 TOKENS</span>
+        </div>
+        <div class="eb-grid">
+          <div class="lead n-next" id="lead-finance" onclick="openDisputeById(1)">
+            <div class="lead-icon"><i class="fas fa-coins"></i></div>
+            <div class="lead-name">FINANCE</div>
+            <div class="lead-status" id="ls-finance">OPEN</div>
+          </div>
+          <div class="lead n-dimmed" id="lead-it" onclick="openDisputeById(2)">
+            <div class="lead-icon"><i class="fas fa-server"></i></div>
+            <div class="lead-name">IT</div>
+            <div class="lead-status" id="ls-it">PENDING</div>
+          </div>
+          <div class="lead n-dimmed" id="lead-operations" onclick="openDisputeById(3)">
+            <div class="lead-icon"><i class="fas fa-cogs"></i></div>
+            <div class="lead-name">OPERATIONS</div>
+            <div class="lead-status" id="ls-operations">PENDING</div>
+          </div>
+          <div class="lead n-dimmed" id="lead-compliance" onclick="openDisputeById(4)">
+            <div class="lead-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="lead-name">COMPLIANCE</div>
+            <div class="lead-status" id="ls-compliance">PENDING</div>
+          </div>
+        </div>
+        <div class="eb-progress">
+          <div class="ep-seg" id="ep-finance"></div>
+          <div class="ep-seg" id="ep-it"></div>
+          <div class="ep-seg" id="ep-operations"></div>
+          <div class="ep-seg" id="ep-compliance"></div>
+        </div>
+        <button id="synth-btn" disabled onclick="showDebrief()"><i class="fas fa-key"></i> COMPILE MASTER KEY</button>
+      </div>
+
+      <!-- Mission Channel -->
+      <div id="voss-wrap">
+        <div class="voss-hdr">
+          <div class="bk-avatar"><i class="fas fa-user-secret"></i></div>
+          <div class="bk-info">
+            <div class="bk-name">Mission Channel</div>
+            <div class="bk-members">
+              <span class="bk-member online">Voss</span><span class="bk-sep">,</span>
+              <span class="bk-member online">Atlas</span><span class="bk-sep">,</span>
+              <span class="bk-member online">Zex</span><span class="bk-sep">,</span>
+              <span class="bk-member offline">Nova</span><span class="bk-sep">,</span>
+              <span class="bk-member offline">Kade</span>
+            </div>
+          </div>
+          <div class="bk-icons"><i class="fas fa-lock"></i></div>
+        </div>
+        <div id="voss-body">
+          <div class="bm-sep"><div class="bm-sep-pill">TODAY</div></div>
+        </div>
+        <div class="voss-footer">
+          <div class="voss-input-bar">
+            <div class="hint-wrap">
+              <button id="hint-btn" onclick="requestHint()" title="Request hint">💡</button>
+              <div class="hint-tooltip">REQUEST HINT · −100 pts</div>
+              <div id="hint-cd"></div>
+            </div>
+            <input id="voss-input" readonly placeholder="// channel encrypted — read only">
+          </div>
+        </div>
+      </div>
+    </div><!-- end right -->
+
+  </div><!-- end main-row -->
+</div><!-- end game -->
+</div><!-- end gp-root -->
+
+<!-- DEBRIEF -->
+<div id="debrief-overlay">
+  <div class="db-card">
+    <div class="db-badge">MISSION 02 — COMPLETE</div>
+    <div class="db-head">Master Key Compiled — Vault Access Granted</div>
+    <div class="db-metrics">
+      <div class="db-m"><div class="db-mv" id="dbr-time">—</div><div class="db-ml">TIME</div></div>
+      <div class="db-m"><div class="db-mv" id="dbr-acc">—</div><div class="db-ml">ACCURACY</div></div>
+      <div class="db-m"><div class="db-mv" id="dbr-hints">—</div><div class="db-ml">HINTS</div></div>
+      <div class="db-m"><div class="db-mv" id="dbr-score">—</div><div class="db-ml">SCORE</div></div>
+    </div>
+    <div class="db-rw-ttl">REAL-WORLD TRANSLATION</div>
+    <div class="db-rw-txt">You ruled on four data ownership conflicts — using stewardship chains, lineage pipelines, and classification flags to determine who is truly <em>accountable</em> for each dataset.<br><br>In the real world this is <strong>Data Governance</strong>: ownership is not determined by who generates data, who stores it, or whose name appears in the filename. It is determined by the <em>Data Steward</em> — the accountable person recorded in the governance registry. A file called <em>Marketing_Analytics.dat</em> may be owned by IT. A dataset stored in Finance may be governed by Compliance. The metadata is the ground truth — not the folder it lives in.</div>
+    <div class="db-rw-ttl" style="margin-top:14px">PERSONAL DEBRIEF</div>
+    <div id="dbr-feedback"></div>
+    <div class="db-quote" id="dbr-quote">"Four disputes, four tokens, one key. Data governance isn't about where data lives or what it's called — it's about who is accountable for it." — Atlas</div>
+    <button class="db-next" onclick="document.getElementById('debrief-overlay').classList.remove('active')">CONTINUE TO MISSION 3 — THE HUMAN SHIELD →</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA — FILES
+══════════════════════════════════════════════════════ */
+const FILES = {
+  rev_events:{name:'Revenue_Event_Stream.dat',claimedBy:'Finance / Operations',records:9000,
+    source:'Order Management System (OMS)',steward:'VP Finance — Revenue Accounting',
+    lineage:['OMS','Payment Gateway','Revenue Recognition Engine','Finance Data Warehouse'],
+    classification:'CONFIDENTIAL',cls:'badge-confidential',
+    schema:['event_id','event_ts_utc','event_type','order_id','customer_id','product_id','quantity','unit_price','discount_pct','amount','channel','country','payment_method'],
+    lastAccess:'04-Oct-2003 — fin_reconciliation',
+    hint:'The steward is VP Finance — Revenue Accounting. Despite originating in the OMS (an ops system), the reconciliation function and stewardship chain settle this for Finance.',
+    dispute:1},
+  vendor_invoices:{name:'Vendor_Invoice_Ledger.dat',claimedBy:'Finance',records:2800,
+    source:'Accounts Payable System (APS)',steward:'Head of Accounts Payable — reports to CFO',
+    lineage:['Vendor Portal','APS','Finance ERP','Finance Data Warehouse'],
+    classification:'CONFIDENTIAL',cls:'badge-confidential',
+    schema:['invoice_id','vendor_id','invoice_date','due_date','paid_date','amount','currency','cost_center','status'],
+    lastAccess:'30-Sep-2003 — ap_sync',
+    hint:'Head of Accounts Payable reports directly to the CFO. Classic Finance dataset.',
+    dispute:1},
+  campaign_spend:{name:'Campaign_Spend_Monitor.dat',claimedBy:'Marketing / IT',records:5490,
+    source:'Marketing Analytics Platform (MAP)',steward:'Digital Infrastructure Team — IT Division',
+    lineage:['Ad Networks','Marketing Analytics Platform','IT Data Pipeline','BI Warehouse'],
+    classification:'INTERNAL',cls:'badge-internal',
+    schema:['date','campaign_id','network','objective','impressions','clicks','avg_cpc','spend','country'],
+    lastAccess:'30-Sep-2003 — map_sync',
+    hint:'Marketing generates the data, but the pipeline and platform are owned by IT Digital Infrastructure. Usage is not ownership.',
+    dispute:2},
+  web_sessions:{name:'Web_Session_Analytics.dat',claimedBy:'Marketing / IT',records:18000,
+    source:'Web Analytics Platform (Apache Log + GA)',steward:'IT Security & Digital Infrastructure Lead',
+    lineage:['Web Server Logs','Analytics Platform','BI Warehouse'],
+    classification:'INTERNAL — PSEUDONYMOUS PII',cls:'badge-internal',
+    schema:['session_id','session_start_ts_utc','customer_id','utm_source','utm_medium','device_type','browser','landing_page','session_duration_sec','pages_viewed','conversion_flag','country'],
+    lastAccess:'12-Oct-2003 — it_analytics',
+    hint:'Despite the UTM/marketing fields in the schema, infrastructure and session data is owned by IT Security & Digital Infrastructure.',
+    dispute:2},
+  workforce_shifts:{name:'Workforce_Shift_Registry.dat',claimedBy:'HR / Operations',records:2732,
+    source:'Workforce Management System (WMS)',steward:'VP Operations — Site Scheduling Division',
+    lineage:['WMS Scheduling Engine','HR Integration Layer','Payroll System'],
+    classification:'INTERNAL — RESTRICTED',cls:'badge-internal',
+    schema:['shift_id','site_id','employee_id','role','shift_start_ts_utc','shift_end_ts_utc','hours_worked'],
+    lastAccess:'30-Sep-2003 — ops_scheduler',
+    hint:'Despite the HR Integration Layer in the lineage, the steward is VP Operations. A data pipe does not make a steward.',
+    dispute:3},
+  device_telemetry:{name:'Device_Fleet_Telemetry.dat',claimedBy:'IT / Operations',records:14640,
+    source:'IoT Asset Management Platform',steward:'Facilities & Operations Manager',
+    lineage:['IoT Sensors','Asset Mgmt Platform','Operations Dashboard'],
+    classification:'INTERNAL',cls:'badge-internal',
+    schema:['telemetry_ts_utc','asset_id','asset_type','site_id','temperature_c','battery_pct','status_code','latitude','longitude'],
+    lastAccess:'15-Oct-2003 — iot_daemon',
+    hint:'It involves devices, but the steward is Facilities & Operations Manager. Physical asset monitoring is an Operations function, not IT.',
+    dispute:3},
+  warehouse_moves:{name:'Warehouse_Movement_Tracker.dat',claimedBy:'Operations',records:8000,
+    source:'Warehouse Management System (WMS)',steward:'Head of Logistics — reports to COO',
+    lineage:['WMS','Inventory Engine','Supply Chain Analytics Platform'],
+    classification:'INTERNAL',cls:'badge-internal',
+    schema:['move_id','move_ts_utc','site_id','move_type','product_id','quantity','from_bin','to_bin'],
+    lastAccess:'01-Oct-2003 — wms_sync',
+    hint:'Head of Logistics reports to the COO — clean Operations dataset.',
+    dispute:3},
+  customer_master:{name:'Customer_Master_Registry.dat',claimedBy:'CRM / Compliance',records:1200,
+    source:'CRM / Customer Data Platform (CDP)',steward:'Chief Compliance Officer — Data Protection Office (DPO)',
+    lineage:['Onboarding System','CRM','CDP','Compliance Vault'],
+    classification:'RESTRICTED — GDPR REGULATED',cls:'badge-restricted',
+    schema:['customer_id','account_id','signup_date','country','region','segment','is_active','gdpr_opt_in'],
+    lastAccess:'05-Oct-2003 — dpo_audit',
+    hint:'GDPR-regulated data with a gdpr_opt_in field. The DPO is always the steward regardless of who built the platform.',
+    dispute:4},
+  support_cases:{name:'Support_Case_Archive.dat',claimedBy:'Support / Compliance',records:4200,
+    source:'Customer Support Platform (JIRA Service Desk)',steward:'Compliance & Quality Assurance Manager',
+    lineage:['Support Tickets','Case Management System','Compliance Archive'],
+    classification:'CONFIDENTIAL — SLA AUDIT TRAIL',cls:'badge-confidential',
+    schema:['case_id','created_ts_utc','resolved_ts_utc','customer_id','category','priority','channel','status','sla_target_hours','resolution_hours','sla_breach_flag','country'],
+    lastAccess:'01-Oct-2003 — qa_audit',
+    hint:'SLA breach tracking is a legal compliance audit trail function. Steward is Compliance & QA Manager.',
+    dispute:4},
+  pricing_overrides:{name:'Pricing_Override_Log.dat',claimedBy:'Finance',records:14640,
+    source:'Pricing Engine / ERP',steward:'Revenue Operations Manager — Finance Division',
+    lineage:['Pricing Engine','ERP','Finance Reporting'],
+    classification:'CONFIDENTIAL',cls:'badge-confidential',
+    schema:['date','product_id','product_category','base_price','promo_flag','promo_pct','effective_price','pricing_reason'],
+    lastAccess:'02-Oct-2003 — pricing_svc',
+    hint:'Not involved in any active dispute.',
+    dispute:0},
+};
+
+const DISPUTES = [
+  {id:1,caseId:'GOV-2003-0041',dataset:'Revenue_Event_Stream.dat',fileKey:'rev_events',dqLabel:'Revenue_Event_Stream.dat',
+    token:'finance',leadId:'lead-finance',segId:'ep-finance',lsId:'ls-finance',topic:'Origin ≠ Owner',
+    claimants:[
+      {dept:'Finance',rep:'K. Vanhauer, VP Finance',
+       arg:'This is revenue data — every transaction amount, discount, and payment method flows directly into our period-end close. We reconcile against it nightly. The Revenue Recognition Engine is a Finance system. This is ours.'},
+      {dept:'Operations',rep:'T. Brecker, Head of Fulfilment',
+       arg:'This dataset originates in the Order Management System, which is an operational platform. Every order_id in this file traces back to a fulfilment event we manage. <strong>Origin determines ownership.</strong>'}],
+    correctIdx:0,
+    settleFact:'The steward is VP Finance — Revenue Accounting. The OMS generates the events but Finance holds stewardship through the Revenue Recognition Engine. Origin does not equal ownership.',
+    intro:'Case GOV-2003-0041 loaded. Finance and Operations are both claiming the revenue event log. Operations says origin determines ownership. Finance says reconciliation does. Open Revenue_Event_Stream.dat in the Registry — check the steward.',
+    correct:'Correct ruling. The steward is VP Finance — Revenue Accounting. The OMS generates the events, but the moment data enters the Revenue Recognition Engine, Finance owns it. Origin is not ownership.',
+    wrong:'Incorrect. Operations argues the data "originates" in their system — but origin is not stewardship. Open Revenue_Event_Stream.dat in the Registry and find the Data Steward field.'},
+  {id:2,caseId:'GOV-2003-0057',dataset:'Campaign_Spend_Monitor.dat',fileKey:'campaign_spend',dqLabel:'Campaign_Spend_Monitor.dat',
+    token:'it',leadId:'lead-it',segId:'ep-it',lsId:'ls-it',topic:'Usage ≠ Owner',
+    claimants:[
+      {dept:'Marketing',rep:'S. Okafor, Head of Digital Marketing',
+       arg:'We commissioned this dataset. We set campaign objectives, define the network mix, and read the spend reports every morning. The data describes our work. <strong>We are the primary consumer — therefore we own it.</strong>'},
+      {dept:'IT',rep:'R. Devaux, Digital Infrastructure Lead',
+       arg:'The entire pipeline — from Ad Network ingestion through normalisation to BI Warehouse load — is built, maintained, and operated by our team. We are the Data Steward of record. Infrastructure ownership determines governance.'}],
+    correctIdx:1,
+    settleFact:'Campaign_Spend_Monitor.dat: steward is Digital Infrastructure Team — IT Division. Marketing uses the reports; IT owns the pipeline and governance. Consumption is not stewardship.',
+    intro:'Case GOV-2003-0057. Marketing says they commissioned the data so they own it. IT says they built and maintain the pipeline. Open Campaign_Spend_Monitor.dat — who is the named steward?',
+    correct:'Correct. IT is the steward of record. Marketing reads the reports — that is consumption, not governance. The pipeline owner holds accountability, not the end user.',
+    wrong:'Not quite. Marketing\'s argument feels intuitive — but consuming data is not the same as governing it. Open Campaign_Spend_Monitor.dat and read the Data Steward field.'},
+  {id:3,caseId:'GOV-2003-0063',dataset:'Workforce_Shift_Registry.dat',fileKey:'workforce_shifts',dqLabel:'Workforce_Shift_Registry.dat',
+    token:'operations',leadId:'lead-operations',segId:'ep-operations',lsId:'ls-operations',topic:'Lineage pipe ≠ Owner',
+    claimants:[
+      {dept:'HR',rep:'A. Lindqvist, CHRO',
+       arg:'This file contains employee IDs, roles, and hours worked — that is HR data by definition. The lineage explicitly shows it flows through our <strong>HR Integration Layer</strong> before reaching Payroll. The data belongs to us.'},
+      {dept:'Operations',rep:'M. Dekker, VP Site Operations',
+       arg:'The Workforce Management System is an operational scheduling tool. We run it, configure it, and our VP is the named Data Steward. Shift planning is an operations function, not an HR function.'}],
+    correctIdx:1,
+    settleFact:'Steward is VP Operations — Site Scheduling Division. The HR Integration Layer is a data pipe — it moves data, it does not own it. Stewardship sits with the function that runs the system.',
+    intro:'Case GOV-2003-0063. HR is pointing at the HR Integration Layer in the lineage as proof of ownership. Operations says their VP is the steward. Open Workforce_Shift_Registry.dat — what does the lineage actually say vs what the steward field says?',
+    correct:'Correct. The HR Integration Layer is a pipe — data flows through it on its way to Payroll. Flowing through a system is not stewardship. The steward is VP Operations.',
+    wrong:'Wrong. The lineage does show an HR Integration Layer — but a pipe is not an owner. Open Workforce_Shift_Registry.dat and compare the steward field against that lineage.'},
+  {id:4,caseId:'GOV-2003-0079',dataset:'Customer_Master_Registry.dat',fileKey:'customer_master',dqLabel:'Customer_Master_Registry.dat',
+    token:'compliance',leadId:'lead-compliance',segId:'ep-compliance',lsId:'ls-compliance',topic:'Regulatory override',
+    claimants:[
+      {dept:'CRM Team',rep:'P. Mbeki, Head of CRM',
+       arg:'We built the Customer Data Platform. Every customer record originates in our onboarding workflow. The customer_id is our primary key. <strong>The platform is ours — therefore the data is ours.</strong>'},
+      {dept:'Compliance',rep:'Dr. F. Houten, Chief Compliance Officer / DPO',
+       arg:'This file contains GDPR-regulated personal data including explicit opt-in status. As Data Protection Officer under EU regulation, I am the mandatory steward of record. Regulatory obligation supersedes platform ownership in all governance decisions.'}],
+    correctIdx:1,
+    settleFact:'Classification: RESTRICTED — GDPR REGULATED. Steward: Chief Compliance Officer / DPO. GDPR-regulated personal data always falls under Compliance governance regardless of platform origin.',
+    intro:'Case GOV-2003-0079. CRM built the CDP, so they claim ownership. Compliance claims it because of GDPR. Open Customer_Master_Registry.dat — look at two fields: Classification and Data Steward. Both should point the same direction.',
+    correct:'Correct. GDPR-regulated personal data with a gdpr_opt_in field — the DPO is the mandatory steward under EU law. Regulatory obligation overrides operational platform ownership every time.',
+    wrong:'Incorrect. CRM built the platform — but building something is not the same as governing it. Open Customer_Master_Registry.dat and read both the Classification field and the Data Steward.'},
+];
+
+const DECOY_MSG = {
+  img:"Atlas: Family vacation photos. Nothing useful here.",
+  doc:"Atlas: Yacht quote from a Swiss broker. $1.4M. Explains why he keeps Sub-Acct 7 off the escalation list.",
+  xls:"Atlas: Personal budget. He's overspending on entertainment — all routing offshore.",
+  pdf:"Atlas: Cayman property NDA. This connects to the CFO sticky note. Keep it in mind.",
+  mp3:"Atlas: That's the Stanton voicemail. No audio access from here — the sticky has what we need.",
+};
+
+/* ══════════════════════════════════════════════════════
+   VERIFY QUESTIONS — 2 per dispute
+══════════════════════════════════════════════════════ */
+const VERIFY = {
+  1:{
+    title:'FINANCE TOKEN VERIFICATION',
+    sub:'Two questions about Revenue_Event_Stream.dat to extract the CFO token.',
+    questions:[
+      {
+        label:'Which system in the lineage chain marks the point where Finance takes stewardship of the data?',
+        note:'Open Revenue_Event_Stream.dat → read the lineage left to right. Where does it cross from operational into Finance territory?',
+        opts:['Order Management System','Payment Gateway','Revenue Recognition Engine','Finance Data Warehouse'],
+        ans:2,
+        err:'Open Revenue_Event_Stream.dat in the Inspector. The OMS is where the data originates — but Finance stewardship begins at the system that processes it for Finance. Read the lineage chain carefully.'
+      },
+      {
+        label:'How many intermediate hops does the data make between its source and its final destination?',
+        note:'Count the nodes between the first and last in the lineage — not including either endpoint.',
+        opts:['1 hop','2 hops','3 hops','4 hops'],
+        ans:1,
+        err:'Open Revenue_Event_Stream.dat in the Inspector. Count the nodes in the lineage chain that sit between the source system and the final destination — not including the first or last node.'
+      }
+    ]
+  },
+  2:{
+    title:'IT TOKEN VERIFICATION',
+    sub:'Two questions about Campaign_Spend_Monitor.dat to extract the CTO token.',
+    questions:[
+      {
+        label:'Who is the named Data Steward for Campaign_Spend_Monitor.dat?',
+        note:'Open the file in the Inspector — the Steward field is the key field that settled this dispute.',
+        opts:['Head of Digital Marketing','Digital Infrastructure Team — IT Division','VP Finance — Revenue Accounting','IT Security & Digital Infrastructure Lead'],
+        ans:1,
+        err:'Open Campaign_Spend_Monitor.dat in the Inspector and read the Data Steward field. This is the field that overrides Marketing\'s claim.'
+      },
+      {
+        label:'How many schema fields does Campaign_Spend_Monitor.dat contain?',
+        note:'Open the file in the Inspector and count every field listed in the schema section.',
+        opts:['7 fields','8 fields','9 fields','11 fields'],
+        ans:2,
+        err:'Open Campaign_Spend_Monitor.dat in the Inspector and count every field in the schema section one by one.'
+      }
+    ]
+  },
+  3:{
+    title:'OPERATIONS TOKEN VERIFICATION',
+    sub:'Two questions about the Workforce Shift Registry to extract the COO token.',
+    questions:[
+      {
+        label:'The HR Integration Layer appears in the lineage of Workforce_Shift_Registry.dat. What system comes directly AFTER it in the chain?',
+        note:'Open Workforce_Shift_Registry.dat → read the lineage in order. What follows the HR Integration Layer?',
+        opts:['WMS Scheduling Engine','Finance Data Warehouse','Payroll System','Operations Dashboard'],
+        ans:2,
+        err:'Open Workforce_Shift_Registry.dat in the Inspector. Find the HR Integration Layer in the lineage chain and read the next node to the right of it.'
+      },
+      {
+        label:'Workforce_Shift_Registry.dat vs Device_Fleet_Telemetry.dat — which dataset has MORE records?',
+        note:'Open both files in the Inspector one at a time and compare the record counts in the header.',
+        opts:['Workforce_Shift_Registry.dat — 2,732 records','Device_Fleet_Telemetry.dat — 14,640 records','They have the same record count','Warehouse_Movement_Tracker.dat — 8,000 records'],
+        ans:1,
+        err:'Open Workforce_Shift_Registry.dat, note the record count, then open Device_Fleet_Telemetry.dat and compare. Both are Operations datasets — check which is larger.'
+      }
+    ]
+  },
+  4:{
+    title:'COMPLIANCE TOKEN VERIFICATION',
+    sub:'Two questions about the Compliance datasets to extract the CCO token.',
+    questions:[
+      {
+        label:'What regulation makes Customer_Master_Registry.dat a Compliance dataset rather than a CRM dataset?',
+        note:'Open Customer_Master_Registry.dat → read the Classification field. The regulation is named explicitly.',
+        opts:['SOX — Financial Reporting Act','HIPAA — Health Data Protection','GDPR — General Data Protection Regulation','ISO 27001 — Information Security'],
+        ans:2,
+        err:'Open Customer_Master_Registry.dat in the Inspector. The Classification field names the regulation that forces Compliance stewardship regardless of who built the platform.'
+      },
+      {
+        label:'Customer_Master_Registry.dat and Support_Case_Archive.dat are both Compliance datasets. Which one contains MORE records?',
+        note:'Open both files in the Inspector and compare their record counts.',
+        opts:['Customer_Master_Registry.dat — 1,200 records','Support_Case_Archive.dat — 4,200 records','They contain the same number','Neither — they are not both Compliance datasets'],
+        ans:1,
+        err:'Open both Customer_Master_Registry.dat and Support_Case_Archive.dat in the Inspector. Both are stearded by Compliance — compare their record counts.'
+      }
+    ]
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════════════════ */
+const GS = {
+  lang:'en', hackDone:false,
+  results:{},        // disputeId -> 'correct'|'wrong'
+  verifyResults:{},  // disputeId -> true when verified
+  tokens:new Set(),
+  wrongRulings:0, verifyErrors:0, hintsUsed:0, score:1000,
+  timerSec:0, timerInt:null, passiveInt:null,
+  detection:0,
+  zTop:110, lastSender:null,
+  activeDispute:null,
+  verifyDispute:null,
+  vpSelections:{},
+};
+
+/* ══════════════════════════════════════════════════════
+   INTRO NAV
+══════════════════════════════════════════════════════ */
+function goPage(n){
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===n));
+  document.querySelectorAll('.pnd').forEach((d,i)=>d.classList.toggle('active',i===n));
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════ */
+function startBoot(){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.querySelector('.status-bar').style.display='none';
+  document.querySelectorAll('.ambient-glow,.scanlines,.bg-grid,.corner').forEach(e=>e.style.display='none');
+  const ho=document.getElementById('hack-overlay');
+  ho.classList.add('active');
+  const term=document.getElementById('hack-terminal');
+  const lines=[
+    {c:'ht-g',t:'MASTERMIND TERMINAL v2.1.0 — OPERATION OMNI'},
+    {c:'ht-a',t:'Connecting to MegaCorp governance network...'},
+    {c:'ht-g',t:'[OK] Firewall bypass: NX-7 spoofing active'},
+    {c:'ht-g',t:'[OK] Session hijack: D.Marshall authenticated'},
+    {c:'ht-a',t:'Scanning governance registry...'},
+    {c:'ht-g',t:'[OK] 10 datasets found — metadata intercepted'},
+    {c:'ht-o',t:'[ALERT] 4 unresolved ownership disputes in queue'},
+    {c:'ht-g',t:'[OK] Tribunal + Verification interface loaded'},
+    {c:'ht-g',t:'[OK] Finance token — locked behind GOV-2003-0041'},
+    {c:'ht-g',t:'[OK] IT token — locked behind GOV-2003-0057'},
+    {c:'ht-g',t:'[OK] Operations token — locked behind GOV-2003-0063'},
+    {c:'ht-g',t:'[OK] Compliance token — locked behind GOV-2003-0079'},
+    {c:'ht-a',t:''},
+    {c:'ht-a',t:'⚡ ATLAS: Two steps per dispute — rule first, then verify with evidence questions.'},
+    {c:'ht-a',t:'⚡ ATLAS: Keep the Inspector open. Every answer is in the metadata.'},
+    {c:'ht-g',t:''},
+    {c:'ht-g',t:'Initialising desktop environment...'},
+    {c:'ht-g',t:'BREACH ESTABLISHED ██████████ 100%'},
+  ];
+  lines.forEach((l,i)=>{
+    const s=document.createElement('span');
+    s.className='ht '+l.c; s.textContent=l.t;
+    term.appendChild(s);
+    setTimeout(()=>s.classList.add('show'),i*110+200);
+  });
+  setTimeout(()=>{
+    ho.classList.remove('active');
+    initGame();
+  },lines.length*110+900);
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+function initGame(){
+  document.getElementById('gp-root').classList.add('active');
+  document.querySelector('html').classList.add('gp-html-active');
+  document.getElementById('wallpaper').classList.add('visible');
+  GS.hackDone=true;
+  buildRegistry();
+  startTimer(); startPassive(); clockTick();
+  updateTaskbar();
+  setTimeout(()=>brokerMsg('Atlas','Two steps per dispute: rule on ownership in the Tribunal, then answer evidence questions in the verification panel to extract the token. Start with GOV-2003-0041.','bm-d'),900);
+  setTimeout(()=>loadDispute(1),1200);
+}
+
+/* ══════════════════════════════════════════════════════
+   REGISTRY
+══════════════════════════════════════════════════════ */
+function buildRegistry(){
+  const tb=document.getElementById('reg-tbody'); tb.innerHTML='';
+  Object.entries(FILES).forEach(([key,f])=>{
+    const tr=document.createElement('tr');
+    tr.dataset.key=key;
+    tr.ondblclick=()=>inspectFile(key);
+    tr.onclick=()=>{document.querySelectorAll('#reg-tbody tr').forEach(r=>r.classList.remove('reg-selected'));tr.classList.add('reg-selected');};
+    tr.innerHTML='<td><i class="fas fa-file" style="color:#888;margin-right:4px"></i>'+f.name+'</td><td>'+f.claimedBy+'</td><td><span class="reg-badge '+f.cls+'">'+f.classification.split('—')[0].trim().split(' ')[0]+'</span></td><td>'+f.records.toLocaleString()+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   INSPECTOR
+══════════════════════════════════════════════════════ */
+function inspectFile(key){
+  const f=FILES[key];
+  const lin=f.lineage.map((n,i)=>'<span class="lin-node">'+n+'</span>'+(i<f.lineage.length-1?'<span class="lin-arrow"> → </span>':'')).join('');
+  const schema=f.schema.map(s=>'<span class="insp-field">'+s+'</span>').join('');
+  document.getElementById('inspector-body').innerHTML=
+    '<div class="insp-file-hdr"><span class="insp-file-icon"><i class="fas fa-file" style="color:#888"></i></span><div><div class="insp-file-name">'+f.name+'</div><div class="insp-file-meta">'+f.records.toLocaleString()+' records · last access '+f.lastAccess+'</div></div></div>'+
+    '<div class="insp-section-hdr">OWNERSHIP &amp; GOVERNANCE</div>'+
+    '<div class="insp-row"><span class="insp-key">Source System</span><span class="insp-val">'+f.source+'</span></div>'+
+    '<div class="insp-row"><span class="insp-key">Data Steward ★</span><span class="insp-val highlight">'+f.steward+'</span></div>'+
+    '<div class="insp-row"><span class="insp-key">Classification</span><span class="insp-val warn">'+f.classification+'</span></div>'+
+    '<div class="insp-row"><span class="insp-key">Claimed By</span><span class="insp-val">'+f.claimedBy+'</span></div>'+
+    '<div class="insp-section-hdr">DATA LINEAGE</div>'+
+    '<div class="insp-lineage">'+lin+'</div>'+
+    '<div class="insp-section-hdr">SCHEMA FIELDS</div>'+
+    '<div class="insp-schema">'+schema+'</div>';
+  document.getElementById('inspector-status').textContent=f.name+' — '+f.records.toLocaleString()+' records';
+  openWin('win-inspector'); bringToFront('win-inspector');
+}
+
+/* ══════════════════════════════════════════════════════
+   TRIBUNAL
+══════════════════════════════════════════════════════ */
+function openDisputeById(id){
+  if(GS.verifyResults[id]) return;
+  if(GS.results[id]==='correct'){openVerify(id);return;}
+  loadDispute(id);
+}
+
+function loadDispute(id){
+  const d=DISPUTES.find(x=>x.id===id); if(!d) return;
+  GS.activeDispute=id;
+  renderTribunal(d);
+  openWin('win-tribunal'); bringToFront('win-tribunal');
+  document.getElementById('step-banner').textContent='Case '+d.caseId+' — Step 1: Rule on ownership · Step 2: Verify with evidence questions';
+  // Highlight disputed file rows in registry
+  highlightDisputeFiles(id);
+  if(!GS.results[id]) setTimeout(()=>brokerMsg('Atlas',d.intro,'bm-d'),400);
+}
+
+function highlightDisputeFiles(disputeId){
+  // Clear all
+  document.querySelectorAll('#reg-tbody tr').forEach(r=>{
+    r.style.background='';
+    r.style.outline='';
+  });
+  if(!disputeId) return;
+  // Highlight rows whose file belongs to this dispute
+  Object.entries(FILES).forEach(([key,f])=>{
+    if(f.dispute===disputeId){
+      const row=document.querySelector('#reg-tbody tr[data-key="'+key+'"]');
+      if(row){
+        row.style.background='rgba(247,148,33,.10)';
+        row.style.outline='1px solid rgba(247,148,33,.35)';
+      }
+    }
+  });
+}
+
+function renderTribunal(d){
+  const done=!!GS.results[d.id];
+  const verified=!!GS.verifyResults[d.id];
+  const cA=d.claimants[0], cB=d.claimants[1];
+  let verdict='';
+  if(!done){
+    verdict='<div class="trib-verdict-row">'+
+      '<button class="trib-btn trib-btn-a" id="vbtn-0" onclick="rule('+d.id+',0)">'+
+        '<span class="trib-btn-name">RULE FOR '+cA.dept.toUpperCase()+'</span>'+
+        '<span class="trib-btn-role">'+cA.rep+'</span></button>'+
+      '<button class="trib-btn trib-btn-b" id="vbtn-1" onclick="rule('+d.id+',1)">'+
+        '<span class="trib-btn-name">RULE FOR '+cB.dept.toUpperCase()+'</span>'+
+        '<span class="trib-btn-role">'+cB.rep+'</span></button>'+
+      '</div>';
+  } else if(!verified){
+    const w=d.claimants[d.correctIdx];
+    verdict='<div class="trib-ruling-done">'+
+      '<strong>✓ RULING RECORDED:</strong> '+w.dept+' ('+w.rep+')<br>'+
+      '<span style="color:#555;font-size:10px">'+d.settleFact+'</span><br><br>'+
+      '<button onclick="openVerify('+d.id+')" style="background:linear-gradient(to bottom,#2b5edb,#1239b4);border:1px solid #0a2a8a;color:#fff;padding:5px 14px;font-family:Tahoma,sans-serif;font-size:11px;font-weight:700;cursor:pointer;border-radius:3px;box-shadow:1px 1px 0 rgba(255,255,255,.15) inset">'+
+        '▶ Proceed to Verification →'+
+      '</button>'+
+      '</div>';
+  } else {
+    const w=d.claimants[d.correctIdx];
+    verdict='<div class="trib-ruling-done" style="background:#f0fdf4;border-top:2px solid #28a745">'+
+      '<strong>✓ RULING + VERIFICATION COMPLETE</strong><br>'+w.dept+' — Token extracted.</div>';
+  }
+  document.getElementById('tribunal-body').innerHTML=
+    '<div class="trib-header">'+
+      '<div class="trib-case-id">CASE '+d.caseId+' · '+d.topic+'</div>'+
+      '<div class="trib-case-title">Ownership Conflict — '+d.dataset+'</div></div>'+
+    '<div class="trib-claimant">'+
+      '<div class="trib-claimant-hdr cl-a">⚠ CLAIMANT A — '+cA.dept.toUpperCase()+' &nbsp;<span style="font-weight:400;opacity:.7">'+cA.rep+'</span></div>'+
+      '<div class="trib-claimant-body">'+cA.arg+'</div>'+
+      '<div class="trib-evidence">Evidence: <strong>'+d.dataset+'</strong> — double-click in the Registry to inspect</div></div>'+
+    '<div class="trib-claimant">'+
+      '<div class="trib-claimant-hdr cl-b">⚠ CLAIMANT B — '+cB.dept.toUpperCase()+' &nbsp;<span style="font-weight:400;opacity:.7">'+cB.rep+'</span></div>'+
+      '<div class="trib-claimant-body">'+cB.arg+'</div></div>'+
+    verdict;
+  document.getElementById('tribunal-status').textContent='Case: '+d.caseId+' — '+(!done?'AWAITING RULING':!verified?'VERIFY PENDING':'COMPLETE ✓');
+  document.getElementById('tribunal-counter').textContent=Object.keys(GS.verifyResults).length+'/4 complete';
+}
+
+/* ══════════════════════════════════════════════════════
+   RULING
+══════════════════════════════════════════════════════ */
+function rule(disputeId, chosenIdx){
+  if(GS.results[disputeId]) return;
+  const d=DISPUTES.find(x=>x.id===disputeId);
+  const correct=(chosenIdx===d.correctIdx);
+  if(correct){
+    GS.results[disputeId]='correct';
+    GS.score+=100;
+    setTimeout(()=>brokerMsg('Atlas',d.correct+' Now answer the verification questions to extract the token.','bm-win'),450);
+    setTimeout(()=>renderTribunal(d),700);
+    setTimeout(()=>openVerify(disputeId),1300);
+  } else {
+    GS.wrongRulings++;
+    GS.score=Math.max(0,GS.score-200);
+    addDetection(18);
+    const btn=document.getElementById('vbtn-'+chosenIdx);
+    if(btn){btn.classList.add('wrong-shake');setTimeout(()=>btn.classList.remove('wrong-shake'),400);}
+    setTimeout(()=>brokerMsg('Atlas',d.wrong,'bm-err'),300);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   VERIFY PANEL
+══════════════════════════════════════════════════════ */
+function openVerify(disputeId){
+  const vd=VERIFY[disputeId]; if(!vd) return;
+  if(GS.verifyResults[disputeId]) return;
+  GS.verifyDispute=disputeId;
+  GS.vpSelections={};
+  document.getElementById('vp-node').textContent=vd.title;
+  document.getElementById('vp-sub').textContent=vd.sub;
+  const params=document.getElementById('vp-params');
+  params.innerHTML='';
+  vd.questions.forEach((q,qi)=>{
+    const div=document.createElement('div');
+    div.className='cp-param';
+    const chips=q.opts.map((opt,ci)=>
+      '<button class="cp-chip" id="vchip-'+qi+'-'+ci+'" onclick="selectChip('+qi+','+ci+','+q.ans+',this)">'+opt+'</button>'
+    ).join('');
+    div.innerHTML='<div class="cp-plbl">'+(qi+1)+'. '+q.label+'<span class="cp-note">'+q.note+'</span></div>'+
+      '<div class="cp-chips" id="vchips-'+qi+'">'+chips+'</div>'+
+      '<div class="cp-err" id="verr-'+qi+'">'+q.err+'</div>';
+    params.appendChild(div);
+    if(qi<vd.questions.length-1){
+      const dv=document.createElement('div'); dv.className='cp-divider'; params.appendChild(dv);
+    }
+  });
+  document.getElementById('vp-confirm').disabled=true;
+  const tog=document.getElementById('verify-toggle');
+  tog.classList.add('show'); tog.textContent='‹';
+  document.getElementById('verify-panel').classList.add('open');
+  // Nudge tribunal window left so verify panel doesn't fully cover it
+  const trib=document.getElementById('win-tribunal');
+  if(trib&&parseInt(trib.style.left||'0')>80){
+    trib._preVerifyLeft=trib.style.left;
+    trib.style.left='20px';
+    trib.style.transition='left .34s cubic-bezier(.4,0,.2,1)';
+    setTimeout(()=>trib.style.transition='',400);
+  }
+  document.getElementById('step-banner').textContent='Step 2: Answer verification questions in the side panel — use the Inspector to find the answers';
+  brokerMsg('Atlas','Ruling confirmed. Answer the verification questions on the right — the Inspector has everything you need.','bm-d');
+}
+
+function toggleVerify(){
+  const panel=document.getElementById('verify-panel');
+  const tog=document.getElementById('verify-toggle');
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  tog.textContent=isOpen?'›':'‹';
+  // Restore tribunal position when panel closes
+  const trib=document.getElementById('win-tribunal');
+  if(isOpen&&trib&&trib._preVerifyLeft){
+    trib.style.transition='left .34s cubic-bezier(.4,0,.2,1)';
+    trib.style.left=trib._preVerifyLeft;
+    setTimeout(()=>trib.style.transition='',400);
+    trib._preVerifyLeft=null;
+  }
+}
+
+function selectChip(qi, ci, correctAns, el){
+  document.querySelectorAll('#vchips-'+qi+' .cp-chip').forEach(c=>c.classList.remove('cp-sel'));
+  el.classList.add('cp-sel');
+  GS.vpSelections[qi]=ci;
+  const vd=VERIFY[GS.verifyDispute];
+  const allAnswered=vd.questions.every((_,i)=>GS.vpSelections[i]!==undefined);
+  document.getElementById('vp-confirm').disabled=!allAnswered;
+}
+
+function confirmVerify(){
+  const vd=VERIFY[GS.verifyDispute]; if(!vd) return;
+  let errors=0;
+  vd.questions.forEach((q,qi)=>{
+    const chosen=GS.vpSelections[qi];
+    const chips=document.querySelectorAll('#vchips-'+qi+' .cp-chip');
+    const errEl=document.getElementById('verr-'+qi);
+    chips.forEach(c=>c.classList.remove('cp-sel'));
+    if(chosen===q.ans){
+      chips[chosen].classList.add('cp-correct');
+      errEl.classList.remove('show');
+    } else {
+      if(chosen!==undefined) chips[chosen].classList.add('cp-wrong');
+      chips[q.ans].classList.add('cp-correct');
+      errEl.classList.add('show');
+      errors++;
+    }
+    chips.forEach(c=>c.classList.add('cp-disabled'));
+  });
+  GS.verifyErrors+=errors;
+  if(errors===0){
+    GS.score+=150;
+    lockToken(GS.verifyDispute);
+    setTimeout(()=>{
+      document.getElementById('verify-panel').classList.remove('open');
+      document.getElementById('verify-toggle').textContent='›';
+      document.getElementById('vp-confirm').disabled=true;
+    },1600);
+  } else {
+    GS.score=Math.max(0,GS.score-(errors*75));
+    addDetection(errors*10);
+    brokerMsg('Atlas',errors+' wrong answer'+(errors>1?'s':'')+'.'+(errors>1?' The correct answers are':'The correct answer is')+' highlighted. Review the Inspector and try again.','bm-err');
+    GS.vpSelections={};
+    document.getElementById('vp-confirm').disabled=true;
+    setTimeout(()=>{
+      vd.questions.forEach((q,qi)=>{
+        document.querySelectorAll('#vchips-'+qi+' .cp-chip').forEach(c=>{
+          c.classList.remove('cp-disabled','cp-sel','cp-wrong','cp-correct');
+        });
+        document.getElementById('verr-'+qi).classList.remove('show');
+      });
+    },2200);
+  }
+}
+
+function lockToken(disputeId){
+  const d=DISPUTES.find(x=>x.id===disputeId);
+  GS.verifyResults[disputeId]=true;
+  GS.tokens.add(d.token);
+  document.getElementById(d.leadId).className='lead n-locked';
+  document.getElementById(d.lsId).textContent='TOKEN ✓';
+  document.getElementById(d.segId).classList.add('filled');
+  document.getElementById('eb-count').textContent=GS.tokens.size+' / 4 TOKENS';
+  renderTribunal(d);
+  // Restore tribunal position
+  const trib=document.getElementById('win-tribunal');
+  if(trib&&trib._preVerifyLeft){
+    trib.style.transition='left .34s cubic-bezier(.4,0,.2,1)';
+    trib.style.left=trib._preVerifyLeft;
+    setTimeout(()=>trib.style.transition='',400);
+    trib._preVerifyLeft=null;
+  }
+  // Clear registry highlight
+  highlightDisputeFiles(null);
+  if(GS.tokens.size===4){
+    const sb=document.getElementById('synth-btn'); sb.disabled=false; sb.classList.add('ready');
+    setTimeout(()=>brokerMsg('Atlas','All four tokens extracted. Compile the Master Key.','bm-win'),600);
+  } else {
+    const next=DISPUTES.find(x=>!GS.verifyResults[x.id]);
+    if(next){
+      document.getElementById(next.leadId).className='lead n-next';
+      document.getElementById(next.lsId).textContent='OPEN';
+      setTimeout(()=>brokerMsg('Atlas','Token secured. Next: '+next.caseId+'.','bm-win'),700);
+      setTimeout(()=>loadDispute(next.id),1800);
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   HINT
+══════════════════════════════════════════════════════ */
+function requestHint(){
+  const id=GS.verifyDispute||GS.activeDispute;
+  if(!id){brokerMsg('Atlas','No active dispute.','bm-h');return;}
+  const d=DISPUTES.find(x=>x.id===id&&!GS.verifyResults[x.id]);
+  if(!d){brokerMsg('Atlas','This dispute is already complete.','bm-h');return;}
+  GS.hintsUsed++;GS.score=Math.max(0,GS.score-100);addDetection(8);
+  brokerMsg('Atlas','[HINT] '+FILES[d.fileKey].hint,'bm-h');
+  const btn=document.getElementById('hint-btn'); btn.disabled=true;
+  const cd=document.getElementById('hint-cd'); cd.classList.add('show');
+  let s=30; cd.textContent=s;
+  const iv=setInterval(()=>{s--;cd.textContent=s;if(s<=0){clearInterval(iv);btn.disabled=false;cd.classList.remove('show');}},1000);
+}
+
+/* ══════════════════════════════════════════════════════
+   DECOY FILES
+══════════════════════════════════════════════════════ */
+function decoyOpen(key){
+  const msg=DECOY_MSG[key]||'Nothing relevant here.';
+  const parts=msg.split(': ',2);
+  brokerMsg(parts[0]||'Atlas',parts[1]||msg,'bm-d');
+}
+
+/* ══════════════════════════════════════════════════════
+   BROKER CHAT
+══════════════════════════════════════════════════════ */
+function brokerMsg(sender,text,cls){
+  const body=document.getElementById('voss-body');
+  const showSender=(sender!==GS.lastSender); GS.lastSender=sender;
+  const colors={Atlas:'#00c41c',Voss:'#8f44e8',Zex:'#f79421',Nova:'#00FF41'};
+  const col=colors[sender]||'#7fa8cc';
+  const tw=document.createElement('div'); tw.className='bm-typing-wrap';
+  tw.innerHTML=(showSender?'<div class="bm-sender" style="color:'+col+'">'+sender.toUpperCase()+'</div>':'')+
+    '<div class="bm-typing"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>';
+  body.appendChild(tw); body.scrollTop=body.scrollHeight;
+  const now=new Date(); const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  setTimeout(()=>{
+    body.removeChild(tw);
+    const grp=document.createElement('div'); grp.className='bm-group';
+    grp.innerHTML=(showSender?'<div class="bm-sender" style="color:'+col+'">'+sender.toUpperCase()+'</div>':'')+
+      '<div class="bm-bubble '+cls+'">'+text+'</div><div class="bm-ts">'+ts+'</div>';
+    body.appendChild(grp); body.scrollTop=body.scrollHeight;
+  },650);
+}
+
+/* ══════════════════════════════════════════════════════
+   DETECTION
+══════════════════════════════════════════════════════ */
+function addDetection(n){
+  GS.detection=Math.min(100,GS.detection+n);
+  const pct=Math.round(GS.detection);
+  document.getElementById('det-pct').textContent=pct+'%';
+  const bar=document.getElementById('det-bar');
+  const disp=document.getElementById('det-display');
+  bar.style.width=pct+'%';
+  if(pct<35){bar.className='det-bar-green';disp.className='det-green';document.getElementById('det-icon').innerHTML='<i class="fas fa-shield-alt"></i>';}
+  else if(pct<70){bar.className='det-bar-amber';disp.className='det-amber';document.getElementById('det-icon').innerHTML='<i class="fas fa-exclamation-triangle"></i>';}
+  else{bar.className='det-bar-red';disp.className='det-red';document.getElementById('det-icon').innerHTML='<i class="fas fa-radiation"></i>';}
+}
+function startPassive(){ GS.passiveInt=setInterval(()=>addDetection(.35),4000); }
+
+/* ══════════════════════════════════════════════════════
+   TIMER / CLOCK
+══════════════════════════════════════════════════════ */
+function startTimer(){ GS.timerInt=setInterval(()=>{GS.timerSec++;const m=Math.floor(GS.timerSec/60).toString().padStart(2,'0');const s=(GS.timerSec%60).toString().padStart(2,'0');document.getElementById('timer').textContent=m+':'+s;},1000);}
+function stopTimer(){clearInterval(GS.timerInt);clearInterval(GS.passiveInt);}
+function clockTick(){const el=document.getElementById('tb-clock');if(!el)return;const t=new Date();el.textContent=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');setTimeout(clockTick,10000);}
+
+/* ══════════════════════════════════════════════════════
+   WINDOWS
+══════════════════════════════════════════════════════ */
+function openWin(id){
+  const w=document.getElementById(id); if(!w) return;
+  w.classList.add('visible');
+  w.classList.remove('xp-minimised');
+  bringToFront(id);
+  updateTaskbar();
+}
+function closeWin(id){
+  const w=document.getElementById(id); if(!w) return;
+  w.classList.remove('visible');
+  w.classList.remove('xp-minimised');
+  updateTaskbar();
+}
+/* Minimize — hides window from desktop, keeps it alive in taskbar */
+function minWin(id){
+  const w=document.getElementById(id); if(!w) return;
+  w.classList.add('xp-minimised'); // used only as state flag now
+  w.classList.remove('visible');   // actually hides it
+  updateTaskbar();
+}
+/* Taskbar button — XP behaviour:
+   hidden/minimised → restore + bring to front
+   open + already on top → minimize
+   open + behind → bring to front */
+function toggleWin(id){
+  const w=document.getElementById(id); if(!w) return;
+  const hidden=!w.classList.contains('visible')||w.classList.contains('xp-minimised');
+  const isTop=parseInt(w.style.zIndex||'0')===GS.zTop;
+  if(hidden){
+    // restore
+    w.classList.remove('xp-minimised');
+    w.classList.add('visible');
+    bringToFront(id);
+  } else if(isTop){
+    // already focused — minimize
+    minWin(id);
+  } else {
+    // bring to front
+    bringToFront(id);
+  }
+  updateTaskbar();
+}
+function maxWin(id){
+  const w=document.getElementById(id); if(!w) return;
+  const isMax=w.classList.contains('xp-maximised');
+  if(isMax){
+    const s=w._savedState;
+    if(s){w.style.top=s.top;w.style.left=s.left;w.style.width=s.width;w.style.height=s.height;}
+    w.classList.remove('xp-maximised');
+  } else {
+    w._savedState={top:w.style.top,left:w.style.left,width:w.style.width,height:w.style.height};
+    w.classList.remove('xp-minimised');
+    w.classList.add('visible');
+    w.classList.add('xp-maximised');
+  }
+  bringToFront(id);
+  updateTaskbar();
+}
+function bringToFront(id){
+  GS.zTop++;
+  const w=document.getElementById(id); if(w) w.style.zIndex=GS.zTop;
+}
+/* Taskbar: lit when window is open and NOT minimised */
+function updateTaskbar(){
+  const map={
+    'win-tribunal':'tbw-tribunal',
+    'win-registry':'tbw-registry',
+    'win-inspector':'tbw-inspector',
+    'win-personal':'tbw-personal',
+  };
+  Object.entries(map).forEach(([winId,btnId])=>{
+    const w=document.getElementById(winId);
+    const btn=document.getElementById(btnId);
+    if(!w||!btn) return;
+    const active=w.classList.contains('visible')&&!w.classList.contains('xp-minimised');
+    btn.classList.toggle('tb-on',active);
+  });
+}
+function dragWin(e,id){
+  const w=document.getElementById(id);
+  if(w.classList.contains('xp-maximised'))return;
+  bringToFront(id);
+  const ox=e.clientX-w.offsetLeft, oy=e.clientY-w.offsetTop;
+  function mv(e){const p=document.getElementById('desktop-panel').getBoundingClientRect();
+    let nx=e.clientX-ox,ny=e.clientY-oy;
+    nx=Math.max(0,Math.min(nx,p.width-w.offsetWidth));ny=Math.max(0,Math.min(ny,p.height-w.offsetHeight));
+    w.style.left=nx+'px';w.style.top=ny+'px';}
+  function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);e.preventDefault();
+}
+function resizeWin(e,id){
+  const w=document.getElementById(id);
+  if(w.classList.contains('xp-maximised'))return;
+  bringToFront(id);
+  const startX=e.clientX,startY=e.clientY;
+  const startW=w.offsetWidth,startH=w.offsetHeight;
+  const body=w.querySelector('.xp-body');
+  const startBH=body?body.offsetHeight:0;
+  function mv(e){
+    const dx=e.clientX-startX,dy=e.clientY-startY;
+    const nw=Math.max(220,startW+dx),nh=Math.max(80,startH+dy);
+    w.style.width=nw+'px';
+    if(body){body.style.height=Math.max(40,startBH+dy)+'px';}
+  }
+  function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);e.preventDefault();
+}
+function setLang(lang){
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===lang.toUpperCase()));
+}
+
+/* ══════════════════════════════════════════════════════
+   DEBRIEF
+══════════════════════════════════════════════════════ */
+function showDebrief(){
+  stopTimer();
+  const m=Math.floor(GS.timerSec/60).toString().padStart(2,'0');
+  const s=(GS.timerSec%60).toString().padStart(2,'0');
+  if(GS.wrongRulings===0&&GS.verifyErrors===0) GS.score+=300;
+  if(GS.hintsUsed===0) GS.score+=150;
+  document.getElementById('dbr-time').textContent=m+':'+s;
+  const acc=Math.round(((8-(GS.wrongRulings+GS.verifyErrors))/8)*100);
+  document.getElementById('dbr-acc').textContent=Math.max(0,acc)+'%';
+  document.getElementById('dbr-hints').textContent=GS.hintsUsed;
+  document.getElementById('dbr-score').textContent=GS.score;
+  const fb=document.getElementById('dbr-feedback');
+  const items=[];
+  if(GS.wrongRulings===0)
+    items.push({c:'fb-good',t:'FLAWLESS RULINGS — All four ownership disputes resolved correctly on first attempt.'});
+  else
+    items.push({c:'fb-warn',t:'RULING ERRORS: '+GS.wrongRulings+' incorrect ruling(s). The Data Steward field is always the deciding factor — not where data originates, who uses it, or what the filename says.'});
+  if(GS.verifyErrors===0)
+    items.push({c:'fb-good',t:'PERFECT VERIFICATION — All 8 evidence questions answered correctly. You read the metadata precisely.'});
+  else
+    items.push({c:'fb-warn',t:'VERIFICATION ERRORS: '+GS.verifyErrors+' incorrect answer(s). Every answer is visible in the Inspector — record count, lineage nodes, steward name, and schema fields. No guessing required.'});
+  if(GS.hintsUsed>0)
+    items.push({c:'fb-warn',t:'HINTS USED: '+GS.hintsUsed+'. Open the Inspector before requesting a hint — the metadata contains everything.'});
+  else
+    items.push({c:'fb-good',t:'NO HINTS — All decisions made directly from evidence. That is the governance mindset.'});
+  items.push({c:'fb-good',t:'CONCEPTS COVERED: Data Steward vs Data Owner · Origin vs Ownership · Usage vs Governance · Lineage pipe vs Stewardship · GDPR regulatory override.'});
+  fb.innerHTML=items.map(i=>'<div class="db-fb-item '+i.c+'">'+i.t+'</div>').join('');
+  document.getElementById('debrief-overlay').classList.add('active');
+}
+
+</script>
+</body>
+</html>

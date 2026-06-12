@@ -16,6 +16,16 @@ export type FileRecord = {
   lastAccess: string;
   hint: string;
   dispute: DisputeId | 0;
+  keyNode?: string;
+  keyNodeNote?: string;
+};
+
+/** Per-question result flash shown after CONFIRM_VERIFY (cleared ~2.2s later on errors). */
+export type VerifyFeedback = {
+  /** chip index the player had selected per question */
+  selections: Record<number, number>;
+  /** per-question correctness */
+  correct: Record<number, boolean>;
 };
 
 export type Claimant = { dept: string; rep: string; arg: string };
@@ -90,6 +100,10 @@ export type M2GameState = {
   gameOver: boolean;
   introScheduled: boolean;
   wrongShake: number | null;
+  /** windows the player has opened at least once — used to retire desktop-icon attention cues */
+  everOpened: string[];
+  /** post-confirm chip feedback; null when not showing */
+  verifyFeedback: VerifyFeedback | null;
 };
 
 export type M2GameAction =
@@ -113,4 +127,5 @@ export type M2GameAction =
   | { type: "START_SYNTH" }
   | { type: "SYNTH_DONE" }
   | { type: "CLEAR_SHAKE" }
+  | { type: "CLEAR_VERIFY_FEEDBACK" }
   | { type: "PASSIVE_DETECTION" };

@@ -12,6 +12,8 @@ import { ProtocolPhase } from "@/components/missions/phases/ProtocolPhase";
 import { M1MargusMission } from "@/components/missions/m1/M1MargusMission";
 import { MargusM1Brief } from "@/components/missions/margus-m1/MargusM1Brief";
 import { MargusM1Protocol } from "@/components/missions/margus-m1/MargusM1Protocol";
+import { M2Brief } from "@/components/missions/m2/M2Brief";
+import { M2Protocol } from "@/components/missions/m2/M2Protocol";
 import { MissionGame } from "@/components/missions/MissionGame";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
@@ -155,6 +157,15 @@ function MissionExperienceInner({
     }
     if (phase === "protocol") {
       return <MargusM1Protocol onContinue={goToGame} />;
+    }
+  }
+
+  if (missionId === "m2") {
+    if (phase === "brief") {
+      return <M2Brief onContinue={goToProtocol} onSkip={goToGame} />;
+    }
+    if (phase === "protocol") {
+      return <M2Protocol onBreach={goToGame} onSkip={goToGame} />;
     }
   }
 

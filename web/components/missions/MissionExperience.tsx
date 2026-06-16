@@ -18,6 +18,7 @@ import { M1TutorialPhase } from "@/components/missions/m1/M1TutorialPhase";
 import { M2TutorialPhase } from "@/components/missions/m2/M2TutorialPhase";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
+import { M5TutorialPhase } from "@/components/missions/m5/M5TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
 
 type MissionExperienceProps = {
@@ -57,7 +58,8 @@ function MissionExperienceInner({
   const isM2 = missionId === "m2";
   const isM3 = missionId === "m3";
   const isM4 = missionId === "m4";
-  const hasTutorial = isM1 || isM2 || isM3 || isM4;
+  const isM5 = missionId === "m5";
+  const hasTutorial = isM1 || isM2 || isM3 || isM4 || isM5;
   const { save } = useMissionProgress(intro.missionId);
   const [phase, setPhase] = useState<MissionPhase>(() =>
     checkpointToPhase(initialCheckpoint, resume, missionId)
@@ -140,13 +142,19 @@ function MissionExperienceInner({
           missionName={missionName}
           savedState={savedState}
         />
-        {missionId !== "m3" && missionId !== "m4" ? <PlaytestMissionNav missionId={missionId} /> : null}
+        {missionId !== "m3" && missionId !== "m4" && missionId !== "m5" ? (
+          <PlaytestMissionNav missionId={missionId} />
+        ) : null}
       </>
     );
   }
 
   if (phase === "tutorial" && isM3) {
     return <M3TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+  }
+
+  if (phase === "tutorial" && isM5) {
+    return <M5TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
   }
 
   if (phase === "tutorial" && isM4) {
@@ -193,7 +201,7 @@ function MissionExperienceInner({
 
 export function MissionExperience(props: MissionExperienceProps) {
   const audioConfig = useMemo(() => toMissionAudioConfig(props.media), [props.media]);
-  const hasAudio = props.missionId === "m3" || props.missionId === "m4";
+  const hasAudio = props.missionId === "m3" || props.missionId === "m4" || props.missionId === "m5";
 
   if (!hasAudio || !audioConfig) {
     return <MissionExperienceInner {...props} />;

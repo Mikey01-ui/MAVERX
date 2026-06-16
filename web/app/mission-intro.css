@@ -823,3 +823,109 @@
   border-color: var(--orange);
   color: var(--orange);
 }
+
+.mission-page .ack-gate {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--grey-text);
+  transition: color 0.18s;
+  margin-bottom: 1.4vh;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0;
+}
+
+.mission-page .ack-gate:hover,
+.mission-page .ack-gate.is-checked {
+  color: var(--white);
+}
+
+.mission-page .ack-box {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(247, 148, 33, 0.55);
+  background: rgba(20, 12, 28, 0.5);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.mission-page .ack-gate:hover .ack-box {
+  border-color: var(--orange);
+}
+
+.mission-page .ack-tick {
+  width: 8px;
+  height: 8px;
+  background: var(--orange);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.18s, transform 0.18s;
+  box-shadow: 0 0 8px rgba(247, 148, 33, 0.6);
+}
+
+.mission-page .ack-gate.is-checked .ack-box {
+  border-color: var(--orange);
+  background: rgba(247, 148, 33, 0.08);
+}
+
+.mission-page .ack-gate.is-checked .ack-tick {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mission-brief-text .gloss {
+  cursor: help;
+  color: var(--orange);
+  border-bottom: 1px dashed rgba(247, 148, 33, 0.55);
+  position: relative;
+  font-weight: 500;
+}
+
+.mission-brief-text .gloss:hover {
+  color: var(--orange-light);
+  border-bottom-color: rgba(247, 148, 33, 0.9);
+}
+
+.mission-brief-text .gloss::after {
+  content: attr(data-gloss);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 12, 28, 0.98);
+  border: 1px solid rgba(247, 148, 33, 0.5);
+  color: var(--grey-light);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 0.55rem 0.7rem;
+  width: 240px;
+  border-radius: 2px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s, visibility 0.15s;
+  z-index: 50;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  white-space: normal;
+  text-transform: none;
+  text-align: left;
+}
+
+.mission-brief-text .gloss:hover::after {
+  opacity: 1;
+  visibility: visible;
+}

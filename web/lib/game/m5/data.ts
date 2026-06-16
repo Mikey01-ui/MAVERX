@@ -28,6 +28,25 @@ export const FRAME_OPTIONS: { key: FrameKey; label: string; icon: string }[] = [
   { key: "neutral", label: "NEUTRAL", icon: "fa-minus" },
 ];
 
+/** Per-card button order from legacy Mission 5.html */
+export const CARD_FRAME_ORDER: Record<number, FrameKey[]> = {
+  1: ["risk", "opportunity", "neutral"],
+  2: ["risk", "opportunity", "neutral"],
+  3: ["risk", "neutral", "opportunity"],
+  4: ["neutral", "opportunity", "risk"],
+};
+
+export const FRAME_GLOSS =
+  "How you position the evidence for the audience. Risk-focused highlights threats and gaps. Opportunity-focused highlights reasons to proceed. Neutral presents facts only — rarely the strongest choice when someone has a specific objection to address.";
+
+export const VIZ_GLOSS =
+  "The format used to show the evidence. Must match the type of data — a node map proves connectivity, a traffic light grid shows decisions, a matrix shows ownership. Wrong format makes the room do extra work.";
+
+export function frameOptionsForCard(cardId: number) {
+  const byKey = Object.fromEntries(FRAME_OPTIONS.map((opt) => [opt.key, opt])) as Record<FrameKey, (typeof FRAME_OPTIONS)[number]>;
+  return CARD_FRAME_ORDER[cardId].map((key) => byKey[key]);
+}
+
 export const VIZ_OPTIONS: Record<number, { key: string; label: string; icon: string }[]> = {
   1: [
     { key: "bar", label: "BAR CHART", icon: "fa-chart-column" },
@@ -74,11 +93,11 @@ export const CREW_QUESTIONS: Record<CrewId, { text: string; opts: string[]; ans:
 
 export const CREW_ORDER: CrewId[] = ["zex", "atlas", "nova", "kade"];
 
-export const CREW_META: Record<CrewId, { name: string; domain: string; color: string; initial: string }> = {
-  zex: { name: "ZEX", domain: "INFRASTRUCTURE · DATA ANALYSIS", color: "var(--orange)", initial: "Z" },
-  atlas: { name: "ATLAS", domain: "GOVERNANCE · DATA OWNERSHIP", color: "var(--green-stable)", initial: "A" },
-  nova: { name: "NOVA", domain: "ETHICS · PRIVACY", color: "var(--pink)", initial: "N" },
-  kade: { name: "KADE", domain: "PROCESS · DATA FLOWS", color: "var(--purple-light)", initial: "K" },
+export const CREW_META: Record<CrewId, { name: string; domain: string; color: string; initial: string; avatarBg: string }> = {
+  zex: { name: "ZEX", domain: "INFRASTRUCTURE · DATA ANALYSIS", color: "var(--orange)", initial: "Z", avatarBg: "rgba(247,148,33,.12)" },
+  atlas: { name: "ATLAS", domain: "GOVERNANCE · DATA OWNERSHIP", color: "var(--green-stable)", initial: "A", avatarBg: "rgba(0,196,28,.08)" },
+  nova: { name: "NOVA", domain: "ETHICS · PRIVACY", color: "var(--pink)", initial: "N", avatarBg: "rgba(211,25,114,.10)" },
+  kade: { name: "KADE", domain: "PROCESS · DATA FLOWS", color: "var(--purple-light)", initial: "K", avatarBg: "rgba(143,68,232,.10)" },
 };
 
 export const DEBRIEF = {

@@ -14,6 +14,7 @@ import "./m3-tutorial.css";
 import "./m4-game.css";
 import "./m4-tutorial.css";
 import "./m5-game.css";
+import "./m5-tutorial.css";
 import "@/components/admin/playtest-mission-nav.css";
 
 const spaceGrotesk = Space_Grotesk({

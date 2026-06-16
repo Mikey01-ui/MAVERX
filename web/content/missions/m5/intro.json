@@ -1,31 +1,76 @@
 {
   "missionId": "m5",
-  "statusLeft": ["TERMINAL ACTIVE", "MISSION 05"],
-  "statusRight": ["ENCRYPTED"],
+  "statusLeft": ["LIVE SESSION", "OPERATION OMNI", "MISSION 05 / 05"],
+  "statusRight": ["MASTERMIND TERMINAL", "v5.0.0"],
+  "tutorialStatusRight": ["OP-OMNI / M05 TUTORIAL", "ENCRYPTED"],
   "brief": {
     "eyebrow": "// Mission 5 — The Final Brief",
     "title": "Pre-Mission Brief",
-    "params": [],
-    "briefParagraphs": [
-      "Frame the dossier with ECHO, then win three of four crew commits.",
-      "Migrate copy from reference/legacy-missions/Mission 5.html."
+    "params": [
+      { "label": "// Window", "value": "OPEN" },
+      { "label": "// Detection Ceiling", "value": "100%" },
+      { "label": "// Evidence Cards", "value": "4" },
+      { "label": "// Commit Threshold", "value": "3 OF 4 CREW" },
+      { "label": "// Outcome", "value": "OPERATION SHIPS" }
     ],
-    "pullquote": "Win the room.",
-    "dossier": [],
+    "briefParagraphs": [
+      "Four operations. Four objections answered. The <span class=\"gloss\" data-gloss=\"The four specialists who will vote on whether the operation ships. Each has a different reason to say no.\">crew</span> is in the room for the first time — all of them. <strong>I'm stepping back.</strong> The plan has to stand without me holding it up.",
+      "ECHO works with you first: choose how to <span class=\"gloss\" data-gloss=\"Framing determines what the room focuses on — risk, opportunity, or neutral fact. The wrong framing gives the crew a reason to object before you open your mouth.\">frame each evidence card</span> and which <span class=\"gloss\" data-gloss=\"Visualisation format must match the type of evidence being shown. A node map proves connectivity. A traffic light grid proves ethical triage. A table proves nothing without context.\">visualisation format</span> makes it legible to a non-technical room.",
+      "Then you present. Each specialist challenges you once — a question from their domain. <strong>Get three of four to commit</strong> and the operation ships.",
+      "You built this dossier across four operations. Now you have to sell it to the people who have to act on it."
+    ],
+    "pullquote": "The room doesn't care what you found. It cares what it means.",
+    "dossier": [
+      { "label": "HANDLER", "name": "Voss", "role": "Steps back — watching only" },
+      { "label": "COMMS / FRAMING", "name": "Echo", "role": "Works with you on framing — already committed" },
+      { "label": "CREW VOTE", "name": "ZEX · ATLAS · NOVA · KADE", "role": "Each challenges you once — 3 of 4 must commit" }
+    ],
+    "encryptedChannel": "VOSS",
+    "ackGateLabel": "I understand — three of four crew members must commit for the operation to ship",
+    "useHtml": true,
     "continueLabel": "Continue",
-    "continueDelayMs": 1500
+    "continueDelayMs": 3000
   },
   "protocol": {
     "eyebrow": "// Mission 5 — The Final Brief",
     "title": "Mission Protocol",
-    "sectionLabel": "// How to Operate",
-    "steps": [],
-    "detection": null,
-    "breachLabel": "Begin Mission",
-    "breachReadyLabel": "// Ready?"
+    "sectionLabel": "// How to Present",
+    "steps": [
+      {
+        "number": "01",
+        "title": "FRAME WITH ECHO",
+        "description": "Four evidence cards from Ops 1–4. For each card: pick a framing type (risk / opportunity / neutral) and a visualisation format. ECHO gives you one line of feedback per choice — read it before moving on."
+      },
+      {
+        "number": "02",
+        "title": "CREW BRIEFING",
+        "description": "Present the framed dossier. Each specialist — ZEX, ATLAS, NOVA, KADE — challenges you once with a multiple-choice question from their domain. One retry is available per crew member, at a detection cost."
+      },
+      {
+        "number": "03",
+        "title": "THE VOTE",
+        "description": "Three of four specialists must commit. VOSS closes the session either way. No retries on the vote — the debrief shows exactly which answers caused each crew member to stay sceptical."
+      }
+    ],
+    "detection": {
+      "title": "THE DETECTION METER",
+      "tag": "ACTIVE THREAT",
+      "paragraphs": [
+        "Every mistake raises the meter. Hit 100% and MegaCorp closes the connection — the briefing room goes dark and the operation is over."
+      ],
+      "pills": [
+        { "text": "Wrong crew answer · +10%", "variant": "high" },
+        { "text": "Wrong framing · +8% per card", "variant": "high" },
+        { "text": "Wrong visualisation · +5% per card", "variant": "mid" }
+      ],
+      "hint": "<strong>Stuck?</strong> ECHO's feedback lines on each card are your hints. Read them before confirming — they tell you exactly what each crew member needs to hear and whether your choice lands.",
+      "hintPills": ["Wrong answer · 1 retry available", "Retry costs · +10% detection"]
+    },
+    "breachLabel": "Enter the Briefing Room",
+    "breachReadyLabel": "// Ready to enter the room?"
   },
   "game": {
     "placeholderTitle": "Mission 5 gameplay",
-    "placeholderBody": "Migrate from reference/legacy-missions/Mission 5.html — ECHO framing, crew commits, debrief."
+    "placeholderBody": "ECHO framing, crew commits, and debrief from reference/legacy-missions/Mission 5.html."
   }
 }

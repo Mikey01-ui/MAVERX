@@ -9,7 +9,7 @@ export function checkpointToPhase(
   if (!checkpoint || checkpoint === "start" || checkpoint === "intro") return "brief";
   if (checkpoint === "brief") return "brief";
   if (checkpoint === "protocol") {
-    return missionId === "m2" || missionId === "m3" || missionId === "m4" ? "tutorial" : "protocol";
+    return missionId === "m2" || missionId === "m3" || missionId === "m4" || missionId === "m5" ? "tutorial" : "protocol";
   }
   if (checkpoint === "tutorial") return "tutorial";
   if (checkpoint === "completed") return "brief";

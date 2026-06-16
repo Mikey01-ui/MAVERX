@@ -13,8 +13,10 @@ import {
   ECHO_FRAME,
   ECHO_VIZ,
   EVIDENCE_CARDS,
-  FRAME_OPTIONS,
+  FRAME_GLOSS,
+  frameOptionsForCard,
   HACK_LINES,
+  VIZ_GLOSS,
   VIZ_OPTIONS,
 } from "@/lib/game/m5/data";
 import { buildM5Debrief } from "@/lib/game/debriefBuilders";
@@ -67,22 +69,25 @@ function M5GameInner() {
   const debrief = useMemo(() => buildM5Debrief(state), [state]);
 
   return (
-    <div className="m5-game">
+    <div id="gp-root" className="m5-game">
       <div id="m5-game" className={state.hackDone ? "active" : ""}>
         {state.hackDone && state.phase !== "debrief" && (
           <>
             <div id="hdr">
               <div className="hdr-left">
-                <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL | OPERATION OMNI
+                <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL · OPERATION OMNI
               </div>
               <div className="hdr-center">MISSION 05 OF 05 / THE FINAL BRIEF</div>
               <div className="hdr-right">
                 <span id="det-display" className={detClass}>
-                  DET
+                  <span id="det-icon">
+                    <i className="fas fa-shield-alt" aria-hidden />
+                  </span>
+                  <span id="det-pct">{state.detection}%</span>
                   <span className="det-bar-wrap">
                     <span id="det-bar" className={`det-bar-${detClass.replace("det-", "")}`} style={{ width: `${state.detection}%` }} />
                   </span>
-                  {state.detection}%
+                  <span style={{ fontSize: 10, letterSpacing: 1.5, opacity: 0.7 }}>DARK</span>
                 </span>
                 <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
                 <span id="timer">{timer}</span>
@@ -98,25 +103,30 @@ function M5GameInner() {
                 {state.phase === "framing" && (
                   <div id="phase-framing">
                     <div className="phase-label">STEP 01 — ECHO FRAMING</div>
-                    <div className="evidence-grid">
+                    <div className="evidence-grid" id="ev-grid">
                       {EVIDENCE_CARDS.map((card) => {
                         const choice = state.frameChoices[card.id] ?? {};
                         const echoLines: string[] = [];
                         if (choice.frame) echoLines.push(ECHO_FRAME[card.id].msgs[choice.frame]);
                         if (choice.viz) echoLines.push(ECHO_VIZ[card.id].msgs[choice.viz]);
                         return (
-                          <div key={card.id} className="ev-card">
+                          <div key={card.id} className="ev-card" id={`evc-${card.id}`}>
                             <div className="ev-op">{card.op}</div>
                             <div className="ev-title">{card.title}</div>
                             <div className="ev-finding">{card.finding}</div>
                             <div className="ev-qual clean">● CLEAN</div>
                             <div className="ev-choices">
-                              <div className="ev-choice-label">FRAMING TYPE</div>
-                              <div className="choice-btns">
-                                {FRAME_OPTIONS.map((opt) => (
+                              <div className="ev-choice-label">
+                                <span className="gloss" data-gloss={FRAME_GLOSS} style={{ color: "var(--purple-light)", borderBottomColor: "rgba(143,68,232,0.5)" }}>
+                                  FRAMING TYPE ⓘ
+                                </span>
+                              </div>
+                              <div className="choice-btns" id={`frame-btns-${card.id}`}>
+                                {frameOptionsForCard(card.id).map((opt) => (
                                   <button
                                     key={opt.key}
                                     type="button"
+                                    data-key={opt.key}
                                     className={`choice-btn${choice.frame === opt.key ? " selected" : ""}${state.framingLocked ? " locked" : ""}`}
                                     disabled={state.framingLocked}
                                     onClick={() => dispatch({ type: "SELECT_FRAME", cardId: card.id, frame: opt.key })}
@@ -129,13 +139,16 @@ function M5GameInner() {
                                 ))}
                               </div>
                               <div className="ev-choice-label" style={{ marginTop: 5 }}>
-                                VISUALISATION
+                                <span className="gloss" data-gloss={VIZ_GLOSS} style={{ color: "var(--purple-light)", borderBottomColor: "rgba(143,68,232,0.5)" }}>
+                                  VISUALISATION ⓘ
+                                </span>
                               </div>
-                              <div className="choice-btns">
+                              <div className="choice-btns" id={`viz-btns-${card.id}`}>
                                 {VIZ_OPTIONS[card.id].map((opt) => (
                                   <button
                                     key={opt.key}
                                     type="button"
+                                    data-viz={opt.key}
                                     className={`choice-btn${choice.viz === opt.key ? " selected" : ""}${state.framingLocked ? " locked" : ""}`}
                                     disabled={state.framingLocked}
                                     onClick={() => dispatch({ type: "SELECT_VIZ", cardId: card.id, viz: opt.key })}
@@ -147,16 +160,14 @@ function M5GameInner() {
                                   </button>
                                 ))}
                               </div>
-                              {echoLines.length > 0 && (
-                                <div className="echo-line show">
-                                  {echoLines.map((line, i) => (
-                                    <span key={i}>
-                                      <span className="echo-tag">ECHO</span>
-                                      {line}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                              <div className={`echo-line${echoLines.length > 0 ? " show" : ""}`} id={`echo-${card.id}`}>
+                                {echoLines.map((line, i) => (
+                                  <span key={i}>
+                                    <span className="echo-tag">ECHO</span>
+                                    {line}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         );
@@ -192,7 +203,10 @@ function M5GameInner() {
                       return (
                         <div key={crewId} className={rowClass} id={`crew-${crewId}`}>
                           <div className="crew-top">
-                            <div className="crew-avatar" style={{ borderColor: meta.color, color: meta.color }}>
+                            <div
+                              className="crew-avatar"
+                              style={{ background: meta.avatarBg, border: `2px solid ${meta.color}`, color: meta.color }}
+                            >
                               {meta.initial}
                             </div>
                             <div>
@@ -235,16 +249,22 @@ function M5GameInner() {
                 <div id="voss-wrap">
                   <div className="voss-hdr">
                     <div className="bk-avatar">
-                      <i className="fas fa-comments" aria-hidden />
+                      <i className="fas fa-user-secret" aria-hidden />
                     </div>
                     <div className="bk-info">
-                      <div className="bk-name">Briefing Channel</div>
+                      <div className="bk-name">Mission Channel</div>
                       <div className="bk-members">
                         <span className="bk-member online">Voss</span>
-                        <span className="bk-sep">·</span>
+                        <span className="bk-sep">,</span>
                         <span className="bk-member online">Echo</span>
-                        <span className="bk-sep">·</span>
-                        <span className="bk-member online">Crew</span>
+                        <span className="bk-sep">,</span>
+                        <span className="bk-member online">Zex</span>
+                        <span className="bk-sep">,</span>
+                        <span className="bk-member online">Atlas</span>
+                        <span className="bk-sep">,</span>
+                        <span className="bk-member online">Nova</span>
+                        <span className="bk-sep">,</span>
+                        <span className="bk-member online">Kade</span>
                       </div>
                     </div>
                     <div className="bk-icons">
@@ -253,7 +273,7 @@ function M5GameInner() {
                   </div>
                   <div id="voss-body">
                     <div className="bm-sep">
-                      <div className="bm-sep-pill">Final Brief</div>
+                      <div className="bm-sep-pill">TODAY</div>
                     </div>
                     {state.messages.map((m) => (
                       <div key={m.id} className="bm-group">
@@ -265,7 +285,7 @@ function M5GameInner() {
                   </div>
                   <div className="voss-footer">
                     <div className="voss-input-bar">
-                      <input id="voss-input" type="text" placeholder="Briefing channel — listen only" disabled readOnly />
+                      <input id="voss-input" type="text" placeholder="// channel encrypted — read only" disabled readOnly />
                     </div>
                   </div>
                 </div>

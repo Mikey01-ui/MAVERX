@@ -85,6 +85,7 @@ const missionIntroSchema = z.object({
     useHtml: z.boolean().optional(),
     continueLabel: z.string(),
     continueDelayMs: z.number(),
+    ackGateLabel: z.string().optional(),
   }),
   protocol: z.object({
     eyebrow: z.string(),

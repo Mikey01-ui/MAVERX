@@ -10,8 +10,10 @@ type BriefPhaseProps = {
 
 export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
   const [unlocked, setUnlocked] = useState(false);
+  const [acked, setAcked] = useState(!brief.ackGateLabel);
   const isPremission = brief.params.length > 0;
   const encryptedLabel = brief.encryptedChannel ?? "VOSS";
+  const canContinue = unlocked && acked;
 
   useEffect(() => {
     const timer = setTimeout(() => setUnlocked(true), brief.continueDelayMs);
@@ -76,13 +78,27 @@ export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
             </div>
           )}
         </div>
+
+        {brief.ackGateLabel && (
+          <button
+            type="button"
+            id="ack-gate"
+            className={`ack-gate${acked ? " is-checked" : ""}`}
+            onClick={() => setAcked(true)}
+          >
+            <div className="ack-box">
+              <div className="ack-tick" />
+            </div>
+            {brief.ackGateLabel}
+          </button>
+        )}
       </div>
 
       <div className={`mission-btn-section${isPremission ? " mission-btn-section--premission" : ""}`}>
         <button
           type="button"
-          className={`mission-btn-next${brief.ghostContinue ? " mission-btn-next--ghost" : ""}${unlocked ? "" : " is-locked"}`}
-          disabled={!unlocked}
+          className={`mission-btn-next${brief.ghostContinue ? " mission-btn-next--ghost" : ""}${canContinue ? "" : " is-locked"}`}
+          disabled={!canContinue}
           onClick={onContinue}
         >
           <span className="mission-btn-inner">

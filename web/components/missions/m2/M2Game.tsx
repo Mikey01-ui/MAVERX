@@ -16,7 +16,11 @@ import {
   VERIFY,
 } from "@/lib/game/m2/data";
 import { M2GameProvider, useM2Game } from "@/lib/game/m2/context";
-import { getDetectionClass } from "@/lib/game/m2/reducer";
+import { getDetectionClass, getDetectionLabel } from "@/lib/game/m2/reducer";
+import { DET_INFO } from "@/components/missions/margus-m1/gameData";
+
+const M2_DET_CAUSE =
+  "Detection rises when you rule incorrectly, fail verification, request hints, or idle too long. At 100% MegaCorp closes the connection.";
 import type { ChatMessage, DisputeId, FileRecord } from "@/lib/game/m2/types";
 
 const SENDER_COLORS: Record<string, string> = {
@@ -318,8 +322,10 @@ function M2GameInner() {
   const timer = `${String(Math.floor(state.timerSec / 60)).padStart(2, "0")}:${String(state.timerSec % 60).padStart(2, "0")}`;
   const det = Math.round(state.detection);
   const detClass = getDetectionClass(det);
+  const detLabel = getDetectionLabel(det);
+  const detInfo = DET_INFO[detLabel] ?? DET_INFO.DARK;
   const barClass = det < 35 ? "det-bar-green" : det < 70 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = det < 35 ? "fa-shield-alt" : det < 70 ? "fa-exclamation-triangle" : "fa-radiation";
+  const detIcon = det < 35 ? "fa-shield-alt" : det < 70 ? "fa-eye" : "fa-exclamation-triangle";
 
   // Restore + focus windows the reducer opens (e.g. Inspector on file dblclick).
   useEffect(() => {
@@ -470,15 +476,29 @@ function M2GameInner() {
             </div>
             <div className="hdr-center">MISSION 02 OF 05 / FORGING THE MASTER KEY</div>
             <div className="hdr-right">
-              <span id="det-display" className={detClass}>
-                <span id="det-icon">
-                  <i className={`fas ${detIcon}`} />
+              <span id="det-cluster">
+                <span id="det-display" className={detClass}>
+                  <span id="det-icon">
+                    <i className={`fas ${detIcon}`} aria-hidden />
+                  </span>
+                  <span id="det-pct">{det}%</span>
+                  <span className="det-bar-wrap">
+                    <span id="det-bar" className={barClass} style={{ width: `${det}%` }} />
+                  </span>
+                  <span id="det-label" style={{ fontSize: "clamp(10px,1vw,12px)", letterSpacing: 2, opacity: 0.7 }}>
+                    {detLabel}
+                  </span>
                 </span>
-                <span id="det-pct">{det}%</span>
-                <span className="det-bar-wrap">
-                  <span id="det-bar" className={barClass} style={{ width: `${det}%` }} />
+                <span className="det-info-wrap" tabIndex={0}>
+                  <i className="fas fa-circle-info det-info-i" aria-hidden />
+                  <div className="det-info-pop" role="tooltip">
+                    <div className="dip-ttl" style={{ color: detInfo.color }}>
+                      {detLabel}
+                    </div>
+                    <div className="dip-desc">{detInfo.desc}</div>
+                    <div className="dip-cause">{M2_DET_CAUSE}</div>
+                  </div>
                 </span>
-                <span style={{ fontSize: 10, letterSpacing: 1.5, opacity: 0.7 }}>DARK</span>
               </span>
               <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
               <div className="lang-toggle">

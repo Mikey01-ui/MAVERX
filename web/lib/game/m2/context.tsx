@@ -69,12 +69,8 @@ export function M2GameProvider({
     };
   }, [state.phase, state.hackDone]);
 
-  useEffect(() => {
-    if (state.phase === "synth") {
-      const t = setTimeout(() => dispatch({ type: "SYNTH_DONE" }), 3200);
-      return () => clearTimeout(t);
-    }
-  }, [state.phase]);
+  // Synth → debrief transition is driven by M2SynthOverlay when its
+  // SVG animation completes (matches the original's ~6.3s sequence).
 
   useEffect(() => {
     if (!state.hintCooldown) return;

@@ -1513,7 +1513,9 @@ body.gp-gameplay-active{background:var(--void)}
   display:flex;align-items:center;gap:2px;padding:0 4px;z-index:50;
   opacity:0;transition:opacity .6s ease;border-top:1px solid #3a7ae0}
 #xp-taskbar.visible{opacity:1}
-/* m3-game.css globally hides #xp-taskbar; keep M1 taskbar visible inside its desktop panel */
+/* Counter m3-game.css global `body:not(.r3-desktop) #xp-taskbar{display:none}` leak.
+   Higher specificity (#desktop-panel #xp-taskbar) keeps M1's taskbar visible
+   even when m3-game.css is bundled into the mission route. */
 #desktop-panel #xp-taskbar{display:flex}
 #start-btn{background:linear-gradient(to bottom,#3da641,#278d2a);
   border:1px solid #1e7a21;border-radius:10px;padding:2px 10px 2px 5px;
@@ -1743,10 +1745,12 @@ body.gp-gameplay-active{background:var(--void)}
   letter-spacing:2px;margin-bottom:12px}
 .cap-txt{font-size:clamp(12px,1.2vw,14px);color:#fff;text-align:center;max-width:300px;
   line-height:1.65;margin-bottom:20px;font-family:'DM Sans',sans-serif}
-.cap-btn{background:var(--orange);color:var(--void);border:none;
+.cap-btn{background:rgba(247,148,33,.32);color:var(--orange);border:1px solid var(--orange);
   font-family:'Space Grotesk',sans-serif;font-size:clamp(11px,1.1vw,13px);font-weight:700;
-  padding:11px 26px;letter-spacing:1.5px;cursor:pointer}
-.cap-btn:hover{background:#ffa234}
+  padding:11px 26px;letter-spacing:1.5px;cursor:pointer;border-radius:4px;
+  box-shadow:0 0 10px rgba(247,148,33,.22);transition:background .25s,box-shadow .25s,transform .25s}
+.cap-btn:hover{background:rgba(247,148,33,.46);box-shadow:0 0 26px rgba(247,148,33,.55);transform:translateY(-2px)}
+.cap-btn:active{transform:translateY(0);box-shadow:0 0 20px rgba(247,148,33,.2)}
 .heatmap-wrap{overflow-x:auto;margin-top:8px}
 .heatmap-tbl{width:100%;border-collapse:collapse;font-family:'Tahoma',sans-serif;font-size:10px}
 .heatmap-tbl th{background:#e8e4d8;padding:4px 6px;text-align:center;border:1px solid #aca899;font-weight:700}
@@ -1827,7 +1831,7 @@ body.gp-gameplay-active{background:var(--void)}
 /* PPT window fit within desktop panel */
 #win-finance-ppt.visible{display:flex;flex-direction:column;max-height:calc(100vh - 196px)}
 #win-finance-ppt .ppt-body{flex:1;min-height:0;overflow:hidden}
-.ppt-menu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:#f0ece0;border-bottom:1px solid #aca899;padding:5px 12px;font-family:'Tahoma',sans-serif;font-size:11px;flex-shrink:0}
+.ppt-menu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:#f0ece0;border-bottom:1px solid #aca899;padding:5px 12px;font-family:'Tahoma',sans-serif;font-size:11px;flex-shrink:0;color:#000}
 .ppt-menu .xpm{margin-right:0;cursor:default}
 .ppt-toolbar{background:#f0ece0;border-bottom:1px solid #aca899;min-height:28px;height:auto;display:flex;align-items:center;padding:4px 10px;gap:6px;flex-shrink:0}
 .ppt-tb-btn{width:20px;height:20px;border:none;background:transparent;color:#666;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;border-radius:2px}
@@ -1950,6 +1954,7 @@ body.gp-gameplay-active{background:var(--void)}
   font-family:var(--font-mono); line-height:1; user-select:none;
 }
 #verify-toggle:hover { background:rgba(84,0,173,.35); color:var(--text-w); }
+#verify-toggle.show { display:flex; }
 .cp-hdr{padding:14px 16px 10px;border-bottom:1px solid rgba(143,68,232,.18);flex-shrink:0}
 .cp-lead{font-family:'Space Grotesk',sans-serif;font-size:clamp(11px,1.1vw,13px);color:var(--purple-light);
   letter-spacing:1.5px;margin-bottom:4px}
@@ -2074,6 +2079,18 @@ body.gp-gameplay-active{background:var(--void)}
 /* Debrief CTA */
 .db-cta-row { display:flex; justify-content:center; margin-top:18px; flex-shrink:0; opacity:0; transition:opacity .4s; }
 .db-cta-row.show { opacity:1; }
+.db-cta:disabled { cursor:default; opacity:.9; }
+.db-cta.btn-sweep { background:rgba(247,148,33,.06); }
+
+/* ── Charge sweep: button starts as an empty shell; the fill charges it left→right
+     over the unlock delay (--sweep-ms). The filled color IS the resting color —
+     the overlay persists after unlock, so there's no flash back. ── */
+.btn-sweep{position:relative;overflow:hidden}
+.btn-sweep::before{content:'';position:absolute;top:0;left:0;bottom:0;width:0;
+  background:linear-gradient(90deg,rgba(247,148,33,.22),rgba(247,148,33,.42));
+  animation:btnSweep var(--sweep-ms,3000ms) linear forwards;pointer-events:none}
+.btn-sweep>*{position:relative;z-index:1}
+@keyframes btnSweep{from{width:0}to{width:100%}}
 .db-cta { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; border-radius:4px; cursor:pointer; box-shadow:0 0 10px rgba(247,148,33,.22); transition:all .25s; }
 .db-cta:hover { background:rgba(247,148,33,.46); box-shadow:0 0 26px rgba(247,148,33,.55); transform:translateY(-2px); }
 

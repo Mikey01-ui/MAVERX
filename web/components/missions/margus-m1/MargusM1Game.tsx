@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AudioToggle } from "@/components/audio/AudioToggle";
+import { useM1MissionAudio } from "@/lib/audio/useM1MissionAudio";
+import { createPortal } from "react-dom";
 import { Bar } from "react-chartjs-2";
 import {
   BudgetAllocChart,
@@ -43,17 +46,12 @@ type LeadVisual = "n-dimmed" | "n-start" | "n-idle" | "n-mission" | "n-active" |
 
 const PASSIVE_RATE = 100 / 1500;
 const now2 = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
-const now12 = () => {
-  const n = new Date();
-  let h = n.getHours();
-  const m = String(n.getMinutes()).padStart(2, "0");
-  const ap = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m} ${ap}`;
-};
+// Taskbar clock — live 12-hour "5:40 PM" format (ports tickClock from the HTML).
+const clock12 = () => { const n = new Date(); const h = n.getHours() % 12 || 12; return `${h}:${String(n.getMinutes()).padStart(2, "0")} ${n.getHours() >= 12 ? "PM" : "AM"}`; };
 
-// Default window positions (top,left,width) ported from the HTML.
-const WIN_POS: Record<string, { top: number; left: number; width: number }> = {
+// Default window positions (top,left,width[,height]) ported from the HTML.
+type WinRect = { top: number; left: number; width: number; height?: number };
+const WIN_POS: Record<string, WinRect> = {
   "win-it": { top: 58, left: 88, width: 420 },
   "win-finance": { top: 75, left: 105, width: 420 },
   "win-hr": { top: 68, left: 96, width: 420 },
@@ -61,7 +59,7 @@ const WIN_POS: Record<string, { top: number; left: number; width: number }> = {
   "win-server": { top: 44, left: 86, width: 560 },
   "win-budget": { top: 54, left: 98, width: 545 },
   "win-personnel": { top: 50, left: 94, width: 548 },
-  "win-finance-ppt": { top: 30, left: 30, width: 780 },
+  "win-finance-ppt": { top: 30, left: 30, width: 780, height: 540 },
   "win-headcount": { top: 66, left: 108, width: 500 },
   "win-hr-auth": { top: 76, left: 110, width: 530 },
   "win-finance-audit": { top: 82, left: 120, width: 520 },
@@ -71,13 +69,30 @@ const WIN_POS: Record<string, { top: number; left: number; width: number }> = {
   "win-absence": { top: 70, left: 112, width: 540 },
 };
 
+// Per-window resize minimums (board report largest; chart/table windows mid; folders smallest default).
+const WIN_MIN_DEFAULT = { w: 280, h: 180 };
+const WIN_MIN: Record<string, { w: number; h: number }> = {
+  "win-finance-ppt": { w: 740, h: 520 },
+  "win-server": { w: 520, h: 400 },
+  "win-budget": { w: 520, h: 400 },
+  "win-personnel": { w: 520, h: 400 },
+  "win-headcount": { w: 520, h: 400 },
+  "win-hr-auth": { w: 520, h: 400 },
+  "win-finance-audit": { w: 520, h: 400 },
+  "win-sys-metrics": { w: 520, h: 400 },
+  "win-opex": { w: 520, h: 400 },
+  "win-absence": { w: 520, h: 400 },
+};
+const RESIZE_DIRS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
+type ResizeDir = (typeof RESIZE_DIRS)[number];
+const TASKBAR_H = 30;
+
 export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) => void }) {
   // ── visible state ──
   const [det, setDet] = useState(0);
   const [timerSec, setTimerSec] = useState(0);
   const [hackActive, setHackActive] = useState(true);
   const [revealed, setRevealed] = useState(false);
-  const [tbClock, setTbClock] = useState("--:--");
   const [hackShown, setHackShown] = useState<Record<string, boolean>>({});
   const [activeLead, setActiveLead] = useState<LeadId | null>(null);
   const [locked, setLocked] = useState<LeadId[]>([]);
@@ -90,14 +105,6 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const [openWins, setOpenWins] = useState<string[]>([]);
   const [zOrder, setZOrder] = useState<string[]>([]);
   const [pos, setPos] = useState(WIN_POS);
-
-  useEffect(() => {
-    const tick = () => setTbClock(now12());
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
   const [activeTab, setActiveTab] = useState<Record<string, number>>({ "win-server": 0, "win-budget": 0, "win-personnel": 0, "win-sys-metrics": 0, "win-opex": 0, "win-absence": 0 });
   const [anomaly, setAnomaly] = useState<Record<string, boolean>>({});
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -135,8 +142,26 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const processingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
+  const resizeRef = useRef<{ id: string; dir: ResizeDir; startX: number; startY: number; startL: number; startT: number; startW: number; startH: number } | null>(null);
+  const restoreRects = useRef<Record<string, WinRect>>({});
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [maximized, setMaximized] = useState<string[]>([]);
   const synthSvgRef = useRef<SVGSVGElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+
+  // ─── AUDIO ─── (mirrors m3/m4: state-diff cue hook)
+  const audioState = useMemo(
+    () => ({
+      detection: det,
+      lockedCount: locked.length,
+      errorCount: gs.current.errors,
+      gameOver,
+      active: revealed,
+      success: synthOn,
+    }),
+    [det, locked.length, gameOver, revealed, synthOn]
+  );
+  useM1MissionAudio(audioState);
 
   // ─── CHAT QUEUE ───
   const processQueue = useCallback(() => {
@@ -199,13 +224,13 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
       setRevealed(true);
       startTimer();
       timers.push(setTimeout(() => voss(
-        "We're in. Marshall's desktop, live mirror, read-only. He has no idea.\nThree leads on the board. Start with COMPUTE, where the infrastructure trail begins.\nZex won't commit without a confirmed footprint. Everything we find goes on the board.",
-      ), 1200));
-      timers.push(setTimeout(() => zex("I'll be on the channel. Not committing to anything until I see real evidence."), 4200));
+        "We're in. Marshall's desktop, live mirror. He has no idea.\nThree leads on the board. Start with COMPUTE.",
+      ), 700));
+      timers.push(setTimeout(() => zex("I'll be on the channel. Not committing to anything until I see real evidence."), 2600));
       timers.push(setTimeout(() => {
         setLeadVisual((v) => ({ ...v, compute: "n-start" }));
         setLeadStatusTxt((t) => ({ ...t, compute: "START HERE →" }));
-      }, 3000));
+      }, 2000));
       setEbStep("LEAD 1 OF 3");
     }, 3350 + 720));
     return () => { timers.forEach(clearTimeout); if (timerRef.current) clearInterval(timerRef.current); };
@@ -265,21 +290,101 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
       if (activeLead === folderMap[id]) setTimeout(() => voss(lead.folderMsg), 800);
     }
   }, [activeLead, bringFront, voss]);
-  const closeWin = useCallback((id: string) => setOpenWins((w) => w.filter((x) => x !== id)), []);
+  const closeWin = useCallback((id: string) => {
+    // Restore from maximised state before closing so reopening shows the saved rect.
+    setMaximized((m) => {
+      if (m.includes(id)) {
+        const r = restoreRects.current[id];
+        if (r) setPos((p) => ({ ...p, [id]: r }));
+      }
+      return m.filter((x) => x !== id);
+    });
+    setOpenWins((w) => w.filter((x) => x !== id));
+  }, []);
   const toggleWin = useCallback((id: string) => setOpenWins((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id])), []);
 
-  // drag
+  const toggleMaximise = useCallback((id: string) => {
+    setMaximized((m) => {
+      if (m.includes(id)) {
+        const r = restoreRects.current[id];
+        if (r) setPos((p) => ({ ...p, [id]: r }));
+        return m.filter((x) => x !== id);
+      }
+      // Save exact current rect (measure height if window is auto-sized).
+      const el = document.getElementById(id);
+      setPos((p) => {
+        restoreRects.current[id] = { ...p[id], height: p[id].height ?? el?.offsetHeight };
+        return p;
+      });
+      return [...m, id];
+    });
+    bringFront(id);
+  }, [bringFront]);
+
+  // drag + resize (shared listeners; self-release when mouse released outside browser)
   useEffect(() => {
+    const release = () => { dragRef.current = null; resizeRef.current = null; };
     const move = (e: MouseEvent) => {
-      const d = dragRef.current; if (!d) return;
-      setPos((p) => ({ ...p, [d.id]: { ...p[d.id], top: Math.max(0, e.clientY - d.oy), left: Math.max(0, e.clientX - d.ox) } }));
+      if (e.buttons === 0) { release(); return; } // mouse released outside window — fixes "stuck drag"
+      const pR = panelRef.current?.getBoundingClientRect();
+      if (!pR) return;
+      const d = dragRef.current;
+      if (d) {
+        const el = document.getElementById(d.id);
+        const ww = el?.offsetWidth ?? 0, wh = el?.offsetHeight ?? 0;
+        let nx = e.clientX - d.ox, ny = e.clientY - d.oy;
+        nx = Math.max(0, Math.min(nx, pR.width - ww));
+        ny = Math.max(0, Math.min(ny, pR.height - TASKBAR_H - wh));
+        setPos((p) => ({ ...p, [d.id]: { ...p[d.id], top: ny, left: nx } }));
+        return;
+      }
+      const r = resizeRef.current;
+      if (r) {
+        const dx = e.clientX - r.startX, dy = e.clientY - r.startY;
+        let l = r.startL, t = r.startT, w = r.startW, h = r.startH;
+        if (r.dir.includes("e")) w = r.startW + dx;
+        if (r.dir.includes("s")) h = r.startH + dy;
+        if (r.dir.includes("w")) { w = r.startW - dx; l = r.startL + dx; }
+        if (r.dir.includes("n")) { h = r.startH - dy; t = r.startT + dy; }
+        const min = WIN_MIN[r.id] ?? WIN_MIN_DEFAULT;
+        if (w < min.w) { if (r.dir.includes("w")) l = r.startL + r.startW - min.w; w = min.w; }
+        if (h < min.h) { if (r.dir.includes("n")) t = r.startT + r.startH - min.h; h = min.h; }
+        // Max bounds (desktop minus taskbar), then clamp position.
+        w = Math.min(w, pR.width - l);
+        h = Math.min(h, pR.height - TASKBAR_H - t);
+        l = Math.max(0, Math.min(l, pR.width - w));
+        t = Math.max(0, Math.min(t, pR.height - TASKBAR_H - h));
+        setPos((p) => ({ ...p, [r.id]: { top: t, left: l, width: w, height: h } }));
+      }
     };
-    const up = () => { dragRef.current = null; };
-    window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
-    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", release);
+    window.addEventListener("blur", release);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", release); window.removeEventListener("blur", release); };
   }, []);
   const startDrag = (e: React.MouseEvent, id: string) => {
-    const p = pos[id]; dragRef.current = { id, ox: e.clientX - p.left, oy: e.clientY - p.top }; bringFront(id);
+    if ((e.target as HTMLElement).classList.contains("xp-btn")) return;
+    bringFront(id);
+    if (maximized.includes(id)) return;
+    const p = pos[id]; dragRef.current = { id, ox: e.clientX - p.left, oy: e.clientY - p.top };
+    e.preventDefault();
+  };
+  const startResize = (e: React.MouseEvent, id: string, dir: ResizeDir) => {
+    e.preventDefault(); e.stopPropagation();
+    const pR = panelRef.current?.getBoundingClientRect();
+    const el = document.getElementById(id);
+    if (!pR || !el) return;
+    if (maximized.includes(id)) {
+      // Snapshot current on-screen rect, drop maximise, continue resizing from it.
+      const r = el.getBoundingClientRect();
+      const rect: WinRect = { top: r.top - pR.top, left: r.left - pR.left, width: r.width, height: r.height };
+      setMaximized((m) => m.filter((x) => x !== id));
+      setPos((p) => ({ ...p, [id]: rect }));
+      resizeRef.current = { id, dir, startX: e.clientX, startY: e.clientY, startL: rect.left, startT: rect.top, startW: rect.width, startH: rect.height ?? el.offsetHeight };
+    } else {
+      resizeRef.current = { id, dir, startX: e.clientX, startY: e.clientY, startL: el.offsetLeft, startT: el.offsetTop, startW: el.offsetWidth, startH: el.offsetHeight };
+    }
+    bringFront(id);
   };
 
   // ─── DECOY / WRONG / RED-HERRING HANDLERS ───
@@ -444,10 +549,15 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
     const npos = [{ lbl: "COMPUTE", ang: -90 }, { lbl: "FUNDING", ang: 150 }, { lbl: "PERSONNEL", ang: 30 }]
       .map((n) => ({ lbl: n.lbl, x: cx + ringR * Math.cos((n.ang * Math.PI) / 180), y: cy + ringR * Math.sin((n.ang * Math.PI) / 180) }));
     const NS = "http://www.w3.org/2000/svg";
-    svg.innerHTML = `<defs><filter id="sg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    // filterUnits=userSpaceOnUse: percentage regions are relative to the element's
+    // bbox, and the vertical COMPUTE line has a zero-width bbox — the filter region
+    // collapses and the line doesn't render at all. Explicit region fixes it.
+    svg.innerHTML = `<defs><filter id="sg" filterUnits="userSpaceOnUse" x="-100" y="-100" width="900" height="700"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
     npos.forEach((n, i) => {
       const dx = cx - n.x, dy = cy - n.y, dist = Math.hypot(dx, dy), ux = dx / dist, uy = dy / dist;
-      const x1 = n.x + ux * outerR, y1 = n.y + uy * outerR, x2 = cx - ux * (centerR - 3), y2 = cy - uy * (centerR - 3);
+      // End 2px OUTSIDE the centre circle edge — the glow bridges the gap; ending
+      // inside (old -3) made the lines visibly clip into the circle.
+      const x1 = n.x + ux * outerR, y1 = n.y + uy * outerR, x2 = cx - ux * (centerR + 2), y2 = cy - uy * (centerR + 2);
       const lineLen = Math.hypot(x2 - x1, y2 - y1);
       const line = document.createElementNS(NS, "line");
       line.setAttribute("x1", `${x1}`); line.setAttribute("y1", `${y1}`); line.setAttribute("x2", `${x2}`); line.setAttribute("y2", `${y2}`);
@@ -492,11 +602,28 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const detBarCls = det < 30 ? "det-bar-green" : det < 60 ? "det-bar-amber" : "det-bar-red";
   const detIcon = det < 30 ? "fa-shield-alt" : det < 60 ? "fa-eye" : det < 80 ? "fa-exclamation-triangle" : "fa-skull";
 
-  const winShared = (id: string) => ({ visible: openWins.includes(id), style: { top: pos[id].top, left: pos[id].left, width: pos[id].width, zIndex: zIndexOf(id) } });
+  const winShared = (id: string) => ({
+    visible: openWins.includes(id),
+    cls: `xp-win visible${maximized.includes(id) ? " xwin-maximised" : ""}`,
+    style: { top: pos[id].top, left: pos[id].left, width: pos[id].width, height: pos[id].height, zIndex: zIndexOf(id) },
+  });
+  // 8-direction resize handles + SE grip (ported from HTML makeResizable/resizeWin).
+  const resizeHandles = (id: string) => (
+    <>
+      {RESIZE_DIRS.map((d) => <div key={d} className={`xp-rh xp-rh-${d}`} onMouseDown={(e) => startResize(e, id, d)} />)}
+      <div className="xp-grip" />
+    </>
+  );
+  const maxBtn = (id: string) => (
+    <button className="xp-btn xp-max" onClick={() => toggleMaximise(id)}>{maximized.includes(id) ? "❐" : "□"}</button>
+  );
 
-  // tab helper
-  const Tab = ({ win, idx, label }: { win: string; idx: number; label: string }) => (
-    <button className={`xtab${activeTab[win] === idx ? " active" : ""}`} onClick={() => setActiveTab((t) => ({ ...t, [win]: idx }))}>{label}</button>
+  // tab helper — plain render function, NOT a nested component.
+  // A nested component type is recreated each render, so bringFront's re-render
+  // (triggered by mousedown on the window) remounted the buttons mid-click and
+  // the click never fired.
+  const tab = (win: string, idx: number, label: string) => (
+    <button key={`${win}-tab-${idx}`} className={`xtab${activeTab[win] === idx ? " active" : ""}`} onClick={() => setActiveTab((t) => ({ ...t, [win]: idx }))}>{label}</button>
   );
 
   return (
@@ -525,6 +652,8 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             <span id="timer">{timer}</span>
             <span className="live-dot" />
             <span style={{ letterSpacing: 1 }}>LIVE</span>
+            <span style={{ color: "var(--border)", margin: "0 6px" }}>|</span>
+            <AudioToggle compact />
           </div>
         </div>
 
@@ -532,7 +661,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
 
         <div id="main-row">
           {/* DESKTOP */}
-          <div id="desktop-panel" className={glitching ? "glitching" : ""}>
+          <div id="desktop-panel" ref={panelRef} className={glitching ? "glitching" : ""}>
             <div id="wallpaper" className={revealed ? "visible" : ""} />
 
             {DESKTOP_ICONS.map((ic) => (
@@ -554,14 +683,15 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             {(["it", "finance", "hr", "misc"] as FolderKey[]).map((fk) => {
               const id = `win-${fk}`; const ws = winShared(id); if (!ws.visible) return null;
               const titles: Record<FolderKey, string> = { it: "IT_Systems - C:\\Marshall\\IT_Systems\\", finance: "Finance - C:\\Marshall\\Finance\\", hr: "HR_Records - C:\\Marshall\\HR_Records\\", misc: "Misc - C:\\Marshall\\Misc\\" };
+              const sized = pos[id].height != null || maximized.includes(id);
               return (
-                <div key={id} className="xp-win visible" style={ws.style} onMouseDown={() => bringFront(id)}>
+                <div key={id} id={id} className={ws.cls} style={ws.style} onMouseDown={() => bringFront(id)}>
                   <div className="xp-tb" onMouseDown={(e) => startDrag(e, id)}>
                     <div className="xp-title"><span className="xp-ti"><i className="fas fa-folder" /></span>{titles[fk]}</div>
-                    <div className="xp-btns"><button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
+                    <div className="xp-btns">{maxBtn(id)}<button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
                   </div>
                   <div className="xp-menu"><span className="xpm">File</span><span className="xpm">Edit</span><span className="xpm">View</span><span className="xpm">Help</span></div>
-                  <div className="xp-body" style={{ height: 220 }}>
+                  <div className="xp-body" style={sized ? undefined : { height: 220 }}>
                     <div className="folder-grid">
                       {FOLDERS[fk].map((f, i) => { const ic = fileIconClass(f.nm); return (
                         <div key={f.nm} className="fg-item" onDoubleClick={() => onFileOpen(fk, i)}>
@@ -572,6 +702,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
                     </div>
                   </div>
                   <div className="xp-status"><span>{FOLDERS[fk].length} objects</span></div>
+                  {resizeHandles(id)}
                 </div>
               );
             })}
@@ -579,7 +710,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             {/* SERVER REPORT (compute) */}
             {renderWin("win-server", "fa-file-excel", "server_report.xls - Microsoft Excel", "IT Infrastructure Report · Oct 2003", (
               <>
-                <div className="xp-tabs"><Tab win="win-server" idx={0} label="Network Traffic" /><Tab win="win-server" idx={1} label="Server Load" /><Tab win="win-server" idx={2} label="Disk Usage" /></div>
+                <div className="xp-tabs">{tab("win-server", 0, "Network Traffic")}{tab("win-server", 1, "Server Load")}{tab("win-server", 2, "Disk Usage")}</div>
                 {activeTab["win-server"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Network Throughput, FY 2003</div><div className="chart-sub">Monthly total GB · Core backbone</div><div className="chart-canvas-wrap"><NetworkChart /></div></div></div>}
                 {activeTab["win-server"] === 1 && <div className="xtab-panel active"><div className="chart-wrap" style={{ position: "relative" }}><div className="chart-ttl">Sector Node Load Index, FY 2003</div><div className="chart-sub">Monthly avg load % · IT Infrastructure Report</div><div className="chart-canvas-wrap"><ServerLoadChart onAnomaly={() => foundAnomaly("compute", "cap", "Server load like that doesn't happen by accident. Infrastructure confirmed provisionally. Keep going.")} onWrong={wrongClick} /></div>{anomaly["cap"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap", "compute")}>September hit 118%, dwarfing every other month including the elevated spikes in June (72%) and October (81%). Nearly 3× the yearly average load.<br /><br />Tooltip reads: &quot;Ticket: Archived, DO NOT REOPEN&quot;</AnomalyPanel>}</div></div>}
                 {activeTab["win-server"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Disk Usage by Node, Q3 2003</div><div className="chart-sub">Automated snapshot · 01-Oct-2003</div><div className="chart-canvas-wrap"><DiskChart /></div></div></div>}
@@ -589,7 +720,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             {/* BUDGET (funding) */}
             {renderWin("win-budget", "fa-file-excel", "budget_Q3.xls - Microsoft Excel", "Finance Portal · Restricted · 01-Oct-2003", (
               <>
-                <div className="xp-tabs"><Tab win="win-budget" idx={0} label="Headcount Costs" /><Tab win="win-budget" idx={1} label="Capex" /><Tab win="win-budget" idx={2} label="Budget Allocation" /></div>
+                <div className="xp-tabs">{tab("win-budget", 0, "Headcount Costs")}{tab("win-budget", 1, "Capex")}{tab("win-budget", 2, "Budget Allocation")}</div>
                 {activeTab["win-budget"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Headcount Costs, Q3 2003</div><div className="chart-sub">HR &amp; Finance Joint Report · Restricted</div><div className="chart-canvas-wrap"><HCCostChart /></div></div></div>}
                 {activeTab["win-budget"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Capital Expenditure, Q3 2003</div><div className="chart-sub">Finance · Capex Tracker · Authorised Items Only</div><div className="chart-canvas-wrap"><CapexChart /></div></div></div>}
                 {activeTab["win-budget"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Q3 2003 Budget Allocation</div><div className="chart-sub">Finance Portal · Restricted</div><div style={{ position: "relative" }}><div className="chart-canvas-wrap" style={{ height: 240 }}><BudgetAllocChart onAnomaly={() => foundAnomaly("funding", "cap-funding", "Hidden budget lines are how you fund things that don't officially exist.")} onWrong={wrongClick} /></div>{anomaly["cap-funding"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-funding", "funding")}>$7.1M sits under R&amp;D, Unallocated with no department owner. That is a lot of money to go nowhere official.</AnomalyPanel>}</div></div></div>}
@@ -597,9 +728,9 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             ), 320)}
 
             {/* PERSONNEL (overtime) */}
-            {renderWin("win-personnel", "fa-file-word", "overtime_Sep.doc - Microsoft Word", "HR Analytics · RESTRICTED · All Divisions", (
+            {renderWin("win-personnel", "fa-file-word", "staffing_hours_Sep.doc - Microsoft Word", "HR Analytics · RESTRICTED · All Divisions", (
               <>
-                <div className="xp-tabs"><Tab win="win-personnel" idx={0} label="Q1–Q2 Summary" /><Tab win="win-personnel" idx={1} label="September Breakdown" /><Tab win="win-personnel" idx={2} label="Policy Notes" /></div>
+                <div className="xp-tabs">{tab("win-personnel", 0, "Q1–Q2 Summary")}{tab("win-personnel", 1, "September Breakdown")}{tab("win-personnel", 2, "Policy Notes")}</div>
                 {activeTab["win-personnel"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Overtime Summary, H1 2003 (Jan–Jun)</div><div className="chart-sub">HR Analytics · All Divisions</div><div className="chart-canvas-wrap"><H1Chart /></div></div></div>}
                 {activeTab["win-personnel"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">September 2003, Overtime by Division</div><div className="chart-sub">HR Analytics · RESTRICTED</div><div style={{ position: "relative" }}><div className="chart-canvas-wrap" style={{ height: 300 }}><SeptScatterChart onAnomaly={() => foundAnomaly("personnel", "cap-personnel")} onWrong={wrongClick} /></div>{anomaly["cap-personnel"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-personnel", "personnel")}>Engineering Classified logged 2,940 hours under a [REDACTED] project code. That is 7× the next highest division.</AnomalyPanel>}</div></div></div>}
                 {activeTab["win-personnel"] === 2 && <div className="xtab-panel active"><div className="dt-note"><strong>OVERTIME AUTHORISATION POLICY, MEGACORP HR</strong><br /><br />1. Standard overtime (under 200h/month per division) requires line manager approval.<br />2. Overtime exceeding 200h/month must be escalated to VP level.<br />3. Any overtime associated with classified projects requires SVP or above sign-off.<br />4. All overtime must be logged within 5 business days.<br />5. Project codes must be listed on all authorisation requests.<br />6. Records are retained for 7 years.<br /><br /><em>Effective: January 2003. Last reviewed: July 2003.</em></div></div>}
@@ -607,7 +738,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             ), 320)}
 
             {/* HEADCOUNT (cross-ref) */}
-            {renderWin("win-headcount", "fa-file-excel", "staffing_metrics_Sep.xls - Microsoft Excel", "HR Records · Confidential · 10 divisions", (
+            {renderWin("win-headcount", "fa-file-excel", "staffing_ot_metrics_Sep.xls - Microsoft Excel", "HR Records · Confidential · 10 divisions", (
               <div className="xp-body" style={{ height: 320, padding: "10px 12px", background: "#fff" }}>
                 <div className="chart-ttl">Avg Overtime Hours per Employee, September 2003</div>
                 <div className="chart-sub">HR Records · Staffing Metrics · All Divisions · hover segment for exact figure</div>
@@ -681,15 +812,16 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
 
             {/* BOARD REPORT PPT */}
             {(() => { const id = "win-finance-ppt"; const ws = winShared(id); if (!ws.visible) return null; return (
-              <div key={id} className="xp-win visible" style={ws.style} onMouseDown={() => bringFront(id)}>
+              <div key={id} id={id} className={ws.cls} style={ws.style} onMouseDown={() => bringFront(id)}>
                 <div className="xp-tb" onMouseDown={(e) => startDrag(e, id)} style={{ background: "#d4d0c8" }}>
                   <div className="xp-title" style={{ color: "#000" }}><span className="xp-ti"><i className="fas fa-file-powerpoint" /></span>board_report_Q3.ppt - Microsoft PowerPoint</div>
-                  <div className="xp-btns"><button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
+                  <div className="xp-btns">{maxBtn(id)}<button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
                 </div>
                 <PptViewer slide={pptSlide} setSlide={setPptSlide} zoom={pptZoomLvl} setZoom={setPptZoomLvl}
                   fundingActive={activeLead === "funding"} fundingLocked={locked.includes("funding")} fundingAnomalyShown={!!anomaly["cap-funding-ppt"]}
                   onFundingAnomaly={() => foundAnomaly("funding", "cap-funding-ppt", "Hidden budget lines are how you fund things that don't officially exist.")}
                   onVerifyFunding={() => hideAnomalyAndVerify("cap-funding-ppt", "funding")} />
+                {resizeHandles(id)}
               </div>
             ); })()}
 
@@ -700,10 +832,11 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
               </div>
             )}
 
-            {/* VERIFY PANEL */}
-            {verifyOpen && verifyLead && (
-              <div id="verify-panel" className="open">
-                <button id="verify-toggle" className="show" onClick={() => setVerifyOpen(false)} title="Toggle panel">›</button>
+            {/* VERIFY PANEL — stays mounted while a lead is under investigation
+                (collapse via chevron, don't unmount: keeps chip selections). */}
+            {verifyLead && (
+              <div id="verify-panel" className={verifyOpen ? "open" : ""}>
+                <button id="verify-toggle" className="show" onClick={() => setVerifyOpen((o) => !o)} title="Toggle panel">{verifyOpen ? "›" : "‹"}</button>
                 <div className="cp-hdr">
                   <div className="cp-lead">VERIFY LEAD: {LEADS[verifyLead].label}</div>
                   <div className="cp-sub">Select the correct values from the evidence you found.</div>
@@ -734,7 +867,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
               <button className={`tb-wb${openWins.includes("win-it") ? " tb-on" : ""}`} onClick={() => toggleWin("win-it")}><i className="fas fa-folder" /> IT_Systems</button>
               <button className={`tb-wb${openWins.includes("win-finance") ? " tb-on" : ""}`} onClick={() => toggleWin("win-finance")}><i className="fas fa-folder" /> Finance</button>
               <button className={`tb-wb${openWins.includes("win-hr") ? " tb-on" : ""}`} onClick={() => toggleWin("win-hr")}><i className="fas fa-folder" /> HR_Records</button>
-              <div id="tb-clock">{tbClock}</div>
+              <div id="tb-clock">{clock12()}</div>
             </div>
           </div>
 
@@ -753,7 +886,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
                 ))}
               </div>
               <div className="eb-progress">{LEAD_ORDER.map((id) => <div key={id} className={`ep-seg${locked.includes(id) ? " filled" : ""}`} />)}</div>
-              <button id="synth-btn" className={synthBtnReady ? "ready" : ""} disabled={!synthBtnEnabled} onClick={startSynth}><i className="fas fa-circle-nodes" /> CONFIRM INTEL</button>
+              <button id="synth-btn" className={synthBtnReady ? "ready btn-sweep" : ""} style={{ "--sweep-ms": "4575ms" } as React.CSSProperties} disabled={!synthBtnEnabled} onClick={startSynth}><i className="fas fa-circle-nodes" /> <span>CONFIRM INTEL</span></button>
             </div>
 
             {/* MISSION CHANNEL */}
@@ -802,31 +935,35 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
       {/* TOASTS */}
       {toasts.map((t, i) => (<div key={t.id} className="det-toast" style={{ top: 48 + i * 4, right: 24 }}>{t.text}</div>))}
 
-      {/* SYNTH OVERLAY */}
-      {synthOn && (
+      {/* SYNTH OVERLAY — portal to <body>: a transformed ancestor in the mission
+          shell re-anchors position:fixed, misaligning the end animation. */}
+      {synthOn && createPortal(
         <div id="synth-overlay" style={{ display: "flex" }}>
           <svg id="synth-svg" viewBox="0 0 700 500" ref={synthSvgRef} />
           <div id="synth-done" className={synthDone ? "show" : ""}>✓ OMNI FOOTPRINT CONFIRMED</div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* BREACH OVERLAY */}
-      {breachOn && (
+      {/* BREACH OVERLAY — portal, same fixed-position anchoring issue */}
+      {breachOn && createPortal(
         <div id="det-breach" className="active">
           <div className="det-breach-alert show" id="db-alert">{breachAlert}</div>
           <div className="det-breach-glitch show" id="db-glitch">{breachGlitch}</div>
           <div className="det-breach-reconnect show" id="db-reconnect">{breachRecon}</div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* GAME OVER */}
-      {gameOver && (
+      {/* GAME OVER — portal, same fixed-position anchoring issue */}
+      {gameOver && createPortal(
         <div id="gameover-overlay" className="active">
           <div className="go-label">// Operation Terminated</div>
           <div className="go-title">CONNECTION SEVERED</div>
           <div className="go-sub">MegaCorp&apos;s security closed the feed. Voss is exposed.<br />There is no second window into Marshall&apos;s desktop.</div>
           <button className="go-restart" onClick={() => window.location.reload()}>RESTART OPERATION</button>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* UNOPENABLE DIALOG */}
@@ -844,15 +981,17 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   // ── window render helper (declared via hoisted function) ──
   function renderWin(id: string, faIcon: string, title: string, status: string, body: React.ReactNode, bodyHeight = 240, plainBody = false) {
     const ws = winShared(id); if (!ws.visible) return null;
+    const sized = pos[id].height != null || maximized.includes(id); // explicit/maximised height → body flexes
     return (
-      <div key={id} className="xp-win visible" style={ws.style} onMouseDown={() => bringFront(id)}>
+      <div key={id} id={id} className={ws.cls} style={ws.style} onMouseDown={() => bringFront(id)}>
         <div className="xp-tb" onMouseDown={(e) => startDrag(e, id)}>
           <div className="xp-title"><span className="xp-ti"><i className={`fas ${faIcon}`} /></span>{title}</div>
-          <div className="xp-btns"><button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
+          <div className="xp-btns">{maxBtn(id)}<button className="xp-btn xp-cls" onClick={() => closeWin(id)}>✕</button></div>
         </div>
         <div className="xp-menu"><span className="xpm">File</span><span className="xpm">Edit</span><span className="xpm">View</span><span className="xpm">Insert</span><span className="xpm">Format</span></div>
-        {plainBody ? body : <div className="xp-body xb-tab" style={{ height: bodyHeight }}>{body}</div>}
+        {plainBody ? body : <div className="xp-body xb-tab" style={sized ? undefined : { height: bodyHeight }}>{body}</div>}
         <div className="xp-status"><span>{status}</span></div>
+        {resizeHandles(id)}
       </div>
     );
   }
@@ -898,9 +1037,11 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
           ))}
         </div>
         <div className="ppt-main">
-          <div className="ppt-slide" style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
+          {/* HTML layout: absolute .ppt-slide-title + content in .ppt-slide-body (starts below
+              title). ppt-slide-title-only sits on the .ppt-slide element itself (slide 1). */}
+          <div className={`ppt-slide${slide === 0 ? " ppt-slide-title-only" : ""}`} style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
             {slide === 0 && (
-              <div className="ppt-slide-title-only" style={{ textAlign: "center", padding: 28 }}>
+              <div className="ppt-slide-body" style={{ textAlign: "center" }}>
                 <div style={{ marginBottom: 20 }}><span style={{ fontSize: 40, color: "#1a4fc8" }}>⬡</span><span style={{ fontFamily: "Space Grotesk,Arial", fontSize: 20, fontWeight: 700, color: "#0a1f5c", letterSpacing: 8, marginLeft: 4 }}>MEGACORP</span></div>
                 <div style={{ fontSize: 10, color: "#1a4fc8", letterSpacing: 4, marginBottom: 12 }}>BOARD CONFIDENTIAL · OCTOBER 2003</div>
                 <div style={{ fontSize: 28, fontWeight: 700, color: "#0a1f5c", marginBottom: 12 }}>Q3 2003 Financial Performance Review</div>
@@ -908,19 +1049,22 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
               </div>
             )}
             {slide === 1 && (
-              <div style={{ padding: 22 }}>
+              <>
                 <div className="ppt-slide-title">Executive Summary</div>
+                <div className="ppt-slide-body">
                 <div className="ppt-stat-row">
                   {[["$284.7M", "Q3 Total Revenue", "+12% vs Q2"], ["$198.2M", "Operating Costs", "Within budget"], ["$86.5M", "Net Operating Profit", "+8% vs forecast"]].map((b, i) => (
                     <div key={i} className="ppt-stat-block"><div className="ppt-stat-num">{b[0]}</div><div className="ppt-stat-lbl">{b[1]}</div><div className="ppt-stat-sub">{b[2]}</div></div>
                   ))}
                 </div>
                 <div style={{ marginTop: 14, fontSize: 11, color: "#2a3a4a", lineHeight: 1.7 }}>All core divisions performed at or above Q3 targets. Strategic R&amp;D investment programme progressing — full cost centre detail in Appendix B.</div>
-              </div>
+                </div>
+              </>
             )}
             {slide === 2 && (
-              <div style={{ padding: 22 }}>
+              <>
                 <div className="ppt-slide-title">Q3 Revenue by Business Unit</div>
+                <div className="ppt-slide-body">
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                   <div style={{ width: "42%", minWidth: 180, height: 200 }}><PptRevenueChart /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -936,11 +1080,13 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
                     </table>
                   </div>
                 </div>
-              </div>
+                </div>
+              </>
             )}
             {slide === 3 && (
-              <div style={{ padding: 22, position: "relative" }}>
+              <>
                 <div className="ppt-slide-title">Q3 Department Budget Allocation</div>
+                <div className="ppt-slide-body" style={{ position: "relative" }}>
                 <table className="ppt-tbl" style={{ fontSize: 11 }}>
                   <tbody>
                     <tr><th>Department</th><th>Alloc ($M)</th><th>Spent ($M)</th><th>Variance</th></tr>
@@ -955,11 +1101,13 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
                 {fundingAnomalyShown && (
                   <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={onVerifyFunding}>The board report flags R&amp;D at $7.1M with zero underspend and no department owner on record. That line has no official destination.</AnomalyPanel>
                 )}
-              </div>
+                </div>
+              </>
             )}
             {slide === 4 && (
-              <div style={{ padding: 22 }}>
+              <>
                 <div className="ppt-slide-title">Q3 Workforce Summary</div>
+                <div className="ppt-slide-body">
                 <div className="ppt-stat-row" style={{ marginBottom: 12 }}>
                   {[["4,847", "Total Headcount"], ["312", "Active Contractors"], ["94%", "Retention Rate"], ["2,940h", "Overtime Logged"]].map((b, i) => (
                     <div key={i} className="ppt-stat-block"><div className="ppt-stat-num" style={{ fontSize: 22 }}>{b[0]}</div><div className="ppt-stat-lbl">{b[1]}</div></div>
@@ -967,11 +1115,13 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
                 </div>
                 <div style={{ width: "100%", height: 150 }}><PptHeadcountChart /></div>
                 <div style={{ fontSize: 9, color: "#6a7a8a", fontStyle: "italic", marginTop: 6 }}>Engineering headcount includes classified project allocations.</div>
-              </div>
+                </div>
+              </>
             )}
             {slide === 5 && (
-              <div style={{ padding: 22 }}>
+              <>
                 <div className="ppt-slide-title">Q3 Risk Register, Active Items</div>
+                <div className="ppt-slide-body">
                 <table className="ppt-tbl" style={{ fontSize: 11 }}>
                   <tbody>
                     <tr><th>Risk Item</th><th>Likelihood</th><th>Impact</th><th>Owner</th></tr>
@@ -981,18 +1131,21 @@ function PptViewer({ slide, setSlide, zoom, setZoom, fundingActive, fundingLocke
                     <tr><td>Data security &amp; access ctrl</td><td>Low</td><td>High</td><td>IT Division</td></tr>
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
             {slide === 6 && (
-              <div style={{ padding: 22 }}>
+              <>
                 <div className="ppt-slide-title">Q4 2003, Strategic Priorities &amp; Outlook</div>
+                <div className="ppt-slide-body">
                 <div style={{ background: "linear-gradient(90deg,#0a1f5c,#1a4fc8)", color: "#fff", padding: "12px 16px", borderRadius: 4, fontSize: 11, fontWeight: 700, marginBottom: 12 }}>Full-year revenue guidance maintained at $1.12B · No material risks to profit outlook</div>
                 <div className="ppt-card-row">
                   {[["📈 Revenue & Growth", "Q4 forecast: $301M (+6% vs Q3)"], ["💼 Investment & Costs", "R&D programme: final delivery phase"], ["⚙ Operational Focus", "IT security review: Oct 31 deadline"]].map((c, i) => (
                     <div key={i} className="ppt-card"><div className="ppt-card-ttl">{c[0]}</div><div className="ppt-card-txt">{c[1]}</div></div>
                   ))}
                 </div>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>

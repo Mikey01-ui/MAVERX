@@ -20,12 +20,19 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [starting, setStarting] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     const tick = () => setClock(formatClock(new Date()));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Time-gated charge on the start button (matches M1 brief/confirm sweep)
+  useEffect(() => {
+    const t = setTimeout(() => setArmed(true), 3000);
+    return () => clearTimeout(t);
   }, []);
 
   async function handleStartMission() {
@@ -52,6 +59,7 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
 
   return (
     <MissionChrome
+      theme="theme-v2"
       statusLeft={[content.statusLeft[0], clock, ...content.statusLeft.slice(1)]}
       statusRight={content.statusRight}
     >
@@ -103,9 +111,10 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
           <div className="vi-start-label">{content.startLabel}</div>
           <button
             type="button"
-            className="vi-btn-start"
+            className={`vi-btn-start vi-btn-sweep ${!armed ? "is-locked" : ""}`}
+            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
             onClick={handleStartMission}
-            disabled={starting}
+            disabled={starting || !armed}
           >
             <div className="vi-btn-start-inner">
               <span>{content.startButton}</span>

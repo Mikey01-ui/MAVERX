@@ -99,7 +99,8 @@
     linear-gradient(rgba(143,68,232,0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(143,68,232,0.06) 1px, transparent 1px);
   background-size: 40px 40px;
-  background-position: 0 36px;
+  /* 0 0, not 0 36px: a 36px offset lands a grid line under the status bar, doubling into one thick line */
+  background-position: 0 0;
 }
 
 /* === CORNER MARKS === */
@@ -171,7 +172,7 @@
 .margus-m1-brief .page {
   position: relative;
   z-index: 2;
-  margin-top: 36px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -575,11 +576,21 @@
 }
 
 .margus-m1-brief .btn-next.is-locked {
-  opacity: 0.4;
+  opacity: 0.9;
   cursor: not-allowed;
-  filter: grayscale(0.4);
   pointer-events: none;
 }
+
+/* Charge sweep — button starts as an empty shell; the fill charges it left→right
+   over the unlock delay (--sweep-ms) and the filled color IS the resting color
+   (overlay persists after unlock — no flash back). */
+.margus-m1-brief .btn-next.btn-sweep{background:rgba(247,148,33,0.06)}
+.margus-m1-brief .btn-sweep{position:relative;overflow:hidden}
+.margus-m1-brief .btn-sweep::before{content:'';display:block;position:absolute;top:0;left:0;bottom:0;width:0;
+  background:linear-gradient(90deg,rgba(247,148,33,.22),rgba(247,148,33,.42));
+  animation:btnSweep var(--sweep-ms,3000ms) linear forwards;pointer-events:none}
+.margus-m1-brief .btn-sweep>*{position:relative;z-index:1}
+@keyframes btnSweep{from{width:0}to{width:100%}}
 
 .margus-m1-brief .btn-inner {
   display: flex;

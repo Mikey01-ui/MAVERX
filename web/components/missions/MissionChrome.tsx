@@ -7,14 +7,15 @@ type MissionChromeProps = {
   statusRight: string[];
   clock?: string;
   showAudio?: boolean;
+  theme?: "theme-v2";
   children: ReactNode;
 };
 
-export function MissionChrome({ statusLeft, statusRight, clock, showAudio, children }: MissionChromeProps) {
+export function MissionChrome({ statusLeft, statusRight, clock, showAudio, theme, children }: MissionChromeProps) {
   const left = clock ? [statusLeft[0], clock, ...statusLeft.slice(1)] : statusLeft;
 
   return (
-    <div className="mission-root">
+    <div className={`mission-root${theme ? ` ${theme}` : ""}`}>
       <div className="ambient-glow" />
       <div className="scanlines" />
       <div className="bg-grid" />

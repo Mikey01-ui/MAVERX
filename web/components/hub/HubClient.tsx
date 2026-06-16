@@ -50,24 +50,27 @@ export function HubClient({
   const progressMap = new Map(progress.map((p) => [p.missionId, p]));
 
   async function handleRestart() {
-    if (!continueMission || restarting) return;
+    if (restarting) return;
     setRestarting(true);
     try {
-      await fetch("/api/progress", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          missionId: continueMission.id,
-          status: "in_progress",
-          checkpoint: "start",
-          stateJson: null,
-          score: null,
-        }),
-      });
-      const dest =
-        continueMission.id === "m1" ? "/intro" : `/mission/${continueMission.id}`;
-      router.push(dest);
+      // Restart the WHOLE game: clear every mission, unlock only M1, back to the intro.
+      await Promise.all(
+        missions.map((m) =>
+          fetch("/api/progress", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              missionId: m.id,
+              status: m.id === "m1" ? "in_progress" : "locked",
+              checkpoint: "start",
+              stateJson: null,
+              score: null,
+            }),
+          })
+        )
+      );
+      router.push("/intro");
       router.refresh();
     } finally {
       setRestarting(false);
@@ -75,17 +78,7 @@ export function HubClient({
   }
 
   return (
-    <main className="hub">
-      <div className="hub-top-actions">
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => signOut({ callbackUrl: "/login" })}
-        >
-          {content.signOut}
-        </button>
-      </div>
-
+    <main className={`hub${continueMission ? " hub--centered" : ""}`}>
       <header className="hub-header">
         <p className="hub-eyebrow">{content.eyebrow}</p>
         <h1 className="hub-title">{content.title}</h1>
@@ -117,10 +110,27 @@ export function HubClient({
             >
               {restarting ? "Resetting…" : `${content.restartLabel} →`}
             </button>
+            <button
+              type="button"
+              className="btn-secondary hub-choice-btn hub-signout"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
+              {content.signOut}
+            </button>
           </div>
           <p className="hub-choice-hint">{content.restartHint}</p>
         </section>
       ) : (
+        <>
+        <div className="hub-top-actions">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+          >
+            {content.signOut}
+          </button>
+        </div>
         <ul className="round-grid">
           {missions.map((mission) => {
             const state = access[mission.id] ?? { playable: false, label: "locked" };
@@ -159,6 +169,7 @@ export function HubClient({
             );
           })}
         </ul>
+        </>
       )}
 
       <p className="hub-footer">{content.footer}</p>

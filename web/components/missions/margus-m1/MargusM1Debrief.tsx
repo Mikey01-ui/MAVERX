@@ -72,8 +72,8 @@ export function MargusM1Debrief({ stats, onContinue }: { stats: GameStats; onCon
           </div>
         </div>
 
-        <div className={`db-cta-row${reveal >= 7 ? " show" : ""}`}>
-          <button className="db-cta" onClick={onContinue}>{DEBRIEF.cta}</button>
+        <div className="db-cta-row show">
+          <button className="db-cta btn-sweep" style={{ "--sweep-ms": "1820ms" } as React.CSSProperties} disabled={reveal < 7} onClick={onContinue}><span>{DEBRIEF.cta}</span></button>
         </div>
       </div>
     </div>

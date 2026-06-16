@@ -617,6 +617,39 @@ a {
   line-height: 1.5;
 }
 
+/* Centered premium card — resume view (#1). Vertically centers header+card to
+   kill the dead space, compact card, equal-width stacked buttons. */
+.hub--centered {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 720px;
+}
+.hub--centered .hub-header { text-align: center; margin-bottom: 1rem; }
+.hub--centered .hub-sub { margin-left: auto; margin-right: auto; }
+.hub--centered .hub-choice {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 2rem 1.6rem;
+}
+.hub--centered .hub-choice-actions { flex-direction: column; gap: 0.6rem; }
+.hub--centered .hub-choice-btn { width: 100%; min-width: 0; }
+.hub--centered .hub-choice-hint { text-align: center; }
+/* Sign out — danger-tinted tertiary inside the card */
+.hub-signout {
+  background: transparent;
+  border-color: rgba(209, 25, 114, 0.3);
+  color: rgba(209, 25, 114, 0.7);
+}
+.hub-signout:hover {
+  color: #d31972;
+  border-color: rgba(209, 25, 114, 0.65);
+  background: rgba(209, 25, 114, 0.08);
+  background: rgba(143, 68, 232, 0.08);
+}
+
 .round-grid {
   list-style: none;
   display: grid;

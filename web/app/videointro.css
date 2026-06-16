@@ -18,7 +18,7 @@
 .vi-eyebrow {
   font-family: var(--font-mono);
   font-size: clamp(0.48rem, 0.62vw, 0.68rem);
-  color: var(--green-stable);
+  color: var(--purple-light);
   letter-spacing: 0.25em;
   text-transform: uppercase;
   margin-bottom: 0.5vh;
@@ -49,7 +49,7 @@
 .vi-video-label {
   font-family: var(--font-mono);
   font-size: clamp(0.44rem, 0.58vw, 0.63rem);
-  color: var(--green-stable);
+  color: var(--purple-light);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 0.5vh;
@@ -73,7 +73,7 @@
   gap: 1vh;
   box-shadow:
     0 0 60px rgba(84, 0, 173, 0.14),
-    0 0 120px rgba(0, 255, 65, 0.08);
+    0 0 120px rgba(143, 68, 232, 0.08);
 }
 
 .vi-video-box::before,
@@ -88,15 +88,15 @@
 .vi-video-box::before {
   top: 12px;
   left: 12px;
-  border-top: 1px solid rgba(0, 196, 28, 0.5);
-  border-left: 1px solid rgba(0, 196, 28, 0.5);
+  border-top: 1px solid rgba(143, 68, 232, 0.5);
+  border-left: 1px solid rgba(143, 68, 232, 0.5);
 }
 
 .vi-video-box::after {
   bottom: 12px;
   right: 12px;
-  border-bottom: 1px solid rgba(0, 196, 28, 0.5);
-  border-right: 1px solid rgba(0, 196, 28, 0.5);
+  border-bottom: 1px solid rgba(143, 68, 232, 0.5);
+  border-right: 1px solid rgba(143, 68, 232, 0.5);
 }
 
 .vi-video-scan {
@@ -105,7 +105,7 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(143, 68, 232, 0.3), transparent);
   animation: vi-scan-down 6s linear infinite;
 }
 
@@ -138,7 +138,7 @@
 .vi-play-icon {
   width: clamp(36px, 4.5vh, 54px);
   height: clamp(36px, 4.5vh, 54px);
-  border: 1px solid rgba(0, 196, 28, 0.4);
+  border: 1px solid rgba(143, 68, 232, 0.4);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -150,14 +150,14 @@
 .vi-play-icon svg {
   width: clamp(12px, 1.6vh, 20px);
   height: clamp(12px, 1.6vh, 20px);
-  fill: var(--green-stable);
+  fill: var(--orange);
   margin-left: 2px;
 }
 
 .vi-placeholder-text {
   font-family: var(--font-mono);
   font-size: clamp(0.44rem, 0.58vw, 0.65rem);
-  color: var(--green-stable);
+  color: var(--purple-light);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   position: relative;
@@ -203,7 +203,7 @@
 .vi-start-label {
   font-family: var(--font-mono);
   font-size: clamp(0.44rem, 0.58vw, 0.63rem);
-  color: var(--green-stable);
+  color: var(--purple-light);
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
@@ -211,22 +211,24 @@
 .vi-btn-start {
   width: clamp(200px, 22vw, 340px);
   padding: 1vh 2vw;
-  background: var(--orange);
+  background: rgba(247, 148, 33, 0.06);
   border: 1px solid var(--orange);
-  color: var(--void);
+  color: var(--orange);
   font-family: var(--font-display);
   font-size: clamp(0.8rem, 1.2vw, 1.1rem);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(247, 148, 33, 0.22);
   transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
-.vi-btn-start:hover {
-  background: var(--orange-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(247, 148, 33, 0.25);
+.vi-btn-start:hover:not(:disabled) {
+  background: rgba(247, 148, 33, 0.46);
+  transform: translateY(-2px);
+  box-shadow: 0 0 26px rgba(247, 148, 33, 0.55);
 }
 
 .vi-btn-start-inner {
@@ -235,6 +237,24 @@
   justify-content: center;
   gap: 0.6rem;
 }
+
+/* Time-gated charge sweep (mirrors the M1 brief/confirm button) */
+.vi-btn-start.vi-btn-sweep { position: relative; overflow: hidden; }
+.vi-btn-start.is-locked {
+  cursor: default;
+}
+.vi-btn-start.is-locked:hover { transform: none; box-shadow: none; }
+.vi-btn-start.vi-btn-sweep::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(247, 148, 33, 0.22), rgba(247, 148, 33, 0.42));
+  animation: viBtnSweep var(--sweep-ms, 3000ms) linear forwards;
+  pointer-events: none;
+}
+.vi-btn-start.vi-btn-sweep > * { position: relative; z-index: 1; }
+@keyframes viBtnSweep { from { width: 0; } to { width: 100%; } }
 
 .vi-intro-modal-overlay {
   position: fixed;
@@ -277,7 +297,7 @@
 
 .vi-intro-modal-header {
   padding: 1.75rem 1.75rem 1.25rem;
-  border-bottom: 1px solid rgba(0, 196, 28, 0.28);
+  border-bottom: 1px solid rgba(143, 68, 232, 0.28);
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -286,7 +306,7 @@
 .vi-intro-modal-eyebrow {
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  color: var(--green-stable);
+  color: var(--purple-light);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   margin-bottom: 0.3rem;
@@ -303,9 +323,9 @@
 .vi-intro-modal-close-x {
   width: 28px;
   height: 28px;
-  background: rgba(0, 196, 28, 0.11);
-  border: 1px solid rgba(0, 196, 28, 0.32);
-  color: var(--green-stable);
+  background: rgba(143, 68, 232, 0.11);
+  border: 1px solid rgba(143, 68, 232, 0.32);
+  color: var(--purple-light);
   cursor: pointer;
   font-size: 1rem;
 }
@@ -325,7 +345,7 @@
 
 .vi-intro-modal-footer {
   padding: 1rem 1.75rem;
-  border-top: 1px solid rgba(0, 196, 28, 0.28);
+  border-top: 1px solid rgba(143, 68, 232, 0.28);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -335,7 +355,7 @@
 .vi-intro-modal-footer-text {
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  color: var(--green-stable);
+  color: var(--purple-light);
 }
 
 .vi-intro-modal-close-btn {

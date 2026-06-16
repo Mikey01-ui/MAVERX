@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./MargusM1Protocol.css";
 
 interface ProtocolCardProps {
@@ -39,6 +39,12 @@ interface MargusM1ProtocolProps {
 
 export function MargusM1Protocol({ onContinue }: MargusM1ProtocolProps) {
   const [activeCard, setActiveCard] = useState(0);
+  const [continueEnabled, setContinueEnabled] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setContinueEnabled(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const cards = [
     {
@@ -118,7 +124,12 @@ export function MargusM1Protocol({ onContinue }: MargusM1ProtocolProps) {
 
         {/* Continue Button */}
         <div className="button-section">
-          <button className="btn-next" onClick={onContinue}>
+          <button
+            className={`btn-next btn-sweep ${!continueEnabled ? "is-locked" : ""}`}
+            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
+            onClick={onContinue}
+            disabled={!continueEnabled}
+          >
             <div className="btn-inner">
               <span>Continue to Mission</span>
               <span className="btn-arrow">→</span>

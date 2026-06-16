@@ -14,17 +14,6 @@ interface MargusM1BriefProps {
 
 export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
   const [continueEnabled, setContinueEnabled] = useState(false);
-  const [currentTime, setCurrentTime] = useState<string>("");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toTimeString().slice(0, 8));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,21 +32,6 @@ export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
 
   return (
     <div className="margus-m1-brief">
-      {/* Status Bar */}
-      <div className="status-bar">
-        <div className="status-left">
-          <span>
-            <span className="status-dot live" />
-            TERMINAL ACTIVE
-          </span>
-          <span>OP-OMNI / v2.4.1</span>
-        </div>
-        <div className="status-right">
-          <span id="clock">{currentTime}</span>
-          <span>ENCRYPTED</span>
-        </div>
-      </div>
-
       {/* Ambient background effects */}
       <div className="ambient-glow" />
       <div className="bg-grid" />
@@ -186,7 +160,8 @@ export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
         {/* Continue Button */}
         <div className="button-section">
           <button
-            className={`btn-next ${!continueEnabled ? "is-locked" : ""}`}
+            className={`btn-next btn-sweep ${!continueEnabled ? "is-locked" : ""}`}
+            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
             onClick={onContinue}
             disabled={!continueEnabled}
           >

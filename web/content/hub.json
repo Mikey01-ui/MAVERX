@@ -7,7 +7,7 @@
   "continueLabel": "Pick up where you left off",
   "continueSuffix": "— resume your last checkpoint",
   "restartLabel": "Restart operation",
-  "restartHint": "Clears this mission's saved progress and starts from the beginning.",
+  "restartHint": "Wipes all saved progress and restarts the operation from Mission 1.",
   "checkpointLabel": "Last checkpoint",
   "rosterLabel": "Operation roster",
   "playLabel": "Launch",

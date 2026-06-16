@@ -41,7 +41,7 @@ export default async function HubPage() {
     : null;
 
   return (
-    <AmbientShell>
+    <AmbientShell theme="theme-v2">
       <StatusBar left={content.statusLeft} right={content.statusRight} />
       <HubClient
         content={content}

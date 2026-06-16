@@ -290,7 +290,7 @@ export const M1TutorialShell = forwardRef<M1TutorialShellHandle>(function M1Tuto
 
             {/* Demo window - not showing real game files */}
             {openWins.includes("win-server") && (
-              <div className="xp-win visible" style={{ top: 44, left: 86, width: 560 }}>
+              <div className="xp-win visible" style={{ top: 72, left: 150, width: 560 }}>
                 <div className="xp-tb">
                   <div className="xp-title">
                     <span className="xp-ti"><i className="fas fa-file-excel" aria-hidden /></span>

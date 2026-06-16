@@ -100,7 +100,7 @@ export const LEADS: Record<LeadId, Lead> = {
     folderMsg:
       "The HR folder has staffing records and workforce reports. You're looking for a division that logged more hours than usual. For something like OMNI, they must have been working overtime.",
     lockMsg: "2,940 hours on a project that officially doesn't exist. Someone built something real. Logged.",
-    hint: "HR → overtime_Sep.doc → September Breakdown tab. One division is on a different scale. Hover dots for project codes.\nFor question 2: HR → staffing_metrics_Sep.xls. For question 3: HR → auth_log_Sep.doc",
+    hint: "HR → staffing_hours_Sep.doc → September Breakdown tab. One division is on a different scale. Hover dots for project codes.\nFor question 2: HR → staffing_ot_metrics_Sep.xls. For question 3: HR → auth_log_Sep.doc",
     params: [
       {
         label: "WHICH DIVISION LOGGED THE ANOMALOUS HOURS?",
@@ -112,7 +112,7 @@ export const LEADS: Record<LeadId, Lead> = {
         label: "WHAT WAS THE AVERAGE OVERTIME HOURS PER EMPLOYEE IN ENGINEERING CLASSIFIED?",
         opts: ["8h", "13h", "18h", "23h", "47h"],
         ans: 3,
-        err: "Open staffing_metrics_Sep.xls in the HR folder, find the Engineering Classified staff count, then divide into the total overtime hours.",
+        err: "Open staffing_ot_metrics_Sep.xls in the HR folder, find the Engineering Classified staff count, then divide into the total overtime hours.",
         crossRef: true,
       },
       {
@@ -179,8 +179,8 @@ export const FOLDERS: Record<FolderKey, FolderFile[]> = {
     { nm: "absence_log_Q3.xls", redHerring: true, fn: "openAbsenceLog" },
     { nm: "reviews_Q2.doc", decoy: true, unopenable: true, msg: "Performance reviews from Q2. Nothing in there connects to active projects. You just flagged an access entry for nothing." },
     { nm: "auth_log_Sep.doc", fn: "openHrAuth" },
-    { nm: "staffing_metrics_Sep.xls", fn: "openHeadcount" },
-    { nm: "overtime_Sep.doc", win: "win-personnel" },
+    { nm: "staffing_ot_metrics_Sep.xls", fn: "openHeadcount" },
+    { nm: "staffing_hours_Sep.doc", win: "win-personnel" },
   ],
   misc: [
     { nm: "golf_scores.xls", decoy: true, msg: "Dead end. Don't waste time on it." },

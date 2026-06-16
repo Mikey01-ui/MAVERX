@@ -224,9 +224,13 @@ body.m1-tutorial-active .m1-tutorial-shell .det-info-wrap:not(:hover):not(:focus
   display: none;
   box-sizing: border-box;
   border: 2px solid var(--orange);
-  border-radius: 8px;
+  border-radius: 3px;
   pointer-events: none;
-  box-shadow: 0 0 0 1px rgba(247, 148, 33, 0.35);
+  /* #5 subtle orange glow on the highlight outline */
+  box-shadow:
+    0 0 0 1px rgba(247, 148, 33, 0.35),
+    0 0 14px rgba(247, 148, 33, 0.5),
+    0 0 30px rgba(247, 148, 33, 0.22);
   z-index: 602;
 }
 
@@ -249,6 +253,47 @@ body.m1-tutorial-active .m1-tutorial-shell .det-info-wrap:not(:hover):not(:focus
   transform-origin: 4px 4px;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.85));
   z-index: 2147483646;
+}
+
+/* #4 — pointer arrow from the panel toward the highlighted element */
+.m1-tut-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.m1-tut-arrow--left {
+  left: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 11px solid rgba(247, 148, 33, 0.75);
+}
+.m1-tut-arrow--right {
+  right: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 11px solid rgba(247, 148, 33, 0.75);
+}
+.m1-tut-arrow--up {
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 11px solid rgba(247, 148, 33, 0.75);
+}
+.m1-tut-arrow--down {
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 11px solid rgba(247, 148, 33, 0.75);
 }
 
 #m1-tut-footer {

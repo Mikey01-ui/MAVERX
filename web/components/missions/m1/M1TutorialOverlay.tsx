@@ -98,6 +98,8 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
   const [interactionComplete, setInteractionComplete] = useState(false);
   const [footerPos, setFooterPos] = useState<{ left: number; top: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [arrowDir, setArrowDir] = useState<"left" | "right" | "up" | "down" | null>(null);
+  const manualRef = useRef(false);
 
   const footerRef = useRef<HTMLDivElement>(null);
   const tutorialRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,45 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
     hi.style.height = `${ax.height}px`;
   }, []);
 
+  // #4 — place the tooltip panel next to the spotlight, on whichever side has room,
+  // with an arrow pointing at the element. Skipped once the user drags the panel.
+  const placePanel = useCallback((ax: SpotlightRect) => {
+    if (manualRef.current) return;
+    const footer = footerRef.current;
+    const w = footer?.offsetWidth ?? 520;
+    const h = footer?.offsetHeight ?? 260;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 20;
+    const m = 8;
+    const cx = ax.left + ax.width / 2;
+    const cy = ax.top + ax.height / 2;
+    let left: number;
+    let top: number;
+    let dir: "left" | "right" | "up" | "down";
+    if (ax.left + ax.width + gap + w + m <= vw) {
+      left = ax.left + ax.width + gap;
+      top = cy - h / 2;
+      dir = "left";
+    } else if (ax.left - gap - w - m >= 0) {
+      left = ax.left - gap - w;
+      top = cy - h / 2;
+      dir = "right";
+    } else if (ax.top + ax.height + gap + h + m <= vh) {
+      top = ax.top + ax.height + gap;
+      left = cx - w / 2;
+      dir = "up";
+    } else {
+      top = ax.top - gap - h;
+      left = cx - w / 2;
+      dir = "down";
+    }
+    left = Math.max(m, Math.min(vw - w - m, left));
+    top = Math.max(m, Math.min(vh - h - m, top));
+    setFooterPos({ left, top });
+    setArrowDir(dir);
+  }, []);
+
   const applySpotlight = useCallback(
     (options?: { scroll?: boolean }) => {
       const currentStep = M1_TUTORIAL_STEPS[stepIxRef.current];
@@ -220,8 +261,9 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
       if (rectsEqual(hole, spotlightRef.current)) return;
       spotlightRef.current = hole;
       layoutShades(hole);
+      placePanel(hole);
     },
-    [hideShades, layoutShades, shellRoot]
+    [hideShades, layoutShades, placePanel, shellRoot]
   );
 
   const scheduleReflow = useCallback(
@@ -237,6 +279,9 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
   useEffect(() => {
     scrolledStepRef.current = -1;
     setInteractionComplete(false);
+    manualRef.current = false;
+    setFooterPos(null);
+    setArrowDir(null);
     onStepChangeRef.current?.(stepIx);
 
     let cancelled = false;
@@ -373,6 +418,8 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
     const rect = footer.getBoundingClientRect();
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     setDragging(true);
+    manualRef.current = true;
+    setArrowDir(null);
     footer.setPointerCapture(e.pointerId);
   };
 
@@ -419,6 +466,9 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}
       >
+        {footerPos && arrowDir && (
+          <div className={`m1-tut-arrow m1-tut-arrow--${arrowDir}`} aria-hidden />
+        )}
         <div
           className="m1-tut-drag-handle"
           id="m1-tut-drag-handle"

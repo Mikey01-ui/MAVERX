@@ -1,6 +1,6 @@
 {
-  "statusLeft": ["TERMINAL ACTIVE", "OP-OMNI / v2.4.1"],
-  "statusRight": ["ENCRYPTED"],
+  "statusLeft": ["TERMINAL ACTIVE"],
+  "statusRight": ["OP-OMNI / v2.4.1", "ENCRYPTED"],
   "opLabel": "Operation OMNI",
   "title": "The Data Heist",
   "intro": "You are <strong>The Mastermind</strong>. Your target is MegaCorp and their illegal Project OMNI. Authenticate to access the encrypted mastermind terminal and begin the operation.",

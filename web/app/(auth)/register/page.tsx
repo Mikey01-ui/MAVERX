@@ -7,7 +7,7 @@ export default async function RegisterPage() {
   const content = await getLoginContent();
 
   return (
-    <AmbientShell>
+    <AmbientShell theme="theme-v2">
       <StatusBar left={content.statusLeft} right={content.statusRight} />
       <main className="omni-page">
         <RegisterForm content={content} />

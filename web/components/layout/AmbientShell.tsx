@@ -1,7 +1,13 @@
 import { ReactNode } from "react";
 
-export function AmbientShell({ children }: { children: ReactNode }) {
-  return (
+export function AmbientShell({
+  children,
+  theme,
+}: {
+  children: ReactNode;
+  theme?: "theme-v2";
+}) {
+  const content = (
     <>
       <div className="ambient-glow" aria-hidden="true" />
       <div className="scanlines" aria-hidden="true" />
@@ -13,4 +19,6 @@ export function AmbientShell({ children }: { children: ReactNode }) {
       {children}
     </>
   );
+
+  return theme ? <div className={theme}>{content}</div> : content;
 }

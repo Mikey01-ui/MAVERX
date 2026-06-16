@@ -43,6 +43,14 @@ type LeadVisual = "n-dimmed" | "n-start" | "n-idle" | "n-mission" | "n-active" |
 
 const PASSIVE_RATE = 100 / 1500;
 const now2 = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
+const now12 = () => {
+  const n = new Date();
+  let h = n.getHours();
+  const m = String(n.getMinutes()).padStart(2, "0");
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${ap}`;
+};
 
 // Default window positions (top,left,width) ported from the HTML.
 const WIN_POS: Record<string, { top: number; left: number; width: number }> = {
@@ -69,6 +77,7 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const [timerSec, setTimerSec] = useState(0);
   const [hackActive, setHackActive] = useState(true);
   const [revealed, setRevealed] = useState(false);
+  const [tbClock, setTbClock] = useState("--:--");
   const [hackShown, setHackShown] = useState<Record<string, boolean>>({});
   const [activeLead, setActiveLead] = useState<LeadId | null>(null);
   const [locked, setLocked] = useState<LeadId[]>([]);
@@ -81,6 +90,14 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const [openWins, setOpenWins] = useState<string[]>([]);
   const [zOrder, setZOrder] = useState<string[]>([]);
   const [pos, setPos] = useState(WIN_POS);
+
+  useEffect(() => {
+    const tick = () => setTbClock(now12());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<Record<string, number>>({ "win-server": 0, "win-budget": 0, "win-personnel": 0, "win-sys-metrics": 0, "win-opex": 0, "win-absence": 0 });
   const [anomaly, setAnomaly] = useState<Record<string, boolean>>({});
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -714,10 +731,10 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
             <div id="xp-taskbar" className={revealed ? "visible" : ""}>
               <button id="start-btn">⊞ Start</button>
               <div className="tb-div" />
-              <button className={`tb-wb${openWins.includes("win-it") ? " active" : ""}`} onClick={() => toggleWin("win-it")}><i className="fas fa-folder" /> IT_Systems</button>
-              <button className={`tb-wb${openWins.includes("win-finance") ? " active" : ""}`} onClick={() => toggleWin("win-finance")}><i className="fas fa-folder" /> Finance</button>
-              <button className={`tb-wb${openWins.includes("win-hr") ? " active" : ""}`} onClick={() => toggleWin("win-hr")}><i className="fas fa-folder" /> HR_Records</button>
-              <div id="tb-clock">{now2()}</div>
+              <button className={`tb-wb${openWins.includes("win-it") ? " tb-on" : ""}`} onClick={() => toggleWin("win-it")}><i className="fas fa-folder" /> IT_Systems</button>
+              <button className={`tb-wb${openWins.includes("win-finance") ? " tb-on" : ""}`} onClick={() => toggleWin("win-finance")}><i className="fas fa-folder" /> Finance</button>
+              <button className={`tb-wb${openWins.includes("win-hr") ? " tb-on" : ""}`} onClick={() => toggleWin("win-hr")}><i className="fas fa-folder" /> HR_Records</button>
+              <div id="tb-clock">{tbClock}</div>
             </div>
           </div>
 

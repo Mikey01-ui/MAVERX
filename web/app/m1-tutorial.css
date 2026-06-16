@@ -1,0 +1,499 @@
+/* M1 tutorial — shell uses margus-m1/styles.css; this file adds tutorial-only layers */
+
+body.m1-tutorial-active {
+  overflow: hidden;
+  background: var(--void, #1e0f1a);
+  font-family: var(--font-body);
+  color: var(--text-w, #faf7f2);
+  width: 100vw;
+  height: 100vh;
+}
+
+body.m1-tutorial-active::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 196, 28, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 196, 28, 0.11) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.m1-tutorial-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--void, #1e0f1a);
+  pointer-events: auto;
+}
+
+.m1-tutorial-shell #game::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(84, 0, 173, 0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0, 196, 28, 0.11) 0%, transparent 70%);
+}
+
+.m1-tutorial-shell .lead,
+.m1-tutorial-shell .m1-tut-chart-bar[data-anomaly="true"],
+.m1-tutorial-shell .m1-tut-verify-btn {
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+}
+
+/* Taskbar visible in tutorial desktop */
+body.m1-tutorial-active #desktop-panel #xp-taskbar {
+  display: flex;
+}
+
+/* Detection cluster — inline group for tutorial spotlight */
+#det-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+#mission-chrome {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Tooltip stays hidden until hover — avoids purple popover edge in spotlight */
+.m1-tutorial-shell .det-info-pop {
+  z-index: 50;
+}
+
+body.m1-tutorial-active .m1-tutorial-shell .det-info-wrap:not(:hover):not(:focus-within) .det-info-pop {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tighter spotlight ring on header controls */
+.m1-tut-demo-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid #ccc;
+}
+
+.m1-tut-chart-bar {
+  flex: 1;
+  background: #4472c4;
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  cursor: default;
+  min-height: 8px;
+}
+
+.m1-tut-chart-bar.anomaly {
+  background: #c44444;
+  cursor: pointer;
+  animation: m1TutAnomalyPulse 1.5s ease-in-out infinite;
+}
+
+.m1-tut-chart-bar.anomaly.found {
+  animation: none;
+  background: #4caf50;
+}
+
+@keyframes m1TutAnomalyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 8px 4px rgba(196, 68, 68, 0.6); }
+}
+
+.m1-tut-chart-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.m1-tut-anomaly-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 100, 0, 0.95);
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 280px;
+  color: #fff;
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.m1-tut-anomaly-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: #4caf50;
+  margin-bottom: 8px;
+}
+
+.m1-tut-anomaly-panel p {
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0 0 12px;
+}
+
+.m1-tut-verify-btn {
+  width: 100%;
+  padding: 10px;
+  background: #4caf50;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.m1-tut-verify-btn:hover {
+  background: #45a049;
+}
+
+/* Tutorial overlay */
+#m1-tutorial {
+  z-index: 600;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--font-body);
+  overflow: visible;
+}
+
+#m1-tutorial:not(.active) {
+  visibility: hidden;
+  display: none;
+}
+
+#m1-tutorial.active {
+  display: block;
+  visibility: visible;
+  pointer-events: none;
+}
+
+#m1-tutorial.m1-tut-interactive .m1-tut-dim,
+#m1-tutorial.m1-tut-interactive .m1-tut-full {
+  pointer-events: none !important;
+  display: none !important;
+}
+
+.m1-tut-dim {
+  position: fixed;
+  inset: 0;
+  display: none;
+  background: rgba(10, 6, 14, 0.9);
+  pointer-events: none;
+  z-index: 601;
+}
+
+.m1-tut-dim[style*="display: block"] {
+  pointer-events: auto;
+}
+
+.m1-tut-full {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 6, 14, 0.9);
+  pointer-events: auto;
+  display: none;
+  z-index: 601;
+}
+
+.m1-tut-full.show {
+  display: block;
+}
+
+.m1-tut-highlight {
+  position: fixed;
+  display: none;
+  box-sizing: border-box;
+  border: 2px solid var(--orange);
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(247, 148, 33, 0.35);
+  z-index: 602;
+}
+
+.m1-tut-highlight.show {
+  display: block;
+}
+
+#m1-tut-demo-cursor.m1-tut-demo-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #f79421;
+  pointer-events: none;
+  line-height: 1;
+  font-size: 28px;
+  transform-origin: 4px 4px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.85));
+  z-index: 2147483646;
+}
+
+#m1-tut-footer {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(14px, 2.5vh, 28px);
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(48vh, 420px);
+  padding: 0;
+  background: linear-gradient(175deg, rgba(28, 18, 36, 0.97), rgba(14, 8, 18, 0.98));
+  border: 1px solid rgba(247, 148, 33, 0.42);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 16px 56px rgba(0, 0, 0, 0.65),
+    0 0 80px rgba(247, 148, 33, 0.08);
+  pointer-events: auto;
+  z-index: 605;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#m1-tut-footer.m1-tut-footer--placed {
+  transform: none;
+}
+
+#m1-tut-footer.m1-tut-footer--dragging {
+  user-select: none;
+  transition: none !important;
+}
+
+#m1-tut-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 196, 28, 0.55),
+    rgba(247, 148, 33, 0.85),
+    rgba(143, 68, 232, 0.4),
+    transparent
+  );
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.m1-tut-drag-handle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: clamp(12px, 1.6vw, 16px) clamp(16px, 2vw, 20px) 8px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(250, 247, 242, 0.08);
+}
+
+.m1-tut-drag-handle:active,
+#m1-tut-footer.m1-tut-footer--dragging .m1-tut-drag-handle {
+  cursor: grabbing;
+}
+
+.m1-tut-drag-grip {
+  color: rgba(247, 148, 33, 0.75);
+  font-size: 14px;
+  line-height: 1;
+  padding-top: 2px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.m1-tut-drag-handle-main {
+  flex: 1;
+  min-width: 0;
+}
+
+#m1-tut-footer .m1-tut-inner {
+  padding: 0 clamp(18px, 2.2vw, 24px) clamp(14px, 1.6vw, 18px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#m1-tut-footer .m1-tut-kicker {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 0.52rem, 11px);
+  color: rgba(0, 196, 28, 0.9);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  display: block;
+  font-weight: 600;
+}
+
+#m1-tut-title {
+  font-family: var(--font-display);
+  font-size: clamp(15px, 0.92rem + 0.5vw, 1.15rem);
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 10px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+#m1-tut-body {
+  font-size: clamp(13px, 0.88rem + 0.15vw, 15px);
+  line-height: 1.5;
+  color: rgba(250, 247, 242, 0.88);
+  margin: 0;
+  max-height: min(28vh, 220px);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+#m1-tut-body strong {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+#m1-tut-body p {
+  margin: 0 0 10px;
+}
+
+#m1-tut-body p:last-child {
+  margin-bottom: 0;
+}
+
+#m1-tut-body ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.m1-tut-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(250, 247, 242, 0.5);
+}
+
+#m1-tut-phase {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(247, 148, 33, 0.1);
+  border: 1px solid rgba(247, 148, 33, 0.28);
+}
+
+.m1-tut-success {
+  padding: 10px;
+  background: rgba(0, 196, 28, 0.15);
+  border: 1px solid rgba(0, 196, 28, 0.4);
+  border-radius: 6px;
+  color: var(--green-matrix);
+  font-size: 13px;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.m1-tut-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(250, 247, 242, 0.1);
+}
+
+#m1-tut-skip,
+#m1-tut-back {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(250, 247, 242, 0.22);
+  color: rgba(250, 247, 242, 0.9);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#m1-tut-next {
+  background: rgba(247, 148, 33, 0.22);
+  border: 2px solid var(--orange);
+  color: var(--orange);
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#m1-tut-next:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#m1-tut-next.m1-tut-next--cta {
+  min-width: 180px;
+  padding: 12px 28px;
+  font-size: 13px;
+  background: rgba(247, 148, 33, 0.32);
+  animation: m1TutCtaPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes m1TutCtaPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(247, 148, 33, 0.2), 0 4px 20px rgba(247, 148, 33, 0.25); }
+  50% { box-shadow: 0 0 0 2px rgba(247, 148, 33, 0.55), 0 0 32px rgba(247, 148, 33, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #m1-tut-next.m1-tut-next--cta,
+  .m1-tut-chart-bar.anomaly {
+    animation: none;
+  }
+}
+
+html.m1-enter-from-brief .m1-tutorial-shell {
+  opacity: 0;
+}
+
+html.m1-enter-from-brief #m1-tutorial {
+  opacity: 0;
+}
+
+body.m1-tutorial-active .m1-tutorial-shell,
+body.m1-tutorial-active #m1-tutorial {
+  transition: opacity 0.55s ease;
+}

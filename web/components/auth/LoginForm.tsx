@@ -50,7 +50,7 @@ export function LoginForm({ content }: { content: LoginContent }) {
   return (
     <>
       <form onSubmit={handleSubmit} className="omni-panel">
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div className="login-heading">
           <span className="op-label">{content.opLabel}</span>
           <h1 className="omni-title">{content.title}</h1>
         </div>
@@ -74,10 +74,11 @@ export function LoginForm({ content }: { content: LoginContent }) {
             onBlur={() => setTouched(true)}
             autoComplete="email"
           />
-          <p className={`error-text${touched && email && !emailValid ? " show" : ""}`}>
-            {content.emailError}
-          </p>
-          <p className="helper-text">{content.emailHelper}</p>
+          {touched && email && !emailValid ? (
+            <p className="error-text show">{content.emailError}</p>
+          ) : (
+            <p className="helper-text">{content.emailHelper}</p>
+          )}
         </div>
 
         <div className="form-group">

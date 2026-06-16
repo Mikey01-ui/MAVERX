@@ -6,6 +6,7 @@ import "./mission-intro.css";
 import "./videointro.css";
 import "./debrief-game.css";
 import "./m1-game.css";
+import "./m1-tutorial.css";
 import "./m2-game.css";
 import "./m3-game.css";
 import "./m3-tutorial.css";

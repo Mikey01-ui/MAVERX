@@ -13,6 +13,7 @@ import { M1MargusMission } from "@/components/missions/m1/M1MargusMission";
 import { MargusM1Brief } from "@/components/missions/margus-m1/MargusM1Brief";
 import { MargusM1Protocol } from "@/components/missions/margus-m1/MargusM1Protocol";
 import { MissionGame } from "@/components/missions/MissionGame";
+import { M1TutorialPhase } from "@/components/missions/m1/M1TutorialPhase";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
@@ -53,7 +54,7 @@ function MissionExperienceInner({
   const isM1 = missionId === "m1";
   const isM3 = missionId === "m3";
   const isM4 = missionId === "m4";
-  const hasTutorial = isM3 || isM4;
+  const hasTutorial = isM1 || isM3 || isM4;
   const { save } = useMissionProgress(intro.missionId);
   const [phase, setPhase] = useState<MissionPhase>(() =>
     checkpointToPhase(initialCheckpoint, resume, missionId)
@@ -147,6 +148,10 @@ function MissionExperienceInner({
 
   if (phase === "tutorial" && isM4) {
     return <M4TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+  }
+
+  if (phase === "tutorial" && isM1) {
+    return <M1TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
   }
 
   if (isM1) {

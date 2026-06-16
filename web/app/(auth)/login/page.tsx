@@ -8,7 +8,7 @@ export default async function LoginPage() {
   const content = await getLoginContent();
 
   return (
-    <AmbientShell>
+    <AmbientShell theme="theme-v2">
       <StatusBar left={content.statusLeft} right={content.statusRight} />
       <main className="omni-page">
         <Suspense fallback={<div className="omni-panel">Loading…</div>}>

@@ -16,6 +16,7 @@ import { M2Brief } from "@/components/missions/m2/M2Brief";
 import { M2Protocol } from "@/components/missions/m2/M2Protocol";
 import { MissionGame } from "@/components/missions/MissionGame";
 import { M1TutorialPhase } from "@/components/missions/m1/M1TutorialPhase";
+import { M2TutorialPhase } from "@/components/missions/m2/M2TutorialPhase";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
@@ -54,9 +55,10 @@ function MissionExperienceInner({
   savedState,
 }: MissionExperienceProps) {
   const isM1 = missionId === "m1";
+  const isM2 = missionId === "m2";
   const isM3 = missionId === "m3";
   const isM4 = missionId === "m4";
-  const hasTutorial = isM1 || isM3 || isM4;
+  const hasTutorial = isM1 || isM2 || isM3 || isM4;
   const { save } = useMissionProgress(intro.missionId);
   const [phase, setPhase] = useState<MissionPhase>(() =>
     checkpointToPhase(initialCheckpoint, resume, missionId)
@@ -83,13 +85,18 @@ function MissionExperienceInner({
   }, [hasTutorial, save]);
 
   const goToProtocol = useCallback(async () => {
+    if (isM2) {
+      setPhase("protocol");
+      await save({ phase: "protocol" });
+      return;
+    }
     if (hasTutorial) {
       await goToTutorial();
       return;
     }
     setPhase("protocol");
     await save({ phase: "protocol" });
-  }, [goToTutorial, hasTutorial, save]);
+  }, [goToTutorial, hasTutorial, isM2, save]);
 
   const goToGame = useCallback(async () => {
     setPhase("game");
@@ -156,6 +163,10 @@ function MissionExperienceInner({
     return <M1TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
   }
 
+  if (phase === "tutorial" && isM2) {
+    return <M2TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+  }
+
   if (isM1) {
     if (phase === "brief") {
       return <MargusM1Brief onContinue={goToProtocol} />;
@@ -170,7 +181,7 @@ function MissionExperienceInner({
       return <M2Brief onContinue={goToProtocol} onSkip={goToGame} />;
     }
     if (phase === "protocol") {
-      return <M2Protocol onBreach={goToGame} onSkip={goToGame} />;
+      return <M2Protocol onBreach={goToTutorial} onSkip={goToGame} />;
     }
   }
 

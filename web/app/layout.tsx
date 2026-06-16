@@ -8,6 +8,7 @@ import "./debrief-game.css";
 import "./m1-game.css";
 import "./m1-tutorial.css";
 import "./m2-game.css";
+import "./m2-tutorial.css";
 import "./m3-game.css";
 import "./m3-tutorial.css";
 import "./m4-game.css";

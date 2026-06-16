@@ -869,6 +869,16 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
               <button className={`tb-wb${openWins.includes("win-hr") ? " tb-on" : ""}`} onClick={() => toggleWin("win-hr")}><i className="fas fa-folder" /> HR_Records</button>
               <div id="tb-clock">{clock12()}</div>
             </div>
+
+            {/* UNOPENABLE DIALOG — centered on the XP desktop */}
+            {dialog && (
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "rgba(0,0,0,0.95)", border: "1px solid #d31972", borderRadius: 4, padding: 20, minWidth: 300, textAlign: "center", zIndex: 600, fontFamily: "'Share Tech Mono',monospace", color: "#faf7f2" }}>
+                <div style={{ fontSize: 11, color: "#d31972", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>⚠ ERROR</div>
+                <div style={{ fontSize: 13, marginBottom: 16 }}>{dialog}</div>
+                <div style={{ fontSize: 10, color: "#888", marginBottom: 16 }}>File contains no relevant data</div>
+                <button onClick={() => setDialog(null)} style={{ padding: "6px 16px", background: "#d31972", border: "none", color: "#fff", fontFamily: "'Space Grotesk',sans-serif", fontSize: 11, borderRadius: 2, cursor: "pointer" }}>DISMISS</button>
+              </div>
+            )}
           </div>
 
           {/* RIGHT PANEL */}
@@ -966,15 +976,6 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
         document.body
       )}
 
-      {/* UNOPENABLE DIALOG */}
-      {dialog && (
-        <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "rgba(0,0,0,0.95)", border: "1px solid #d31972", borderRadius: 4, padding: 20, minWidth: 300, textAlign: "center", zIndex: 600, fontFamily: "'Share Tech Mono',monospace", color: "#faf7f2" }}>
-          <div style={{ fontSize: 11, color: "#d31972", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>⚠ ERROR</div>
-          <div style={{ fontSize: 13, marginBottom: 16 }}>{dialog}</div>
-          <div style={{ fontSize: 10, color: "#888", marginBottom: 16 }}>File contains no relevant data</div>
-          <button onClick={() => setDialog(null)} style={{ padding: "6px 16px", background: "#d31972", border: "none", color: "#fff", fontFamily: "'Space Grotesk',sans-serif", fontSize: 11, borderRadius: 2, cursor: "pointer" }}>DISMISS</button>
-        </div>
-      )}
     </div>
   );
 

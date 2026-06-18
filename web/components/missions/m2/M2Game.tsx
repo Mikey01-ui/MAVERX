@@ -17,6 +17,7 @@ import {
 } from "@/lib/game/m2/data";
 import { M2GameProvider, useM2Game } from "@/lib/game/m2/context";
 import { getDetectionClass, getDetectionLabel } from "@/lib/game/m2/reducer";
+import { useM2MissionAudio } from "@/lib/audio/useM2MissionAudio";
 import { DET_INFO } from "@/components/missions/margus-m1/gameData";
 
 const M2_DET_CAUSE =
@@ -315,6 +316,15 @@ function M2GameInner() {
   const router = useRouter();
   const desktopRef = useRef<HTMLDivElement>(null);
   const windows = useXpWindows(WINDOW_CONFIG, desktopRef);
+  useM2MissionAudio({
+    phase: state.phase,
+    hackDone: state.hackDone,
+    tokensLen: state.tokens.length,
+    wrongRulings: state.wrongRulings,
+    verifyErrors: state.verifyErrors,
+    detection: state.detection,
+    gameOver: state.gameOver,
+  });
   const [lang, setLang] = useState<"en" | "nl">("en");
   const preVerifyLeft = useRef<number | null>(null);
   const prevOpenRef = useRef<string[]>([]);

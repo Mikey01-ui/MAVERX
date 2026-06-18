@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { M1HackOverlay } from "@/components/missions/m1/M1HackOverlay";
 import { M5SynthOverlay } from "@/components/missions/m5/M5SynthOverlay";
 import { M5VoteOverlay } from "@/components/missions/m5/M5VoteOverlay";
@@ -22,7 +22,74 @@ import {
 import { buildM5Debrief } from "@/lib/game/debriefBuilders";
 import { M5GameProvider, useM5Game } from "@/lib/game/m5/context";
 import { getDetectionClass } from "@/lib/game/m5/reducer";
-import type { CrewId } from "@/lib/game/m5/types";
+import { useM5MissionAudio } from "@/lib/audio/useM5MissionAudio";
+import type { ChatMessage, CrewId } from "@/lib/game/m5/types";
+
+const M5_SENDER_COLORS: Record<string, string> = {
+  Echo: "var(--purple-light)",
+  Voss: "var(--purple-light)",
+  Zex: "var(--orange)",
+  Atlas: "var(--green-stable)",
+  Nova: "var(--pink)",
+  Kade: "var(--purple-light)",
+};
+
+function M5MissionChannel({ messages }: { messages: ChatMessage[] }) {
+  const [revealed, setRevealed] = useState(0);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const pending = messages.length > revealed;
+
+  useEffect(() => {
+    if (!pending) return;
+    const t = setTimeout(() => setRevealed((r) => r + 1), 650);
+    return () => clearTimeout(t);
+  }, [pending, revealed]);
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [revealed, pending]);
+
+  const shown = messages.slice(0, revealed);
+  const next = pending ? messages[revealed] : null;
+  const nextShowsSender = next && (revealed === 0 || shown[revealed - 1]?.sender !== next.sender);
+
+  return (
+    <div id="voss-body" ref={bodyRef}>
+      <div className="bm-sep">
+        <div className="bm-sep-pill">Final Brief</div>
+      </div>
+      {shown.map((m, i) => {
+        const showSender = i === 0 || shown[i - 1].sender !== m.sender;
+        return (
+          <div key={m.id} className="bm-group">
+            {showSender && (
+              <div className="bm-sender" style={{ color: M5_SENDER_COLORS[m.sender] ?? "#7fa8cc" }}>
+                {m.sender.toUpperCase()}
+              </div>
+            )}
+            <div className={`bm-bubble ${m.tone}`}>{m.text}</div>
+            <div className="bm-ts">{m.ts}</div>
+          </div>
+        );
+      })}
+      {next && (
+        <div className="bm-typing-wrap">
+          {nextShowsSender && (
+            <div className="bm-sender" style={{ color: M5_SENDER_COLORS[next.sender] ?? "#7fa8cc" }}>
+              {next.sender.toUpperCase()}
+            </div>
+          )}
+          <div className="bm-typing">
+            <span className="tdot" />
+            <span className="tdot" />
+            <span className="tdot" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function framingReady(choices: ReturnType<typeof useM5Game>["state"]["frameChoices"]) {
   for (let i = 1; i <= 4; i++) {
@@ -38,6 +105,13 @@ function M5GameInner() {
   const [voteUiReady, setVoteUiReady] = useState(false);
   const timer = `${String(Math.floor(state.timerSec / 60)).padStart(2, "0")}:${String(state.timerSec % 60).padStart(2, "0")}`;
   const detClass = getDetectionClass(state.detection);
+  useM5MissionAudio({
+    phase: state.phase,
+    hackDone: state.hackDone,
+    commits: state.commits,
+    detection: state.detection,
+    ships: state.ships,
+  });
 
   useEffect(() => {
     if (state.phase === "vote") setVoteUiReady(false);
@@ -271,18 +345,7 @@ function M5GameInner() {
                       <i className="fas fa-lock" aria-hidden />
                     </div>
                   </div>
-                  <div id="voss-body">
-                    <div className="bm-sep">
-                      <div className="bm-sep-pill">TODAY</div>
-                    </div>
-                    {state.messages.map((m) => (
-                      <div key={m.id} className="bm-group">
-                        <div className="bm-sender">{m.sender.toUpperCase()}</div>
-                        <div className={`bm-bubble ${m.tone}`}>{m.text}</div>
-                        <div className="bm-ts">{m.ts}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <M5MissionChannel messages={state.messages} />
                   <div className="voss-footer">
                     <div className="voss-input-bar">
                       <input id="voss-input" type="text" placeholder="// channel encrypted — read only" disabled readOnly />

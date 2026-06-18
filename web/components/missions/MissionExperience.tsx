@@ -203,6 +203,7 @@ export function MissionExperience(props: MissionExperienceProps) {
   const audioConfig = useMemo(() => toMissionAudioConfig(props.media), [props.media]);
   const hasAudio =
     props.missionId === "m1" ||
+    props.missionId === "m2" ||
     props.missionId === "m3" ||
     props.missionId === "m4" ||
     props.missionId === "m5";

@@ -17,18 +17,15 @@ const HOP_BY_HOP = new Set([
 
 function homelabTunnel(): string | null {
   const raw = process.env.HOMELAB_TUNNEL_URL?.trim();
-  if (!raw) return null;
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return null;
-  }
+  if (!raw?.startsWith("http")) return null;
+  return raw.replace(/\/$/, "");
 }
 
 async function proxyToHomelab(request: NextRequest, tunnel: string) {
   const path = request.nextUrl.pathname || "/";
   const search = request.nextUrl.search || "";
   const target = `${tunnel}${path}${search}`;
+
   const headers = new Headers(request.headers);
   headers.delete("host");
 
@@ -52,7 +49,6 @@ async function proxyToHomelab(request: NextRequest, tunnel: string) {
     outHeaders.append(key, value);
   });
 
-  // Redirect responses must not include a body (breaks Vercel edge middleware).
   if (upstream.status >= 300 && upstream.status < 400) {
     return new NextResponse(null, {
       status: upstream.status,
@@ -93,7 +89,12 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
 
 export default async function middleware(request: NextRequest) {
   const tunnel = homelabTunnel();
-  if (tunnel) {
+
+  // Vercel = domain + proxy only (Kapitein Labs pattern). App runs on homelab.
+  if (process.env.VERCEL) {
+    if (!tunnel) {
+      return NextResponse.json({ error: "Homelab tunnel is not configured." }, { status: 503 });
+    }
     try {
       return await proxyToHomelab(request, tunnel);
     } catch (error) {
@@ -101,6 +102,7 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
     }
   }
+
   return authMiddleware(request, {} as never);
 }
 

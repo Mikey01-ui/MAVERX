@@ -1,0 +1,19 @@
+name: Deploy to homelab
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.HOMELAB_USER }}
+          key: ${{ secrets.HOMELAB_SSH_KEY }}
+          script: |
+            export DATAGAME_ROOT=~/datagame-mvp
+            ~/datagame-mvp/repo/deploy/homelab/deploy.sh --force

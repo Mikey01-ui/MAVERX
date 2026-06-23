@@ -30,6 +30,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3020:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - ${DATAGAME_ENV_FILE:-.env.production}
     environment:

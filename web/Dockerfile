@@ -6,12 +6,16 @@ RUN apt-get update \
 
 FROM base AS deps
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+ENV DATABASE_URL=postgresql://omni:omni@postgres:5432/omni
 RUN npm ci
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=postgresql://omni:omni@postgres:5432/omni
 RUN npx prisma generate && npm run build
 
 FROM base AS runner

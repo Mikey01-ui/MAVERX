@@ -21,21 +21,31 @@ function homelabTunnel(): string | null {
   return raw.replace(/\/$/, "");
 }
 
+function getSetCookies(headers: Headers): string[] {
+  if (typeof headers.getSetCookie === "function") {
+    return headers.getSetCookie();
+  }
+  const cookies: string[] = [];
+  headers.forEach((value, key) => {
+    if (key.toLowerCase() === "set-cookie") cookies.push(value);
+  });
+  return cookies;
+}
+
 function normalizeRedirectLocation(location: string, request: NextRequest): string {
-  try {
-    const target = new URL(location, request.url);
-    const host = request.headers.get("host");
-    if (host && target.host === host) {
-      return `${target.pathname}${target.search}`;
+  const host = request.headers.get("host");
+  if (!host) return location;
+  for (const prefix of [`https://${host}`, `http://${host}`]) {
+    if (location.startsWith(prefix)) {
+      const path = location.slice(prefix.length);
+      return path.startsWith("/") ? path : `/${path}`;
     }
-  } catch {
-    // Keep original location when parsing fails.
   }
   return location;
 }
 
 function appendUpstreamCookies(response: NextResponse, upstream: Response) {
-  for (const cookie of upstream.headers.getSetCookie()) {
+  for (const cookie of getSetCookies(upstream.headers)) {
     response.headers.append("set-cookie", cookie);
   }
   return response;

@@ -1,57 +1,48 @@
-# Vercel deployment (DataGame-MVP)
+# Deployment architecture (Kapitein Labs pattern)
 
-**Architecture:** Vercel hosts the app + domain. Homelab runs **Postgres** (port 5433) and **SMTP** (port 587).
+| Layer | Where |
+|-------|--------|
+| Domain | **Vercel** (`omni.miltomy.com`) |
+| App + API + auth | **Homelab** Docker (`datagame-web` on `:3020`) |
+| Database | **Homelab** Postgres (`datagame-postgres`, local Docker network) |
+| SMTP | **Homelab** relay (`datagame-smtp` on `:587`) |
+| Public tunnel | **cloudflared** quick tunnel (`datagame-tunnel` PM2) |
 
-## Deploy via CLI (already linked)
-
-```bash
-cd web
-npx vercel deploy --prod --yes --scope mikey01-uis-projects
-```
-
-GitHub pushes can also trigger deploys if the repo is connected in the Vercel dashboard.
+Vercel does **not** talk to Postgres directly. Edge middleware proxies all traffic to the homelab tunnel when `HOMELAB_TUNNEL_URL` is set.
 
 ## Homelab services
 
-| Service | Container | Port |
-|---------|-----------|------|
-| PostgreSQL | `datagame-postgres` | **5433** → 5432 |
-| SMTP relay | `datagame-smtp` | **587** |
-
-Start Postgres only (app runs on Vercel):
-
 ```bash
+# App + DB
 cd ~/datagame-mvp/repo/web
-docker compose -f docker-compose.prod.yml --env-file ~/datagame-mvp/.env up -d postgres
+docker compose -f docker-compose.prod.yml --env-file ~/datagame-mvp/.env up -d
+
+# Tunnel (PM2)
+pm2 start ~/datagame-mvp/repo/deploy/homelab/datagame.config.js --only datagame-tunnel
 ```
 
-Migrations (on homelab):
+When the tunnel restarts, the `trycloudflare.com` URL changes. Update Vercel:
 
 ```bash
-cd ~/datagame-mvp/repo/web
-DATABASE_URL="postgresql://omni:<password>@127.0.0.1:5433/omni" npx prisma migrate deploy
+# From web/
+printf '%s' 'https://NEW-URL.trycloudflare.com' | npx vercel env rm HOMELAB_TUNNEL_URL production -y --scope mikey01-uis-projects
+printf '%s' 'https://NEW-URL.trycloudflare.com' | npx vercel env add HOMELAB_TUNNEL_URL production --scope mikey01-uis-projects --yes
 ```
 
-## Router port forwards (required)
+Then redeploy (push to `main` or `npx vercel deploy --prod`).
 
-Vercel runs in the cloud — it must reach your homelab over the internet:
+## Teammate workflow
 
-| Port | → Homelab | For |
-|------|-----------|-----|
-| **5433** | 192.168.1.50:5433 | Database |
-| **587** | 192.168.1.50:587 | Email |
+Push to `main` on GitHub → Vercel auto-deploys (proxy config) → homelab app serves all requests.
 
-Without these, the site loads but login/register/email will fail.
+Homelab app code updates: pull on homelab + `docker compose up -d --build web` (or re-enable deploy timer).
 
 ## Vercel env vars
 
-Set via dashboard or `vercel env add`. Required:
+| Variable | Purpose |
+|----------|---------|
+| `HOMELAB_TUNNEL_URL` | cloudflared URL (required for production proxy) |
+| `AUTH_SECRET` | Must match `~/datagame-mvp/.env` on homelab |
+| `AUTH_URL` | `https://omni.miltomy.com` |
 
-- `DATABASE_URL` → `postgresql://omni:<pass>@178.231.168.15:5433/omni`
-- `AUTH_SECRET`, `AUTH_URL` (must match domain, e.g. `https://omni.miltomy.com`)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
-
-## Domains
-
-- Production: https://datagame-mvp.vercel.app
-- Custom: https://omni.miltomy.com
+`DATABASE_URL` on Vercel is **not used** when proxying (DB stays on homelab).

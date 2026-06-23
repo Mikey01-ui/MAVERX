@@ -1,10 +1,33 @@
 import NextAuth from "next-auth";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 
-const { auth } = NextAuth(authConfig);
+const tunnelBase = process.env.HOMELAB_TUNNEL_URL?.replace(/\/$/, "");
 
-export default auth((req) => {
+async function proxyToHomelab(request: NextRequest) {
+  const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, tunnelBase);
+  const headers = new Headers(request.headers);
+  headers.delete("host");
+
+  const init: RequestInit = {
+    method: request.method,
+    headers,
+    redirect: "manual",
+  };
+
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = await request.arrayBuffer();
+  }
+
+  const upstream = await fetch(target, init);
+  return new NextResponse(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: new Headers(upstream.headers),
+  });
+}
+
+const authMiddleware = NextAuth(authConfig).auth((req) => {
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
   const isAuthPage = pathname === "/login" || pathname === "/register";
@@ -27,6 +50,10 @@ export default auth((req) => {
   return NextResponse.next();
 });
 
+export default tunnelBase
+  ? async (request: NextRequest) => proxyToHomelab(request)
+  : authMiddleware;
+
 export const config = {
-  matcher: ["/hub/:path*", "/mission/:path*", "/intro", "/finale", "/login", "/register", "/"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).*)"],
 };

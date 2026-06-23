@@ -117,6 +117,7 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // `.+` excludes bare "/" (Vercel edge crashes proxying root); homepage client-redirects.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).+)"],
+  // Proxy app routes AND /_next/* to homelab so HTML and JS chunks stay in sync.
+  // Only favicon + /media stay on Vercel; bare "/" is excluded (.+ requires a path segment).
+  matcher: ["/((?!favicon.ico|media/).+)"],
 };

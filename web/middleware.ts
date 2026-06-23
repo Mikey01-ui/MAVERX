@@ -27,8 +27,8 @@ function homelabTunnel(): string | null {
 
 async function proxyToHomelab(request: NextRequest, tunnel: string) {
   const path = request.nextUrl.pathname || "/";
-  const target = new URL(path, `${tunnel}/`);
-  target.search = request.nextUrl.search;
+  const search = request.nextUrl.search || "";
+  const target = `${tunnel}${path}${search}`;
   const headers = new Headers(request.headers);
   headers.delete("host");
 

@@ -21,6 +21,19 @@ function homelabTunnel(): string | null {
   return raw.replace(/\/$/, "");
 }
 
+function normalizeRedirectLocation(location: string, request: NextRequest): string {
+  try {
+    const target = new URL(location, request.url);
+    const host = request.headers.get("host");
+    if (host && target.host === host) {
+      return `${target.pathname}${target.search}`;
+    }
+  } catch {
+    // Keep original location when parsing fails.
+  }
+  return location;
+}
+
 function appendUpstreamCookies(response: NextResponse, upstream: Response) {
   for (const cookie of upstream.headers.getSetCookie()) {
     response.headers.append("set-cookie", cookie);
@@ -64,7 +77,12 @@ async function proxyToHomelab(request: NextRequest, tunnel: string) {
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = upstream.headers.get("location");
     if (location) {
-      return appendUpstreamCookies(NextResponse.redirect(location, upstream.status), upstream);
+      const normalized = normalizeRedirectLocation(location, request);
+      const response = new NextResponse(null, {
+        status: upstream.status,
+        headers: { Location: normalized },
+      });
+      return appendUpstreamCookies(response, upstream);
     }
   }
 

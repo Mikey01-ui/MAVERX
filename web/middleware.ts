@@ -27,7 +27,12 @@ async function proxyToHomelab(request: NextRequest, tunnel: string) {
   const target = `${tunnel}${path}${search}`;
 
   const headers = new Headers(request.headers);
+  const host = request.headers.get("host");
   headers.delete("host");
+  if (host) {
+    headers.set("x-forwarded-host", host);
+    headers.set("x-forwarded-proto", request.nextUrl.protocol.replace(":", ""));
+  }
 
   const init: RequestInit = {
     method: request.method,
@@ -49,12 +54,15 @@ async function proxyToHomelab(request: NextRequest, tunnel: string) {
     outHeaders.append(key, value);
   });
 
+  for (const cookie of upstream.headers.getSetCookie()) {
+    outHeaders.append("set-cookie", cookie);
+  }
+
   if (upstream.status >= 300 && upstream.status < 400) {
-    return new NextResponse(null, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: outHeaders,
-    });
+    const location = upstream.headers.get("location");
+    if (location) {
+      return NextResponse.redirect(location, upstream.status);
+    }
   }
 
   return new NextResponse(upstream.body, {

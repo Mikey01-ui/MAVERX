@@ -90,11 +90,7 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
 export default async function middleware(request: NextRequest) {
   const tunnel = homelabTunnel();
 
-  // Vercel = domain + proxy only (Kapitein Labs pattern). App runs on homelab.
-  if (process.env.VERCEL) {
-    if (!tunnel) {
-      return NextResponse.json({ error: "Homelab tunnel is not configured." }, { status: 503 });
-    }
+  if (tunnel) {
     try {
       return await proxyToHomelab(request, tunnel);
     } catch (error) {

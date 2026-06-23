@@ -38,7 +38,8 @@ if [[ "${1:-}" != "--force" && "$LOCAL" == "$REMOTE" ]]; then
 fi
 
 log "Updating $LOCAL -> $REMOTE"
-git pull --ff-only origin main
+git checkout main
+git merge --ff-only origin/main
 
 cd "$WEB_DIR"
 log "Building images"

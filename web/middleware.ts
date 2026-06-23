@@ -21,6 +21,13 @@ function homelabTunnel(): string | null {
   return raw.replace(/\/$/, "");
 }
 
+function appendUpstreamCookies(response: NextResponse, upstream: Response) {
+  for (const cookie of upstream.headers.getSetCookie()) {
+    response.headers.append("set-cookie", cookie);
+  }
+  return response;
+}
+
 async function proxyToHomelab(request: NextRequest, tunnel: string) {
   const path = request.nextUrl.pathname || "/";
   const search = request.nextUrl.search || "";
@@ -54,22 +61,21 @@ async function proxyToHomelab(request: NextRequest, tunnel: string) {
     outHeaders.append(key, value);
   });
 
-  for (const cookie of upstream.headers.getSetCookie()) {
-    outHeaders.append("set-cookie", cookie);
-  }
-
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = upstream.headers.get("location");
     if (location) {
-      return NextResponse.redirect(location, upstream.status);
+      return appendUpstreamCookies(NextResponse.redirect(location, upstream.status), upstream);
     }
   }
 
-  return new NextResponse(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: outHeaders,
-  });
+  return appendUpstreamCookies(
+    new NextResponse(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: outHeaders,
+    }),
+    upstream,
+  );
 }
 
 const authMiddleware = NextAuth(authConfig).auth((req) => {

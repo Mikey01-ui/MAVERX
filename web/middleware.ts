@@ -103,5 +103,6 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/((?!_next/static|_next/image|favicon.ico|media/).*)"],
+  // Omit bare "/" — edge middleware throws on root; homepage is a client redirect.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).*)"],
 };

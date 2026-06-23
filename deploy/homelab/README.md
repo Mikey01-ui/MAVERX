@@ -1,6 +1,8 @@
 # DataGame homelab deployment
 
-Isolated stack under `~/datagame-mvp` — does not modify other homelab projects.
+**Recommended:** [Homelab-only guide](./HOMELAB-ONLY.md) — domain → Cloudflare Tunnel → homelab, auto-pull from GitHub. No Vercel.
+
+Legacy Vercel proxy pattern: [../vercel/README.md](../vercel/README.md)
 
 ## What runs
 

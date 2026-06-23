@@ -1,5 +1,6 @@
-// PM2 config for DataGame cloudflared tunnel (same pattern as kapetein-tunnel).
-// App runs in Docker on localhost:3020; Vercel proxies via vercel.json rewrites.
+// PM2 config for DataGame Cloudflare tunnel → localhost:3020
+// Quick tunnel:  cloudflared tunnel --url http://localhost:3020
+// Production:    run setup-cloudflare-tunnel.sh (named tunnel + omni.miltomy.com)
 module.exports = {
   apps: [
     {

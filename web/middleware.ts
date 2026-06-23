@@ -103,6 +103,6 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Omit bare "/" — edge middleware throws on root; homepage is a client redirect.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).*)"],
+  // `.+` excludes bare "/" (Vercel edge crashes proxying root); homepage client-redirects.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).+)"],
 };

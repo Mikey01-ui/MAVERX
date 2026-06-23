@@ -1,49 +1,57 @@
 # Vercel deployment (DataGame-MVP)
 
-## Import project
+**Architecture:** Vercel hosts the app + domain. Homelab runs **Postgres** (port 5433) and **SMTP** (port 587).
 
-1. [vercel.com/new](https://vercel.com/new) → import **Mikey01-ui/DataGame-MVP**
-2. **Root Directory** → `web`
-3. Framework: Next.js (auto-detected)
-
-## Database (Neon — easiest)
-
-1. Vercel project → **Storage** → **Create Database** → **Neon** (or connect existing Neon)
-2. Link to project → copies `DATABASE_URL` automatically
-3. After first deploy, run migrations once from your machine:
+## Deploy via CLI (already linked)
 
 ```bash
 cd web
-DATABASE_URL="<paste-neon-url>" npx prisma migrate deploy
+npx vercel deploy --prod --yes --scope mikey01-uis-projects
 ```
 
-Optional seed: `DATABASE_URL="..." npm run db:seed`
+GitHub pushes can also trigger deploys if the repo is connected in the Vercel dashboard.
 
-## Environment variables
+## Homelab services
 
-| Variable | Value |
-|----------|--------|
-| `DATABASE_URL` | From Neon (auto if linked) |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `AUTH_URL` | `https://your-subdomain.miltomy.com` |
-| `SMTP_HOST` | Homelab public IP (see homelab `smtp.env`) |
-| `SMTP_PORT` | `587` |
-| `SMTP_USER` | `datagame` (from homelab `smtp.env`) |
-| `SMTP_PASS` | Relay password from homelab `smtp.env` |
-| `SMTP_FROM` | `Operation OMNI <your@gmail.com>` |
+| Service | Container | Port |
+|---------|-----------|------|
+| PostgreSQL | `datagame-postgres` | **5433** → 5432 |
+| SMTP relay | `datagame-smtp` | **587** |
 
-## Domain
-
-Project → **Settings** → **Domains** → add e.g. `omni.miltomy.com`  
-If `miltomy.com` is on Vercel, DNS is automatic.
-
-## Homelab (SMTP only)
-
-App runs on **Vercel**. Homelab only runs the SMTP relay:
+Start Postgres only (app runs on Vercel):
 
 ```bash
-~/datagame-mvp/repo/deploy/homelab/setup-smtp.sh
-# Edit ~/datagame-mvp/smtp.env with Gmail app password, re-run setup-smtp.sh
+cd ~/datagame-mvp/repo/web
+docker compose -f docker-compose.prod.yml --env-file ~/datagame-mvp/.env up -d postgres
 ```
 
-Ensure router forwards **port 587** → homelab `192.168.1.50`.
+Migrations (on homelab):
+
+```bash
+cd ~/datagame-mvp/repo/web
+DATABASE_URL="postgresql://omni:<password>@127.0.0.1:5433/omni" npx prisma migrate deploy
+```
+
+## Router port forwards (required)
+
+Vercel runs in the cloud — it must reach your homelab over the internet:
+
+| Port | → Homelab | For |
+|------|-----------|-----|
+| **5433** | 192.168.1.50:5433 | Database |
+| **587** | 192.168.1.50:587 | Email |
+
+Without these, the site loads but login/register/email will fail.
+
+## Vercel env vars
+
+Set via dashboard or `vercel env add`. Required:
+
+- `DATABASE_URL` → `postgresql://omni:<pass>@178.231.168.15:5433/omni`
+- `AUTH_SECRET`, `AUTH_URL` (must match domain, e.g. `https://omni.miltomy.com`)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+## Domains
+
+- Production: https://datagame-mvp.vercel.app
+- Custom: https://omni.miltomy.com

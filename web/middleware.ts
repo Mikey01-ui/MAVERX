@@ -15,9 +15,20 @@ const HOP_BY_HOP = new Set([
   "content-length",
 ]);
 
+function homelabTunnel(): string | null {
+  const raw = process.env.HOMELAB_TUNNEL_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
 async function proxyToHomelab(request: NextRequest, tunnel: string) {
   const path = request.nextUrl.pathname || "/";
-  const target = new URL(`${path}${request.nextUrl.search}`, tunnel);
+  const target = new URL(path, `${tunnel}/`);
+  target.search = request.nextUrl.search;
   const headers = new Headers(request.headers);
   headers.delete("host");
 
@@ -81,7 +92,7 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
 });
 
 export default async function middleware(request: NextRequest) {
-  const tunnel = process.env.HOMELAB_TUNNEL_URL?.replace(/\/$/, "");
+  const tunnel = homelabTunnel();
   if (tunnel) {
     try {
       return await proxyToHomelab(request, tunnel);

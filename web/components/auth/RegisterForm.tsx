@@ -52,7 +52,7 @@ export function RegisterForm({ content }: { content: LoginContent }) {
       return;
     }
 
-    router.push("/");
+    router.push("/intro");
     router.refresh();
   }
 

@@ -2,10 +2,21 @@ import NextAuth from "next-auth";
 import { NextResponse, type NextRequest } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 
-const tunnelBase = process.env.HOMELAB_TUNNEL_URL?.replace(/\/$/, "");
+const HOP_BY_HOP = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
+  "content-encoding",
+  "content-length",
+]);
 
-async function proxyToHomelab(request: NextRequest) {
-  const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, tunnelBase);
+async function proxyToHomelab(request: NextRequest, tunnel: string) {
+  const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, tunnel);
   const headers = new Headers(request.headers);
   headers.delete("host");
 
@@ -20,10 +31,28 @@ async function proxyToHomelab(request: NextRequest) {
   }
 
   const upstream = await fetch(target, init);
+  const outHeaders = new Headers();
+
+  upstream.headers.forEach((value, key) => {
+    const lower = key.toLowerCase();
+    if (HOP_BY_HOP.has(lower)) return;
+    if (lower === "set-cookie") return;
+    outHeaders.append(key, value);
+  });
+
+  // Redirect responses must not include a body (breaks Vercel edge middleware).
+  if (upstream.status >= 300 && upstream.status < 400) {
+    return new NextResponse(null, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: outHeaders,
+    });
+  }
+
   return new NextResponse(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
-    headers: new Headers(upstream.headers),
+    headers: outHeaders,
   });
 }
 
@@ -44,16 +73,25 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    return NextResponse.redirect(new URL("/intro", req.nextUrl));
   }
 
   return NextResponse.next();
 });
 
-export default tunnelBase
-  ? async (request: NextRequest) => proxyToHomelab(request)
-  : authMiddleware;
+export default async function middleware(request: NextRequest) {
+  const tunnel = process.env.HOMELAB_TUNNEL_URL?.replace(/\/$/, "");
+  if (tunnel) {
+    try {
+      return await proxyToHomelab(request, tunnel);
+    } catch (error) {
+      console.error("homelab proxy error", error);
+      return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
+    }
+  }
+  return authMiddleware(request, {} as never);
+}
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/).*)"],
+  matcher: ["/", "/((?!_next/static|_next/image|favicon.ico|media/).*)"],
 };

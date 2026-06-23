@@ -1,4 +1,7 @@
 import { m3TutDrillFileName, m3TutGetDocumentPreview } from "@/lib/game/m3/tutorialDrill";
+import type gsap from "gsap";
+
+type GsapTimeline = gsap.core.Timeline;
 
 export type M3TutorialDemoApi = {
   applyBaseline: () => void;
@@ -37,16 +40,16 @@ function ensureCursor(): HTMLElement {
   return cur;
 }
 
-function removeCursor(gsap: typeof import("gsap").default) {
+function removeCursor(gsapMod: typeof gsap) {
   const cur = document.getElementById("m3-tut-demo-cursor");
   if (cur) {
-    gsap.killTweensOf(cur);
+    gsapMod.killTweensOf(cur);
     cur.remove();
   }
 }
 
 function routeFileDemo(
-  tl: import("gsap").gsap.core.Timeline,
+  tl: GsapTimeline,
   curEl: HTMLElement,
   btn: HTMLElement,
   choice: "public" | "official" | "vault",

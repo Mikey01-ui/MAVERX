@@ -13,7 +13,7 @@ const emailArg = process.argv[2];
 (async () => {
   const user = await prisma.user.findFirst({
     where: emailArg ? { email: emailArg } : undefined,
-    orderBy: { updatedAt: "desc" },
+    orderBy: { createdAt: "desc" },
     select: { id: true, email: true },
   });
 

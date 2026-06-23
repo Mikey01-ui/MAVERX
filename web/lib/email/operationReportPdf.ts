@@ -1,9 +1,10 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import PDFDocument from "pdfkit";
-import type { PDFDocument as PDFDocumentType } from "pdfkit";
 import type { OperationReportData } from "@/lib/finale/reportData";
 import type { MissionReportSection } from "@/lib/finale/reportInsights";
+
+type PDFDocumentType = InstanceType<typeof PDFDocument>;
 
 const C = {
   bg: "#140c1c",

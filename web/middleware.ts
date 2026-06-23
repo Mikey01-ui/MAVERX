@@ -16,7 +16,8 @@ const HOP_BY_HOP = new Set([
 ]);
 
 async function proxyToHomelab(request: NextRequest, tunnel: string) {
-  const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, tunnel);
+  const path = request.nextUrl.pathname || "/";
+  const target = new URL(`${path}${request.nextUrl.search}`, tunnel);
   const headers = new Headers(request.headers);
   headers.delete("host");
 

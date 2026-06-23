@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { z } from "zod";
+import videointroJson from "../content/videointro.json";
 
 const contentRoot = path.join(process.cwd(), "content");
 
@@ -204,7 +205,7 @@ export async function getHubContent(): Promise<HubContent> {
 }
 
 export async function getVideoIntroContent(): Promise<VideoIntroContent> {
-  return readJson(path.join(contentRoot, "videointro.json"), videoIntroSchema);
+  return videoIntroSchema.parse(videointroJson);
 }
 
 export async function getMissionCatalog(): Promise<MissionMeta[]> {

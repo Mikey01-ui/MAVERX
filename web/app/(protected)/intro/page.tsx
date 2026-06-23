@@ -6,7 +6,10 @@ import { getMissionProgress } from "@/lib/progress";
 
 export default async function IntroPage() {
   const session = await auth();
-  const userId = session!.user!.id;
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/intro");
+  }
+  const userId = session.user.id;
 
   const m1 = await getMissionProgress(userId, "m1");
   if (m1 && m1.checkpoint !== "start") {

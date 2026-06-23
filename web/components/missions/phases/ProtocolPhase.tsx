@@ -145,7 +145,8 @@ export function ProtocolPhase({
           <div className="mission-btn-label">{protocol.breachReadyLabel}</div>
           <button
             type="button"
-            className={`mission-btn-next${breachUnlocked ? "" : " is-locked"}`}
+            className={`mission-btn-next btn-sweep${breachUnlocked ? "" : " is-locked"}`}
+            style={{ "--sweep-ms": "1400ms" } as React.CSSProperties}
             disabled={!breachUnlocked}
             onClick={onBreach}
           >

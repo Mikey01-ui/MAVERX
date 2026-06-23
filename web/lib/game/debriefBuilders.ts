@@ -2,15 +2,13 @@ import { FILES as M4_FILES, STEPS as M4_STEPS } from "@/lib/game/m4/data";
 import {
   DATASETS as M3_DATASETS,
   DETECTION,
-  M3_CHANNEL_LEARNING,
   SIGNOFF_DETECTION_MAX,
 } from "@/lib/game/m3/data";
 import { getDetectionClass } from "@/lib/game/m3/detectionMeter";
-import type { Channel } from "@/lib/game/m3/types";
 import { ECHO_FRAME, ECHO_VIZ, CREW_ORDER } from "@/lib/game/m5/data";
 import type { M2GameState } from "@/lib/game/m2/types";
-import type { M3GameState } from "@/lib/game/m3/types";
-import type { M4GameState } from "@/lib/game/m4/types";
+import type { Channel, M3GameState, M3WrongAttempt } from "@/lib/game/m3/types";
+import type { M4GameState, M4WrongAttempt } from "@/lib/game/m4/types";
 import type { M5GameState } from "@/lib/game/m5/types";
 import type { DebriefLearningRow, DebriefRow, MissionDebriefConfig } from "@/components/missions/shared/MissionDebriefScreen";
 
@@ -96,118 +94,75 @@ function m3BreakdownRows(state: M3GameState, correctN: number, detection: number
   return rows;
 }
 
-const M3_ETHICS_SKILLS: Record<Channel, { who: string; skill: string; realUse: string }> = {
+const M3_AUDIENCE: Record<Channel, { picked: string; entitled: string }> = {
   public: {
-    who: "AUDIENCE FIT",
-    skill: "Only material safe for open publication — aggregates, technical proof, policy admissions without unjustified PII.",
-    realUse: "Press briefings, public accountability reports, sanitized evidence packs.",
+    picked: "the press and general public",
+    entitled: "The press and general public",
   },
   official: {
-    who: "ACCOUNTABLE DISCLOSURE",
-    skill: "Sensitive data for regulators, labour boards, or counsel under proper process — not tabloid dumps.",
-    realUse: "Regulatory filings, sealed counsel briefs, labour-board submissions.",
+    picked: "regulators, counsel, or official bodies",
+    entitled: "Regulators, counsel, or official bodies",
   },
   vault: {
-    who: "HARM PREVENTION",
-    skill: "Health data, minors, raw customer PII — harm outweighs any headline, even when you have access.",
-    realUse: "Default-deny lists, DPO escalation, data that never leaves controlled storage.",
+    picked: "no one — you marked it no release",
+    entitled: "No external audience",
   },
 };
 
-function m3MissionTeachesBlock() {
-  return (
-    "<span class=\"tc-subhead\">What this mission trains</span> " +
-    "Mission 03 is <strong>data ethics</strong>. Mission 2 established <strong>who owns which data</strong>; this round asks <strong>who may receive it</strong> and <strong>how it should be used</strong> — " +
-    "matching sensitivity to audience through <strong>minimum necessary disclosure</strong>, not dumping everything because the vault is open."
-  );
-}
+function m3MistakeExplanation(w: M3WrongAttempt): string {
+  const wrong = M3_AUDIENCE[w.choice];
+  const right = M3_AUDIENCE[w.correct];
 
-function m3YourRoundBlock(state: M3GameState, acc: number, outcome: "signed" | "denied" | "compromised") {
-  const placed = Object.keys(state.assigned).length;
-  const parts: string[] = [];
-
-  if (outcome === "compromised") {
-    parts.push(
-      `Detection hit <strong>100%</strong> before sign-off. You placed <strong>${placed}/10</strong> files in <strong>${formatTimer(state.timerSec)}</strong> — ` +
-        "the ethics framework was right, but wrong routes and exposure cost you the mirror.",
-    );
-  } else if (outcome === "denied") {
-    parts.push(
-      `You routed <strong>${acc}%</strong> correctly in <strong>${formatTimer(state.timerSec)}</strong> (${placed}/10 files on the map). ` +
-        "Nova withheld sign-off because the distribution posture wasn't defensible — ethics isn't only about access, it's about <strong>audience entitlement</strong>.",
-    );
-  } else if (acc === 100 && state.wrongRoutes === 0) {
-    parts.push(
-      `In <strong>${formatTimer(state.timerSec)}</strong> you routed all 10 files with no wrong attempts. ` +
-        "You read <strong>identifiers</strong> and <strong>harm if public</strong> before every channel pick — that's data ethics applied under pressure.",
-    );
-  } else {
-    parts.push(
-      `In <strong>${formatTimer(state.timerSec)}</strong> you finished at <strong>${acc}%</strong> accuracy with <strong>${state.wrongRoutes}</strong> wrong attempt(s) along the way. ` +
-        "You showed you can separate what the <strong>public</strong>, <strong>official bodies</strong>, and <strong>vault</strong> each deserve — the judgment Nova signs off on.",
+  if (w.choice === "vault" && w.correct !== "vault") {
+    return (
+      `<strong>${w.file}</strong> — You withheld this entirely, but ` +
+      `<strong>${right.picked}</strong> are entitled to it under proper process. ${w.reason}`
     );
   }
 
-  if (state.hintsUsed > 0) {
-    parts.push(
-      `You requested <strong>${state.hintsUsed}</strong> hint(s) (+${state.hintsUsed * DETECTION.hint}% detection) when harm profiles were unclear — in practice that's escalating to a <strong>DPO or privacy counsel</strong> before release.`,
-    );
-  } else if (outcome === "signed") {
-    parts.push("No hints — you worked from the inspector evidence alone.");
-  }
-
-  if (state.catastrophic > 0) {
-    parts.push(
-      `<strong>${state.catastrophic}</strong> file(s) with vault-class sensitivity were sent toward the <strong>public wall</strong> — the core ethics failure this mission trains you to avoid.`,
+  if (w.correct === "vault") {
+    return (
+      `<strong>${w.file}</strong> — You sent this to <strong>${wrong.picked}</strong>. ` +
+      `<strong>They are not supposed to access this data</strong> — the harm profile and identifiers in the file rule out that audience. ${w.reason}`
     );
   }
 
-  return `<span class="tc-subhead">What you applied this round</span> ${parts.join(" ")}`;
-}
-
-function m3RealWorldBlock() {
   return (
-    "<span class=\"tc-subhead\">In the real world</span> " +
-    "You'd use the same judgment building a <strong>regulatory disclosure</strong>, a <strong>FOIA or subject-access response</strong>, a <strong>responsible press package</strong>, or an <strong>internal ethics review</strong>. " +
-    "Data stewards and privacy officers ask: <em>Who is the audience? What is the lawful basis? What harm if this goes wide?</em> — " +
-    "GDPR, HIPAA, and sector rules encode <strong>who may process what</strong>, not just whether a field exists on a drive."
+    `<strong>${w.file}</strong> — You routed this to <strong>${wrong.picked}</strong>. ` +
+    `<strong>They are not supposed to have this</strong> — <strong>${right.entitled}</strong> should, based on what's in the file. ${w.reason}`
   );
 }
 
-function m3ExampleBlock() {
-  return (
-    "<span class=\"tc-subhead\">Example</span> " +
-    "A team obtains a <strong>customer database backup</strong>, a <strong>board policy memo</strong>, and <strong>session traffic logs</strong>. " +
-    "Ethics says: publish the memo (public accountability), file the logs with regulators (official process), and <strong>never</strong> release the customer CSV — " +
-    "even though all three prove wrongdoing. <strong>Impact without doxxing.</strong>"
-  );
-}
-
-function m3LearningRows(state: M3GameState) {
-  return (["public", "official", "vault"] as Channel[]).map((ch) => {
-    const meta = M3_ETHICS_SKILLS[ch];
-    const files = M3_DATASETS.filter((d) => d.correct === ch);
-    const routed = files.filter((d) => state.assigned[d.id] === ch).length;
-    const ok = routed === files.length;
-    const example = M3_CHANNEL_LEARNING[ch].example;
-    return {
-      who: meta.who,
-      text: `${meta.skill} <em>In practice: ${meta.realUse}</em> This round: <strong>${routed}/${files.length}</strong> routed correctly. <em>Mission file: ${example}</em>`,
-      ok,
-    };
-  });
-}
-
-function m3Tradecraft(state: M3GameState, acc: number, outcome: "signed" | "denied" | "compromised") {
-  return [
-    { html: m3MissionTeachesBlock() },
-    { html: m3YourRoundBlock(state, acc, outcome) },
-    { html: m3RealWorldBlock() },
-    { html: m3ExampleBlock() },
+function m3Tradecraft(state: M3GameState) {
+  const blocks: { html: string }[] = [
+    {
+      html:
+        '<span class="tc-subhead">What this mission trains</span>' +
+        "This round is about deciding <strong>who is allowed to see each file</strong> — from what's inside it, not because you have access. " +
+        "In the real world, <strong>the press</strong>, <strong>regulators</strong>, and <strong>people named in the data</strong> do not get the same access. " +
+        "Read <strong>identifiers</strong> and <strong>harm if public</strong>, then release only to the audience that is entitled to it.",
+    },
   ];
-}
 
-const M3_LEARNING_TITLE = "HOW YOU APPLIED DATA ETHICS";
+  const attempts = state.wrongAttemptLog ?? [];
+  if (attempts.length > 0) {
+    const mistakes = attempts.map((w) => `<p class="tc-mistake">${m3MistakeExplanation(w)}</p>`).join("");
+    blocks.push({
+      html:
+        '<span class="tc-subhead">Where you misjudged access</span>' +
+        '<p class="tc-mistake-intro">You had to decide who is allowed to see each file. These are the cases where the wrong audience would have received data they should not access:</p>' +
+        mistakes,
+    });
+  } else {
+    blocks.push({
+      html:
+        '<span class="tc-subhead">Your routing</span> ' +
+        "You matched every file to the right audience on the first try — you read the content before deciding who gets access.",
+    });
+  }
+
+  return blocks;
+}
 
 export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
   const correctN = M3_DATASETS.filter((d) => state.assigned[d.id] === d.correct).length;
@@ -218,7 +173,6 @@ export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
   const detectionMaxed = detection >= 100 || state.phase === "failed";
   const success = !detectionMaxed && correctN === 10 && state.catastrophic === 0 && detection <= SIGNOFF_DETECTION_MAX;
   const breakdownRows = m3BreakdownRows(state, correctN, detection, detCls);
-  const learningRows = m3LearningRows(state);
 
   if (detectionMaxed) {
     return {
@@ -233,9 +187,7 @@ export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
       breakdownTitle: "ROUTING SUMMARY",
       breakdownRows: breakdownRows.map((r) => (r.label === "Final detection" ? { ...r, value: "100%", valueClass: "det-red" } : r)),
       rating: "FEED DROPPED — MegaCorp closed the mirror before sign-off.",
-      tradecraft: m3Tradecraft(state, acc, "compromised"),
-      learningRows,
-      learningTitle: M3_LEARNING_TITLE,
+      tradecraft: m3Tradecraft(state),
       cta: "RETRY MISSION →",
     };
   }
@@ -253,9 +205,7 @@ export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
       breakdownTitle: "ROUTING SUMMARY",
       breakdownRows,
       rating: state.catastrophic > 0 ? "ETHICS BREAK — Vault material surfaced on the wrong audience." : "MAP REJECTED — Distribution posture not defensible.",
-      tradecraft: m3Tradecraft(state, acc, "denied"),
-      learningRows,
-      learningTitle: M3_LEARNING_TITLE,
+      tradecraft: m3Tradecraft(state),
       cta: "REVIEW & CONTINUE TO MISSION 4 →",
     };
   }
@@ -279,12 +229,7 @@ export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
     breakdownTitle: "ROUTING SUMMARY",
     breakdownRows,
     rating,
-    tradecraft: [
-      ...m3Tradecraft(state, acc, "signed"),
-      { html: "<p class=\"tc-quote\">\"We had the access. We chose the boundaries.\"</p>" },
-    ],
-    learningRows,
-    learningTitle: M3_LEARNING_TITLE,
+    tradecraft: m3Tradecraft(state),
     cta: "CONTINUE TO MISSION 4 — THE ONBOARDING →",
   };
 }
@@ -305,55 +250,42 @@ function m4GateBreakdownRows(picks: Record<string, string>): DebriefRow[] {
   });
 }
 
-function m4LearningRows(
-  state: M4GameState,
-  correct: number,
-  detection: number,
-  detectionMaxed: boolean
-): DebriefLearningRow[] {
-  const wa = state.wrongAttempts;
-  const spineComplete = correct === M4_FILES.length;
-  return [
+function m4MistakeExplanation(w: M4WrongAttempt): string {
+  return (
+    `<strong>${w.file}</strong> — You linked this to <strong>${w.wrongGateTitle}</strong>. ` +
+    `<strong>That step is not supposed to consume this data</strong> — ` +
+    `<strong>${w.correctGateTitle}</strong> is, based on the table headers in the file. ${w.reason}`
+  );
+}
+
+function m4Tradecraft(state: M4GameState) {
+  const blocks: { html: string }[] = [
     {
-      who: "VOSS · Process lineage",
-      text: spineComplete
-        ? "You mapped <strong>which department action</strong> each leak artifact feeds — Legal offer review, IT identity, HR compliance, and so on — along MegaCorp's published OMNI spine."
-        : `You linked <strong>${correct} of ${M4_FILES.length}</strong> artifacts to the right gates. Process disclosure needs every handoff on the spine, not a partial chain.`,
-      ok: spineComplete,
-    },
-    {
-      who: "ZEX · Data-to-action matching",
-      text:
-        wa === 0
-          ? "You matched <strong>table headers</strong> on each rail card to the gate's <strong>Expects</strong> line — the skill is pairing <strong>data shape</strong> to the <strong>department task</strong> that consumes it."
-          : "Wrong drops usually mean the <strong>headers</strong> fit a different department's job — session logs belong at Identity, not Background; compensation rows belong at Payroll, not Health.",
-      ok: wa === 0,
-    },
-    {
-      who: "NOVA · Handoff audit",
-      text:
-        wa === 0 && detection < 30
-          ? "Every handoff matched <strong>Expects</strong> without a wrong drop — detection stayed low."
-          : detectionMaxed
-            ? "Detection hit <strong>100%</strong> — analysts called the custody story a random dump."
-            : `Wrong drops raised detection to <strong>${detection}%</strong> — the custody narrative must acknowledge the misses before external brief.`,
-      ok: wa === 0 && detection < 30,
-    },
-    {
-      who: "ATLAS · Custody order",
-      text: spineComplete
-        ? "Gates unlock <strong>in sequence</strong> for a reason — offer before identity, background before parallel Health/Payroll lanes. Custody is <strong>when</strong> each team receives data, not just who holds it."
-        : "OMNI is a <strong>regulated sequence</strong> — mis-ordering artifacts breaks the timeline story even if filenames look plausible.",
-      ok: spineComplete,
-    },
-    {
-      who: "KADE · Field timeline",
-      text: spineComplete
-        ? "All eight gates linked — the map beats the \"random dump\" headline. Detection friction is noted, but the <strong>spine holds</strong>."
-        : "Analysts won't wait for a perfect map — but <strong>eight correct gates</strong> is the bar for a credible onboarding disclosure.",
-      ok: spineComplete,
+      html:
+        '<span class="tc-subhead">What this mission trains</span>' +
+        "Mission 03 was about <strong>who may receive data</strong>. This round is about <strong>which team needs each file to do its job</strong> — Legal reviewing the offer, IT verifying identity, HR running compliance, Payroll setting up tax, and so on. " +
+        "In the real world, <strong>Security cannot trace a login without session logs</strong> and <strong>Payroll cannot run without tax rows</strong>. Match the file to the process step that actually consumes it.",
     },
   ];
+
+  const attempts = state.wrongAttemptLog ?? [];
+  if (attempts.length > 0) {
+    const mistakes = attempts.map((w) => `<p class="tc-mistake">${m4MistakeExplanation(w)}</p>`).join("");
+    blocks.push({
+      html:
+        '<span class="tc-subhead">Where you misjudged handoffs</span>' +
+        '<p class="tc-mistake-intro">You had to place each leak on the gate whose team actually needs that data. These are the cases where the wrong department would have received it:</p>' +
+        mistakes,
+    });
+  } else {
+    blocks.push({
+      html:
+        '<span class="tc-subhead">Your handoffs</span> ' +
+        "Every file landed on the right gate on the first try — you matched table headers to the team doing that job.",
+    });
+  }
+
+  return blocks;
 }
 
 export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
@@ -365,7 +297,6 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
   const solidBar = Math.max(1, Math.ceil(M4_FILES.length * 0.75));
   const tier = correct === M4_FILES.length ? "CLEAN STRUCTURE" : correct >= solidBar ? "SOLID" : "NEEDS REWORK";
   const gateRows = m4GateBreakdownRows(state.picks);
-  const learningRows = m4LearningRows(state, correct, detection, detectionMaxed);
 
   if (detectionMaxed) {
     return {
@@ -384,14 +315,7 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
         { label: "Final detection", value: "100%", valueClass: "det-red", total: true },
       ],
       rating: "EXPOSED — MegaCorp flagged the handoff audit before you could finalize the map.",
-      tradecraft: [
-        { html: "Mission 03 trained <strong>who may receive which data</strong> (audience). Mission 04 trains <strong>which department action consumes each artifact</strong> along one regulated case-flow." },
-        { html: `Detection maxed at <strong>100%</strong> after <strong>${wa}</strong> wrong ${wa === 1 ? "drop" : "drops"}${state.hintsUsed > 0 ? ` and <strong>${state.hintsUsed}</strong> hint${state.hintsUsed === 1 ? "" : "s"}` : ""}.` },
-        { html: "<span class=\"tc-subhead\">What you were matching</span> Each OMNI gate is a <strong>department task</strong> with specific <strong>inputs</strong> — session logs for IT identity, tax rows for HR payroll, dependent names for benefits. The rail <strong>table headers</strong> are your clue." },
-        { html: "<span class=\"tc-subhead\">Real-world translation</span> Every process step needs <strong>its own data</strong> — IT can't verify a login without session logs; Payroll can't run without tax rows. The file has to land on the <strong>team doing that job</strong>, not just somewhere in the company." },
-      ],
-      learningRows,
-      learningTitle: "WHAT YOU LEARNED — DATA TO PROCESS GATE",
+      tradecraft: m4Tradecraft(state),
       cta: "RETRY MISSION →",
     };
   }
@@ -404,12 +328,6 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
         : correct >= solidBar
           ? "USABLE — Adjust the red nodes before you brief externally."
           : "REWORK — Too many mis-links for a credible narrative.";
-
-  const hintNote = state.hintsUsed > 0 ? ` <strong>${state.hintsUsed}</strong> hint${state.hintsUsed === 1 ? "" : "s"} also raised exposure.` : "";
-  const stumb =
-    wa > 0 || state.hintsUsed > 0
-      ? ` Detection finished at <strong>${detection}%</strong>${wa > 0 ? ` after <strong>${wa}</strong> wrong ${wa === 1 ? "drop" : "drops"}` : ""}.${hintNote}`
-      : " Handoff detection stayed low — <strong>no wrong drops</strong>.";
 
   return {
     eyebrow: "// Mission 04 — Map finalized",
@@ -431,14 +349,7 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
       { label: "Outcome band", value: tier, total: true },
     ],
     rating,
-    tradecraft: [
-      { html: "Mission 03 trained <strong>who may receive which data</strong> (audience). Mission 04 trains <strong>which department action consumes each artifact</strong> — Legal reviews the offer, IT verifies identity, HR runs compliance checks, and parallel lanes split Health vs Payroll before Data Access." },
-      { html: `You placed <strong>${correct} of ${M4_FILES.length}</strong> leak files on the gates their <strong>table headers</strong> support.${stumb}` },
-      { html: "<span class=\"tc-subhead\">What you practiced</span> Matching <strong>data shape → process step</strong>. A file isn't \"HR data\" generically — it's background-check rows vs benefits enrollment vs payroll tax fields. Each belongs at a <strong>different gate</strong> on the spine." },
-      { html: "<span class=\"tc-subhead\">Real-world translation</span> In real companies, each step needs <strong>specific data to work</strong> — Security needs logs to trace an account, Benefits needs health rows to enroll someone. You matched <strong>which file fits which job</strong> on the flow, so you know <strong>who has the data for what action</strong>." },
-    ],
-    learningRows,
-    learningTitle: "WHAT YOU LEARNED — DATA TO PROCESS GATE",
+    tradecraft: m4Tradecraft(state),
     cta: "CONTINUE TO MISSION 05 — THE FINAL BRIEF →",
   };
 }

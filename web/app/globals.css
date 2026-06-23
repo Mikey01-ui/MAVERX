@@ -436,6 +436,105 @@ a {
   border-color: var(--green-stable);
 }
 
+/* Charge-sweep CTA — outlined shell + scanlines, fills left→right over --sweep-ms */
+.btn-sweep {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(247, 148, 33, 0.06);
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.16) 2px,
+    rgba(0, 0, 0, 0.16) 4px
+  );
+}
+
+.btn-sweep::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.1) 2px,
+      rgba(0, 0, 0, 0.1) 4px
+    ),
+    linear-gradient(90deg, rgba(247, 148, 33, 0.28), rgba(247, 148, 33, 0.48));
+  animation: btnSweep var(--sweep-ms, 3000ms) linear forwards;
+  pointer-events: none;
+}
+
+.btn-sweep > * {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-sweep.is-locked {
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-sweep.is-locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+@keyframes btnSweep {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Orange sweep CTA shell — pair with .btn-sweep + --sweep-ms (M1 debrief pattern) */
+.db-cta.btn-sweep,
+.btn-next.btn-sweep,
+.mission-btn-next.btn-sweep,
+.btn-primary.btn-sweep {
+  padding: 14px 36px;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(247, 148, 33, 0.22);
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+
+.mission-btn-next.btn-sweep {
+  font-size: clamp(0.85rem, 0.55vw + 0.6vh, 0.95rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.db-cta.btn-sweep:hover:not(:disabled):not(.is-locked),
+.btn-next.btn-sweep:hover:not(:disabled):not(.is-locked),
+.mission-btn-next.btn-sweep:hover:not(:disabled):not(.is-locked),
+.btn-primary.btn-sweep:hover:not(:disabled):not(.is-locked) {
+  box-shadow: 0 0 26px rgba(247, 148, 33, 0.55);
+  transform: translateY(-2px);
+}
+
+.btn-sweep:disabled {
+  cursor: default;
+  opacity: 0.9;
+}
+
 .actions {
   display: flex;
   flex-direction: column;
@@ -959,7 +1058,7 @@ a {
   animation: v2-fade-up 0.5s 0.36s both;
 }
 
-.theme-v2 .btn-primary {
+.theme-v2 .btn-primary:not(.btn-sweep) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -970,13 +1069,20 @@ a {
   transition: background 0.25s, box-shadow 0.25s, transform 0.25s;
 }
 
-.theme-v2 .btn-primary:hover:not(:disabled) {
+.theme-v2 .btn-primary.btn-sweep {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.theme-v2 .btn-primary:not(.btn-sweep):hover:not(:disabled) {
   background: rgba(247, 148, 33, 0.46);
   box-shadow: 0 0 26px rgba(247, 148, 33, 0.55);
   transform: translateY(-2px);
 }
 
-.theme-v2 .btn-primary:active:not(:disabled) {
+.theme-v2 .btn-primary:not(.btn-sweep):active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 0 20px var(--orange-20);
 }

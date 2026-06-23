@@ -75,3 +75,31 @@
   margin-top: 2px;
 }
 #debrief-screen .tc-lrn-txt strong { color: var(--purple-light); font-weight: 600; }
+#debrief-screen .tc-learn-list {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-b, var(--text-w));
+  opacity: 0.9;
+}
+#debrief-screen .tc-learn-list li { margin-bottom: 6px; }
+#debrief-screen .tc-learn-list li:last-child { margin-bottom: 0; }
+#debrief-screen .tc-mistake {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-b, var(--text-w));
+  opacity: 0.88;
+  margin: 0 0 10px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(211, 25, 114, 0.45);
+}
+#debrief-screen .tc-mistake:last-child { margin-bottom: 0; }
+#debrief-screen .tc-mistake strong { color: var(--purple-light); font-weight: 600; }
+#debrief-screen .tc-mistake-intro {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-b, var(--text-w));
+  opacity: 0.88;
+  margin: 0 0 12px;
+}

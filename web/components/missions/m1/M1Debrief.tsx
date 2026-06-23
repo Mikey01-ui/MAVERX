@@ -106,8 +106,14 @@ export function M1Debrief({ timer, onContinue }: Props) {
       </div>
 
       <div className={`db-cta-row${show(7) ? " show" : ""}`}>
-        <button type="button" className="db-cta" onClick={onContinue}>
-          {DEBRIEF.cta}
+        <button
+          type="button"
+          className="db-cta btn-sweep"
+          style={{ "--sweep-ms": "1820ms" } as React.CSSProperties}
+          disabled={!show(7)}
+          onClick={onContinue}
+        >
+          <span>{DEBRIEF.cta}</span>
         </button>
       </div>
       <Link href="/hub" className="mission-hub-link" style={{ display: "block", textAlign: "center", marginTop: 12, color: "var(--text)" }}>

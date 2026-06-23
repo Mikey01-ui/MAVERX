@@ -10,6 +10,7 @@ import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebrie
 import { M4DetectionHeader } from "@/components/missions/m4/M4DetectionHeader";
 import { DETECTION, FILES, HACK_LINES, HINT_COOLDOWN_SEC, STEPS, getDatasetCandidatesForStep, isStepSatisfied } from "@/lib/game/m4/data";
 import { buildM4Debrief } from "@/lib/game/debriefBuilders";
+import { m4ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { useM4MissionAudio } from "@/lib/audio/useM4MissionAudio";
 import { M4GameProvider, useM4Game } from "@/lib/game/m4/context";
 
@@ -39,7 +40,7 @@ function M4GameInner() {
     stepLinked;
 
   const completeMission = useCallback(async () => {
-    const score = Math.max(0, 100 - Math.round(state.detection));
+    const snapshot = m4ReportSnapshot(state);
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
@@ -48,19 +49,13 @@ function M4GameInner() {
         missionId: "m4",
         status: "completed",
         checkpoint: "completed",
-        score,
-        stateJson: {
-          version: 2,
-          detection: state.detection,
-          linked: Object.keys(state.picks).length,
-          wrongAttempts: state.wrongAttempts,
-          timerSec: state.timerSec,
-        },
+        score: snapshot.score,
+        stateJson: snapshot.stateJson,
       }),
     });
     router.push("/mission/m5");
     router.refresh();
-  }, [router, state.detection, state.picks, state.timerSec, state.wrongAttempts]);
+  }, [router, state]);
 
   const debrief = useMemo(() => buildM4Debrief(state), [state]);
 
@@ -232,21 +227,21 @@ function M4GameInner() {
                     <div className="bk-avatar">
                       <i className="fas fa-shield-halved" aria-hidden />
                     </div>
-                    <div className="bk-meta">
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="bk-name">Operation Channel</div>
                       <div className="bk-members">
-                        <span className="bk-member">Voss — 🟢</span>
-                        <span className="bk-sep"> · </span>
-                        <span className="bk-member">Nova — 🟢</span>
-                        <span className="bk-sep"> · </span>
-                        <span className="bk-member">Kade — 🟢</span>
+                        <span className="bk-member online">Voss</span>
+                        <span className="bk-sep">·</span>
+                        <span className="bk-member online">Nova</span>
+                        <span className="bk-sep">·</span>
+                        <span className="bk-member online">Kade</span>
                       </div>
                     </div>
                     <div className="bk-icons">
                       <i className="fas fa-lock" aria-hidden />
                     </div>
                   </div>
-                  <div className="broker-body-scroll" id="broker-body" ref={brokerRef}>
+                  <div id="broker-body" ref={brokerRef}>
                     <div className="bm-sep">
                       <div className="bm-sep-pill">Onboarding</div>
                     </div>
@@ -314,7 +309,7 @@ function M4GameInner() {
         <div id="gameover-overlay" className="active">
           <div className="go-title">HANDOFF AUDIT FAILED</div>
           <div className="go-sub">MegaCorp flagged the custody story. Detection hit 100% — you&apos;re exposed.</div>
-          <button type="button" className="db-cta" onClick={() => dispatch({ type: "RESET_MISSION" })}>
+          <button type="button" className="db-cta btn-sweep" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties} onClick={() => dispatch({ type: "RESET_MISSION" })}>
             RETRY MISSION
           </button>
         </div>

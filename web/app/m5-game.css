@@ -100,7 +100,7 @@
 .m5-game .m5-vote-title { font-family:var(--font-display); font-size:1.4rem; font-weight:700; margin-bottom:8px; }
 .m5-game #debrief-screen { position:fixed; inset:0; z-index:455; display:none; flex-direction:column; padding:24px 48px; background:rgba(0,0,0,.95); overflow:auto; }
 .m5-game #debrief-screen.active { display:flex; }
-.m5-game .db-cta { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:13px; font-weight:700; border-radius:4px; cursor:pointer; }
+.m5-game .db-cta:not(.btn-sweep) { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:13px; font-weight:700; border-radius:4px; cursor:pointer; }
 .m5-game .db-cta-row { display:flex; justify-content:center; margin-top:18px; }
 .m5-game #synth-overlay { position:fixed; inset:0; background:rgba(0,0,0,.97); z-index:450; display:none; align-items:center; justify-content:center; flex-direction:column; }
 .m5-game #synth-overlay.active { display:flex; }

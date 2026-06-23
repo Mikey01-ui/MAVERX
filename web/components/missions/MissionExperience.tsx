@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MissionIntro, MissionMedia } from "@/lib/content";
 import { GameAudioProvider } from "@/lib/audio/GameAudioProvider";
@@ -9,17 +10,25 @@ import { useMissionProgress } from "@/lib/game/useMissionProgress";
 import { MissionChrome } from "@/components/missions/MissionChrome";
 import { BriefPhase } from "@/components/missions/phases/BriefPhase";
 import { ProtocolPhase } from "@/components/missions/phases/ProtocolPhase";
-import { M1MargusMission } from "@/components/missions/m1/M1MargusMission";
 import { MargusM1Brief } from "@/components/missions/margus-m1/MargusM1Brief";
 import { MargusM1Protocol } from "@/components/missions/margus-m1/MargusM1Protocol";
 import { M2Brief } from "@/components/missions/m2/M2Brief";
 import { MissionGame } from "@/components/missions/MissionGame";
-import { M1TutorialPhase } from "@/components/missions/m1/M1TutorialPhase";
 import { M2TutorialPhase } from "@/components/missions/m2/M2TutorialPhase";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
 import { M5TutorialPhase } from "@/components/missions/m5/M5TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
+
+const M1MargusMission = dynamic(
+  () => import("@/components/missions/m1/M1MargusMission").then((m) => m.M1MargusMission),
+  { ssr: false }
+);
+
+const M1TutorialPhase = dynamic(
+  () => import("@/components/missions/m1/M1TutorialPhase").then((m) => m.M1TutorialPhase),
+  { ssr: false }
+);
 
 type MissionExperienceProps = {
   intro: MissionIntro;
@@ -30,6 +39,7 @@ type MissionExperienceProps = {
   initialCheckpoint: string | null;
   resume: boolean;
   savedState?: Record<string, unknown> | null;
+  debriefPreview?: boolean;
 };
 
 function formatClock(now: Date) {
@@ -53,8 +63,13 @@ function MissionExperienceInner({
   initialCheckpoint,
   resume,
   savedState,
+  debriefPreview = false,
 }: MissionExperienceProps) {
   const isM1 = missionId === "m1";
+
+  if (debriefPreview && isM1) {
+    return <M1MargusMission debriefPreview />;
+  }
   const isM2 = missionId === "m2";
   const isM3 = missionId === "m3";
   const isM4 = missionId === "m4";
@@ -132,7 +147,7 @@ function MissionExperienceInner({
 
   if (phase === "game") {
     if (isM1) {
-      return <M1MargusMission />;
+      return <M1MargusMission savedState={savedState} />;
     }
     return (
       <>
@@ -171,10 +186,30 @@ function MissionExperienceInner({
 
   if (isM1) {
     if (phase === "brief") {
-      return <MargusM1Brief onContinue={goToProtocol} />;
+      return (
+        <MissionChrome
+          statusLeft={intro.statusLeft}
+          statusRight={intro.statusRight}
+          clock={clock}
+          showAudio
+          theme="theme-v2"
+        >
+          <MargusM1Brief onContinue={goToProtocol} />
+        </MissionChrome>
+      );
     }
     if (phase === "protocol") {
-      return <MargusM1Protocol onContinue={goToGame} />;
+      return (
+        <MissionChrome
+          statusLeft={intro.statusLeft}
+          statusRight={intro.statusRight}
+          clock={clock}
+          showAudio
+          theme="theme-v2"
+        >
+          <MargusM1Protocol onContinue={goToGame} />
+        </MissionChrome>
+      );
     }
   }
 

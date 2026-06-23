@@ -9,13 +9,14 @@ import { getMissionProgress, hasResumableSession, upsertProgress } from "@/lib/p
 
 type PageProps = {
   params: Promise<{ missionId: string }>;
-  searchParams: Promise<{ resume?: string; replay?: string }>;
+  searchParams: Promise<{ resume?: string; replay?: string; debrief?: string }>;
 };
 
 export default async function MissionPage({ params, searchParams }: PageProps) {
   const { missionId } = await params;
-  const { resume, replay } = await searchParams;
+  const { resume, replay, debrief } = await searchParams;
   const isResume = resume === "1";
+  const isDebriefPreview = debrief === "1" && missionId === "m1";
   const session = await auth();
   const userId = session!.user!.id;
 
@@ -29,11 +30,18 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
     getMissionProgress(userId, missionId),
   ]);
 
-  if (!replay && hasResumableSession(existing) && !isResume) {
+  if (!replay && !isDebriefPreview && hasResumableSession(existing) && !isResume) {
     redirect(`/mission/${missionId}?resume=1`);
   }
 
-  if (!replay) {
+  if (replay === "1") {
+    await upsertProgress(userId, {
+      missionId,
+      status: "in_progress",
+      checkpoint: "start",
+      stateJson: null,
+    });
+  } else if (!replay) {
     if (!existing || existing.status === "locked") {
       await upsertProgress(userId, {
         missionId,
@@ -74,9 +82,10 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
         missionId={missionId}
         missionName={meta.name}
         missionLabel={meta.label}
-        initialCheckpoint={existing?.checkpoint ?? "start"}
+        initialCheckpoint={replay === "1" ? "start" : (existing?.checkpoint ?? "start")}
         resume={isResume}
         savedState={isResume && existing?.status === "in_progress" ? existing.stateJson : null}
+        debriefPreview={isDebriefPreview}
       />
     );
   }

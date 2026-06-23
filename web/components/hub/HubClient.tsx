@@ -99,7 +99,7 @@ export function HubClient({
           </div>
 
           <div className="hub-choice-actions">
-            <Link href={resumeUrl(continueMission)} className="btn-primary hub-choice-btn">
+            <Link href={resumeUrl(continueMission)} className="btn-primary btn-sweep hub-choice-btn" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties}>
               {content.continueLabel} →
             </Link>
             <button

@@ -99,7 +99,13 @@ export function M2Protocol({ onBreach, onSkip }: { onBreach: () => void; onSkip:
 
           <div className="button-section">
             <div className="button-label">{"// ready to breach?"}</div>
-            <button className={`btn-next${breachUnlocked ? "" : " is-locked"}`} id="btn-breach" onClick={() => setPage(3)}>
+            <button
+              className={`btn-next btn-sweep${breachUnlocked ? "" : " is-locked"}`}
+              style={{ "--sweep-ms": "1400ms" } as React.CSSProperties}
+              id="btn-breach"
+              disabled={!breachUnlocked}
+              onClick={() => setPage(3)}
+            >
               <div className="btn-inner">
                 <span>Breach the Desktop</span>
                 <span className="btn-arrow">→</span>
@@ -146,7 +152,11 @@ export function M2Protocol({ onBreach, onSkip }: { onBreach: () => void; onSkip:
           </div>
           <div className="button-section">
             <div className="button-label">{"// ready to breach?"}</div>
-            <button className="btn-next" onClick={onBreach}>
+            <button
+              className="btn-next btn-sweep"
+              style={{ "--sweep-ms": "1820ms" } as React.CSSProperties}
+              onClick={onBreach}
+            >
               <div className="btn-inner">
                 BREACH THE DESKTOP <span className="btn-arrow">→</span>
               </div>

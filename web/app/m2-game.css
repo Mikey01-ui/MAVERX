@@ -284,16 +284,17 @@
 .m2-mission .button-section{ flex-shrink:0; display:flex; flex-direction:column; align-items:center;
   gap:0.9vh; margin-top:0.8vh; animation:fadeUp 0.5s 0.5s both; }
 .m2-mission .button-label{ font-family:var(--font-mono); font-size:0.55rem; color:var(--green-stable); letter-spacing:0.2em; text-transform:uppercase; }
-.m2-mission .btn-next{ width:auto; padding:clamp(13px,1.6vh,20px) clamp(38px,4.5vw,64px); background:rgba(247,148,33,0.32);
+.m2-mission .btn-next:not(.btn-sweep){ width:auto; padding:clamp(13px,1.6vh,20px) clamp(38px,4.5vw,64px); background:rgba(247,148,33,0.32);
   border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display);
   font-size:clamp(15px,0.6vw + 0.7vh,20px); font-weight:600; letter-spacing:0.12em; text-transform:uppercase;
   cursor:pointer; position:relative; box-shadow:0 0 10px rgba(247,148,33,0.22); transition:background .25s,box-shadow .25s,transform .25s,opacity 0.8s ease,filter 0.8s ease; border-radius:4px; }
-.m2-mission .btn-next::before{ display:none; }
-.m2-mission .btn-next:hover{ background:rgba(247,148,33,0.46); transform:translateY(-2px); box-shadow:0 0 26px rgba(247,148,33,0.55); }
-.m2-mission .btn-next:active{ transform:translateY(0); box-shadow:0 0 20px rgba(247,148,33,0.2); }
+.m2-mission .btn-next:not(.btn-sweep)::before{ display:none; }
+.m2-mission .btn-next:not(.btn-sweep):hover{ background:rgba(247,148,33,0.46); transform:translateY(-2px); box-shadow:0 0 26px rgba(247,148,33,0.55); }
+.m2-mission .btn-next:not(.btn-sweep):active{ transform:translateY(0); box-shadow:0 0 20px rgba(247,148,33,0.2); }
 .m2-mission .btn-inner{ display:flex; align-items:center; justify-content:center; gap:0.6rem; }
 .m2-mission .btn-arrow{ font-size:1em; line-height:1; transition:transform .2s; }
-.m2-mission .btn-next:hover .btn-arrow{ transform:translateX(4px); }
+.m2-mission .btn-next.btn-sweep:hover:not(:disabled):not(.is-locked) .btn-arrow,
+.m2-mission .btn-next:not(.btn-sweep):hover .btn-arrow{ transform:translateX(4px); }
 
 /* page nav dots */
 .m2-mission .page-nav-dots{ position:absolute; bottom:52px; left:50%; transform:translateX(-50%); display:flex; gap:8px; }

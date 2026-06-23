@@ -211,7 +211,6 @@
 .vi-btn-start {
   width: clamp(200px, 22vw, 340px);
   padding: 1vh 2vw;
-  background: rgba(247, 148, 33, 0.06);
   border: 1px solid var(--orange);
   color: var(--orange);
   font-family: var(--font-display);
@@ -222,13 +221,16 @@
   cursor: pointer;
   border-radius: 4px;
   box-shadow: 0 0 10px rgba(247, 148, 33, 0.22);
-  transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  transition: background-color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
-.vi-btn-start:hover:not(:disabled) {
-  background: rgba(247, 148, 33, 0.46);
+.vi-btn-start:hover:not(:disabled):not(.is-locked) {
   transform: translateY(-2px);
   box-shadow: 0 0 26px rgba(247, 148, 33, 0.55);
+}
+
+.vi-btn-start.btn-sweep:not(.is-locked):hover {
+  background-color: rgba(247, 148, 33, 0.1);
 }
 
 .vi-btn-start-inner {
@@ -237,24 +239,6 @@
   justify-content: center;
   gap: 0.6rem;
 }
-
-/* Time-gated charge sweep (mirrors the M1 brief/confirm button) */
-.vi-btn-start.vi-btn-sweep { position: relative; overflow: hidden; }
-.vi-btn-start.is-locked {
-  cursor: default;
-}
-.vi-btn-start.is-locked:hover { transform: none; box-shadow: none; }
-.vi-btn-start.vi-btn-sweep::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 0;
-  background: linear-gradient(90deg, rgba(247, 148, 33, 0.22), rgba(247, 148, 33, 0.42));
-  animation: viBtnSweep var(--sweep-ms, 3000ms) linear forwards;
-  pointer-events: none;
-}
-.vi-btn-start.vi-btn-sweep > * { position: relative; z-index: 1; }
-@keyframes viBtnSweep { from { width: 0; } to { width: 100%; } }
 
 .vi-intro-modal-overlay {
   position: fixed;

@@ -13,7 +13,7 @@ import {
   wrongStepMessage,
 } from "@/lib/game/m4/data";
 import { restoreGameState } from "@/lib/game/sessionPersist";
-import type { ChatMessage, M4GameAction, M4GameState } from "@/lib/game/m4/types";
+import type { ChatMessage, M4GameAction, M4GameState, M4WrongAttempt } from "@/lib/game/m4/types";
 
 function nowTs() {
   const n = new Date();
@@ -75,6 +75,7 @@ export function createInitialM4State(): M4GameState {
     detectionWarned: { 30: false, 60: false, 80: false },
     gameOver: false,
     wrongAttempts: 0,
+    wrongAttemptLog: [],
     hintsUsed: 0,
     hintCooldown: false,
     hintCooldownUntil: null,
@@ -135,10 +136,24 @@ export function m4Reducer(state: M4GameState, action: M4GameAction): M4GameState
       const step = STEPS[stepIdx];
       if (!correct || correct !== targetStepId) {
         const hit = wrongHandoffDetection(action.fileId);
+        const file = FILES.find((f) => f.id === action.fileId);
+        const wrongStep = STEPS.find((s) => s.id === targetStepId);
+        const correctStep = STEPS.find((s) => s.id === correct);
+        const reason = wrongStepMessage(action.fileId, targetStepId);
+        const attempt: M4WrongAttempt = {
+          fileId: action.fileId,
+          file: file?.name ?? action.fileId,
+          wrongGateId: targetStepId,
+          wrongGateTitle: wrongStep?.title ?? targetStepId,
+          correctGateId: correct ?? "",
+          correctGateTitle: correctStep?.title ?? "the correct gate",
+          reason,
+        };
         let next: M4GameState = {
           ...state,
           wrongAttempts: state.wrongAttempts + 1,
-          messages: pushChat(state, "Nova", `<strong>Wrong link.</strong> ${wrongStepMessage(action.fileId, targetStepId)} <em>(+${hit}% detection)</em>`, "bm-err"),
+          wrongAttemptLog: [...(state.wrongAttemptLog ?? []), attempt],
+          messages: pushChat(state, "Nova", `<strong>Wrong link.</strong> ${reason} <em>(+${hit}% detection)</em>`, "bm-err"),
         };
         next = addDetection(next, hit);
         return next;
@@ -225,13 +240,14 @@ export function hydrateM4State(raw: Record<string, unknown> | null | undefined):
     if (migrated.phase === "debrief") return migrated;
     return migrated;
   }
-  const restored = restoreGameState(raw, 2, createInitialM4State, ["debrief", "failed"]);
+  const restored = restoreGameState(raw, 2, createInitialM4State, ["failed"]);
   if (!restored) return null;
-  if (typeof restored.hintCooldownUntil === "number" && restored.hintCooldownUntil <= Date.now()) {
-    return { ...restored, hintCooldown: false, hintCooldownUntil: null };
+  const withLog = Array.isArray(restored.wrongAttemptLog) ? restored : { ...restored, wrongAttemptLog: [] as M4GameState["wrongAttemptLog"] };
+  if (typeof withLog.hintCooldownUntil === "number" && withLog.hintCooldownUntil <= Date.now()) {
+    return { ...withLog, hintCooldown: false, hintCooldownUntil: null };
   }
-  if (typeof restored.hintCooldownUntil === "number") {
-    return { ...restored, hintCooldown: true };
+  if (typeof withLog.hintCooldownUntil === "number") {
+    return { ...withLog, hintCooldown: true };
   }
-  return restored;
+  return withLog;
 }

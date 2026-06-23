@@ -299,5 +299,5 @@ export function serializeM2State(state: M2GameState): Record<string, unknown> {
 }
 
 export function hydrateM2State(raw: Record<string, unknown> | null | undefined): M2GameState | null {
-  return restoreGameState(raw, 2, createInitialM2State, ["debrief"]);
+  return restoreGameState(raw, 2, createInitialM2State, []);
 }

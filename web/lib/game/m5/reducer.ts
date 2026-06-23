@@ -1,4 +1,5 @@
 import { CREW_ORDER, CREW_QUESTIONS, ECHO_FRAME, ECHO_VIZ } from "@/lib/game/m5/data";
+import { restoreGameState } from "@/lib/game/sessionPersist";
 import type { ChatMessage, CrewId, M5GameAction, M5GameState } from "@/lib/game/m5/types";
 
 function nowTs() {
@@ -168,4 +169,12 @@ export function getDetectionClass(det: number) {
   if (det < 35) return "det-green";
   if (det < 70) return "det-amber";
   return "det-red";
+}
+
+export function serializeM5State(state: M5GameState): Record<string, unknown> {
+  return { version: 1, ...state };
+}
+
+export function hydrateM5State(raw: Record<string, unknown> | null | undefined): M5GameState | null {
+  return restoreGameState(raw, 1, createInitialM5State, []);
 }

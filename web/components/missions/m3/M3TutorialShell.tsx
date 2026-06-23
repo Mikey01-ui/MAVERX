@@ -2,8 +2,12 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { DATASETS } from "@/lib/game/m3/data";
+import { DETECTION_INFO } from "@/lib/game/m3/detectionMeter";
 import type { M3TutorialDemoApi } from "@/lib/game/m3/tutorialDemo";
 import { m3TutDrillFileName, m3TutGetDocumentPreview } from "@/lib/game/m3/tutorialDrill";
+
+const TUT_DETECTION = 0;
+const TUT_BAND = "DARK" as const;
 
 export type M3TutorialShellHandle = {
   root: HTMLDivElement | null;
@@ -108,8 +112,10 @@ export const M3TutorialShell = forwardRef<M3TutorialShellHandle>(function M3Tuto
 
   const shortName = (name: string) => (name.length > 22 ? `${name.slice(0, 20)}…` : name);
 
+  const detInfo = DETECTION_INFO[TUT_BAND];
+
   return (
-    <div id="gp-root" ref={rootRef} aria-hidden="false">
+    <div id="gp-root" ref={rootRef} className="m3-tutorial-shell" aria-hidden="false">
       <div id="game">
         <div id="hdr">
           <div className="hdr-left">
@@ -117,20 +123,34 @@ export const M3TutorialShell = forwardRef<M3TutorialShellHandle>(function M3Tuto
           </div>
           <div className="hdr-center">MISSION 03 OF 05 / THE HUMAN SHIELD</div>
           <div className="hdr-right">
-            <span id="nova-trust" className="nt-display nt-green">
-              <span className="nt-icon">
-                <i className="fas fa-user-shield" aria-hidden />
+            <span id="det-cluster">
+              <span id="det-display" className="det-green">
+                <span id="det-icon">
+                  <i className="fas fa-shield-alt" aria-hidden />
+                </span>
+                <span id="det-pct">{TUT_DETECTION}%</span>
+                <span className="det-bar-wrap">
+                  <span id="det-bar" className="det-bar-green" style={{ width: `${TUT_DETECTION}%` }} />
+                </span>
+                <span id="det-label">{TUT_BAND}</span>
               </span>
-              <span id="hdr-trust-pct">100%</span>
-              <span className="nt-bar-wrap">
-                <span id="hdr-trust-bar" className="nt-green" style={{ width: "100%" }} />
+              <span className="det-info-wrap" tabIndex={0} aria-label="Detection status info">
+                <i className="fas fa-circle-info det-info-i" aria-hidden />
+                <div className="det-info-pop" role="tooltip">
+                  <div className="dip-ttl" style={{ color: detInfo.color }}>
+                    {TUT_BAND}
+                  </div>
+                  <div className="dip-desc">{detInfo.desc}</div>
+                  <div className="dip-cause">{detInfo.cause}</div>
+                </div>
               </span>
-              <span className="nt-label">NOVA</span>
             </span>
             <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-            <span id="timer">00:00</span>
-            <span className="live-dot" />
-            <span style={{ letterSpacing: "1px" }}>LIVE</span>
+            <span id="mission-chrome">
+              <span id="timer">00:00</span>
+              <span className="live-dot" />
+              <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
+            </span>
           </div>
         </div>
         <div id="step-banner">{banner}</div>

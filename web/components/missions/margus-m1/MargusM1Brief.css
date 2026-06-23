@@ -549,7 +549,6 @@
 .margus-m1-brief .btn-next {
   width: auto;
   padding: clamp(12px, 1.4vh, 18px) clamp(34px, 4vw, 58px);
-  background: rgba(247,148,33,0.32);
   border: 1px solid var(--orange);
   color: var(--orange);
   font-family: var(--font-display);
@@ -563,7 +562,11 @@
   transition: background 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.8s ease, filter 0.8s ease;
 }
 
-.margus-m1-brief .btn-next:hover:not(:disabled) {
+.margus-m1-brief .btn-next:not(.btn-sweep) {
+  background: rgba(247,148,33,0.32);
+}
+
+.margus-m1-brief .btn-next:not(.btn-sweep):hover:not(:disabled) {
   background: rgba(247,148,33,0.46);
   box-shadow: 0 0 26px rgba(247,148,33,0.55);
   transform: translateY(-2px);
@@ -581,16 +584,11 @@
   pointer-events: none;
 }
 
-/* Charge sweep — button starts as an empty shell; the fill charges it left→right
-   over the unlock delay (--sweep-ms) and the filled color IS the resting color
-   (overlay persists after unlock — no flash back). */
-.margus-m1-brief .btn-next.btn-sweep{background:rgba(247,148,33,0.06)}
-.margus-m1-brief .btn-sweep{position:relative;overflow:hidden}
-.margus-m1-brief .btn-sweep::before{content:'';display:block;position:absolute;top:0;left:0;bottom:0;width:0;
-  background:linear-gradient(90deg,rgba(247,148,33,.22),rgba(247,148,33,.42));
-  animation:btnSweep var(--sweep-ms,3000ms) linear forwards;pointer-events:none}
-.margus-m1-brief .btn-sweep>*{position:relative;z-index:1}
-@keyframes btnSweep{from{width:0}to{width:100%}}
+.margus-m1-brief .btn-next.btn-sweep:hover:not(:disabled):not(.is-locked) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 26px rgba(247,148,33,0.55);
+  border-color: var(--orange);
+}
 
 .margus-m1-brief .btn-inner {
   display: flex;

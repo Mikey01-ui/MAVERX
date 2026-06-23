@@ -8,10 +8,10 @@ import { M3VaultDoor } from "@/components/missions/m3/M3VaultDoor";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
 import { CHANNEL_LABELS, DATASETS, DETECTION, HACK_LINES, SIGNOFF_DETECTION_MAX } from "@/lib/game/m3/data";
 import { buildM3Debrief } from "@/lib/game/debriefBuilders";
+import { m3ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { M3Header } from "@/components/missions/m3/M3DetectionHeader";
 import { useM3MissionAudio } from "@/lib/audio/useM3MissionAudio";
 import { M3GameProvider, useM3Game } from "@/lib/game/m3/context";
-import { useMissionProgress } from "@/lib/game/useMissionProgress";
 import type { Channel } from "@/lib/game/m3/types";
 
 function M3RoutingPanel() {
@@ -160,7 +160,6 @@ function M3RoutingPanel() {
 
 function M3GameInner() {
   const { state, dispatch } = useM3Game();
-  const { save } = useMissionProgress("m3");
   const router = useRouter();
   const [desktopReady, setDesktopReady] = useState(false);
   useM3MissionAudio(state);
@@ -175,36 +174,8 @@ function M3GameInner() {
     setDesktopReady(false);
   }, [state.phase]);
 
-  useEffect(() => {
-    if (state.phase !== "debrief") return;
-    void (async () => {
-      await save({
-        status: "completed",
-        checkpoint: "completed",
-        stateJson: {
-          version: 2,
-          detection: Math.round(state.detection),
-          wrongRoutes: state.wrongRoutes,
-          catastrophic: state.catastrophic,
-          hintsUsed: state.hintsUsed,
-          timerSec: state.timerSec,
-        },
-        score: Math.max(0, 100 - Math.round(state.detection)),
-      });
-      await fetch("/api/progress", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          missionId: "m4",
-          status: "in_progress",
-          checkpoint: "start",
-        }),
-      });
-    })();
-  }, [save, state.catastrophic, state.detection, state.hintsUsed, state.phase, state.timerSec, state.wrongRoutes]);
-
   const completeMission = useCallback(async () => {
+    const snapshot = m3ReportSnapshot(state);
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
@@ -213,21 +184,23 @@ function M3GameInner() {
         missionId: "m3",
         status: "completed",
         checkpoint: "completed",
-        score: Math.max(0, 100 - Math.round(state.detection)),
-        stateJson: {
-          version: 1,
-          detection,
-          routed: 10,
-          wrongRoutes: state.wrongRoutes,
-          catastrophic: state.catastrophic,
-          hintsUsed: state.hintsUsed,
-          timerSec: state.timerSec,
-        },
+        score: snapshot.score,
+        stateJson: snapshot.stateJson,
+      }),
+    });
+    await fetch("/api/progress", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        missionId: "m4",
+        status: "in_progress",
+        checkpoint: "start",
       }),
     });
     router.push("/mission/m4");
     router.refresh();
-  }, [router, detection, state.catastrophic, state.detection, state.hintsUsed, state.timerSec, state.wrongRoutes]);
+  }, [router, state]);
 
   const debrief = useMemo(() => buildM3Debrief(state), [state]);
 
@@ -311,7 +284,7 @@ ${detection <= SIGNOFF_DETECTION_MAX && state.catastrophic === 0 ? "STATUS: APPR
         <div id="gameover-overlay" className="active">
           <div className="go-title">OPERATION COMPROMISED</div>
           <div className="go-sub">MegaCorp closed the breach. The mirror is dead.</div>
-          <button type="button" className="db-cta" onClick={() => dispatch({ type: "RESET_MISSION" })}>
+          <button type="button" className="db-cta btn-sweep" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties} onClick={() => dispatch({ type: "RESET_MISSION" })}>
             RETRY MISSION
           </button>
         </div>

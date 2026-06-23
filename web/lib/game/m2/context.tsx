@@ -37,7 +37,7 @@ export function M2GameProvider({
     missionId: "m2",
     state,
     serialize: serializeM2State,
-    enabled: state.phase !== "debrief",
+    enabled: true,
   });
 
   useEffect(() => {

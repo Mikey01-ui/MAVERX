@@ -9,7 +9,7 @@ import {
   wrongExplain,
 } from "@/lib/game/m3/data";
 import { restoreGameState } from "@/lib/game/sessionPersist";
-import type { Channel, ChatMessage, ChatSender, ChatTone, M3GameAction, M3GameState } from "@/lib/game/m3/types";
+import type { Channel, ChatMessage, ChatSender, ChatTone, M3GameAction, M3GameState, M3WrongAttempt } from "@/lib/game/m3/types";
 
 function nowTs() {
   const n = new Date();
@@ -68,15 +68,17 @@ export function serializeM3State(state: M3GameState): Record<string, unknown> {
 }
 
 export function hydrateM3State(raw: Record<string, unknown> | null | undefined): M3GameState | null {
-  const restored = restoreGameState(raw, 2, createInitialM3State, ["debrief", "failed"]);
+  const restored = restoreGameState(raw, 2, createInitialM3State, ["failed"]);
   if (!restored) return null;
-  if (typeof restored.hintCooldownUntil === "number" && restored.hintCooldownUntil <= Date.now()) {
-    return { ...restored, hintCooldown: false, hintCooldownUntil: null };
+  const withLog =
+    Array.isArray(restored.wrongAttemptLog) ? restored : { ...restored, wrongAttemptLog: [] as M3GameState["wrongAttemptLog"] };
+  if (typeof withLog.hintCooldownUntil === "number" && withLog.hintCooldownUntil <= Date.now()) {
+    return { ...withLog, hintCooldown: false, hintCooldownUntil: null };
   }
-  if (typeof restored.hintCooldownUntil === "number") {
-    return { ...restored, hintCooldown: true };
+  if (typeof withLog.hintCooldownUntil === "number") {
+    return { ...withLog, hintCooldown: true };
   }
-  return restored;
+  return withLog;
 }
 
 export function createInitialM3State(): M3GameState {
@@ -91,6 +93,7 @@ export function createInitialM3State(): M3GameState {
     selectedId: null,
     timerSec: 0,
     wrongRoutes: 0,
+    wrongAttemptLog: [],
     catastrophic: 0,
     hintsUsed: 0,
     hintCooldown: false,
@@ -157,7 +160,16 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
         next.assigned = { ...state.assigned, [id]: action.channel };
         next.messages = pushChat(next, "Voss", `Routed: ${ds.file} → ${CHANNEL_LABELS[action.channel]}.`, "bm-ok");
       } else {
+        const reason = ds.wrongRationale[action.channel] ?? `Correct channel: ${CHANNEL_LABELS[ds.correct]}.`;
+        const attempt: M3WrongAttempt = {
+          fileId: id,
+          file: ds.file,
+          choice: action.channel,
+          correct: ds.correct,
+          reason,
+        };
         next.wrongRoutes = state.wrongRoutes + 1;
+        next.wrongAttemptLog = [...state.wrongAttemptLog, attempt];
         next.messages = pushChat(next, "Voss", `${wrongExplain(ds, action.channel)} Choose a different release channel.`, "bm-err");
       }
       if (amount > 0) {

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AmbientShell } from "@/components/layout/AmbientShell";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { HubClient } from "@/components/hub/HubClient";
@@ -8,7 +9,9 @@ import { isAdminRole } from "@/lib/roles";
 import {
   ensureFirstMissionUnlocked,
   findContinueMission,
+  getMissionProgress,
   getUserProgress,
+  isFreshMissionStart,
   resolveMissionAccess,
 } from "@/lib/progress";
 
@@ -17,6 +20,11 @@ export default async function HubPage() {
   const userId = session!.user!.id;
 
   await ensureFirstMissionUnlocked(userId);
+
+  const m1 = await getMissionProgress(userId, "m1");
+  if (isFreshMissionStart(m1)) {
+    redirect("/intro");
+  }
 
   const [content, missions, progress] = await Promise.all([
     getHubContent(),

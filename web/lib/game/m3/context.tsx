@@ -23,7 +23,7 @@ export function M3GameProvider({
 }) {
   const [state, dispatch] = useReducer(m3Reducer, savedState, initM3State);
 
-  const persistEnabled = state.phase !== "debrief" && state.phase !== "failed";
+  const persistEnabled = state.phase !== "failed";
 
   useGameSessionPersist({
     missionId: "m3",

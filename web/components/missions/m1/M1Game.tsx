@@ -331,7 +331,7 @@ function M1GameInner() {
         <div id="det-breach" className="active">
           <div className="breach-title">DETECTION THRESHOLD EXCEEDED</div>
           <div className="breach-sub">Mirror feed dropped. Reconnecting on a cold relay...</div>
-          <button type="button" className="db-cta" onClick={() => dispatch({ type: "DISMISS_BREACH" })}>
+          <button type="button" className="db-cta btn-sweep" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties} onClick={() => dispatch({ type: "DISMISS_BREACH" })}>
             RECONNECT FEED
           </button>
         </div>
@@ -341,7 +341,7 @@ function M1GameInner() {
         <div id="gameover-overlay" className="active">
           <div className="go-title">OPERATION COMPROMISED</div>
           <div className="go-sub">MegaCorp closed the breach. The mirror is dead.</div>
-          <button type="button" className="db-cta" onClick={() => dispatch({ type: "GAME_OVER_DISMISS" })}>
+          <button type="button" className="db-cta btn-sweep" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties} onClick={() => dispatch({ type: "GAME_OVER_DISMISS" })}>
             RETRY MISSION
           </button>
         </div>

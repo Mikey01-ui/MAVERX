@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { sendOperationReportEmail } from "@/lib/email/sendOperationReportEmail";
+import { isSmtpConfigured } from "@/lib/email/smtp";
+import { getMissionProgress } from "@/lib/progress";
+
+const patchSchema = z.object({
+  optIn: z.boolean(),
+});
+
+export async function PATCH(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+    }
+
+    const before = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, emailReportOptIn: true },
+    });
+
+    if (!before) {
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { emailReportOptIn: parsed.data.optIn },
+      select: { email: true, emailReportOptIn: true },
+    });
+
+    let reportSent = false;
+    let reportError: string | null = null;
+
+    if (parsed.data.optIn) {
+      const m5 = await getMissionProgress(session.user.id, "m5");
+      if (!m5 || m5.status !== "completed") {
+        reportError = "Complete Mission 5 before requesting your operation report.";
+      } else if (!isSmtpConfigured()) {
+        reportError = "Email delivery is not configured on this server.";
+      } else {
+        try {
+          const sent = await sendOperationReportEmail(session.user.id);
+          reportSent = true;
+          if (sent.to !== user.email) {
+            console.warn("operation report recipient mismatch", { expected: user.email, sent: sent.to });
+          }
+        } catch (err) {
+          console.error("operation report email error", err);
+          reportError = "We saved your preference but could not send the email. Try again later.";
+        }
+      }
+    }
+
+    return NextResponse.json({
+      email: user.email,
+      optIn: user.emailReportOptIn,
+      reportSent,
+      reportError,
+    });
+  } catch (err) {
+    console.error("email-report patch error", err);
+    return NextResponse.json({ error: "Failed to save preference." }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true, emailReportOptIn: true },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ email: user.email, optIn: user.emailReportOptIn });
+}

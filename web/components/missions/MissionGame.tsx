@@ -26,7 +26,7 @@ export function MissionGame({ missionId, missionLabel, missionName, savedState }
     return <M4Game savedState={savedState} />;
   }
   if (missionId === "m5") {
-    return <M5Game />;
+    return <M5Game savedState={savedState} />;
   }
   return <MissionGameStub missionId={missionId} missionLabel={missionLabel} missionName={missionName} />;
 }

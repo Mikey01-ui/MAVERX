@@ -25,7 +25,7 @@ export function M4GameProvider({
     missionId: "m4",
     state,
     serialize: serializeM4State,
-    enabled: state.phase !== "debrief",
+    enabled: state.phase !== "failed",
   });
 
   useEffect(() => {

@@ -16,6 +16,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+**Finale email (optional):** set `SMTP_*` in `.env` to send the Operation OMNI results PDF when a player opts in on the finale screen. Use a dedicated mailbox or app password (e.g. Gmail: `smtp.gmail.com`, port `587`, app password).
+
 **Seed account:** `playtest@omni.local` / `playtest12`
 
 **Smoke test** (with `npm run dev` running):

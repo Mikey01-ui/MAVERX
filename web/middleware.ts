@@ -11,7 +11,8 @@ export default auth((req) => {
   const isProtected =
     pathname.startsWith("/hub") ||
     pathname.startsWith("/mission") ||
-    pathname.startsWith("/intro");
+    pathname.startsWith("/intro") ||
+    pathname.startsWith("/finale");
 
   if (isProtected && !isLoggedIn) {
     const login = new URL("/login", req.nextUrl);
@@ -27,5 +28,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/hub/:path*", "/mission/:path*", "/intro", "/login", "/register", "/"],
+  matcher: ["/hub/:path*", "/mission/:path*", "/intro", "/finale", "/login", "/register", "/"],
 };

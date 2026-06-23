@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AudioToggle } from "@/components/audio/AudioToggle";
 import { useM1MissionAudio } from "@/lib/audio/useM1MissionAudio";
+import {
+  hydrateMargusM1Play,
+  serializeMargusM1Play,
+  type MargusM1PlaySnapshot,
+} from "@/lib/game/margus-m1/session";
+import { useGameSessionPersist } from "@/lib/game/sessionPersist";
 import { createPortal } from "react-dom";
 import { Bar } from "react-chartjs-2";
 import {
@@ -87,48 +93,76 @@ const RESIZE_DIRS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 type ResizeDir = (typeof RESIZE_DIRS)[number];
 const TASKBAR_H = 30;
 
-export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) => void }) {
+export function MargusM1Game({
+  onComplete,
+  savedState,
+}: {
+  onComplete: (stats: GameStats) => void;
+  savedState?: Record<string, unknown> | null;
+}) {
+  const playSaved = useMemo(() => hydrateMargusM1Play(savedState), [savedState]);
   // ── visible state ──
-  const [det, setDet] = useState(0);
-  const [timerSec, setTimerSec] = useState(0);
-  const [hackActive, setHackActive] = useState(true);
-  const [revealed, setRevealed] = useState(false);
-  const [hackShown, setHackShown] = useState<Record<string, boolean>>({});
-  const [activeLead, setActiveLead] = useState<LeadId | null>(null);
-  const [locked, setLocked] = useState<LeadId[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [leadVisual, setLeadVisual] = useState<Record<LeadId, LeadVisual>>({ compute: "n-dimmed", funding: "n-dimmed", personnel: "n-dimmed" });
-  const [leadStatusTxt, setLeadStatusTxt] = useState<Record<LeadId, string>>({ compute: "LOCKED", funding: "LOCKED", personnel: "LOCKED" });
-  const [stepBanner, setStepBanner] = useState("Select a lead on the board to begin investigation");
-  const [ebStep, setEbStep] = useState("");
-  const [ebHint, setEbHint] = useState("");
-  const [openWins, setOpenWins] = useState<string[]>([]);
-  const [zOrder, setZOrder] = useState<string[]>([]);
-  const [pos, setPos] = useState(WIN_POS);
-  const [activeTab, setActiveTab] = useState<Record<string, number>>({ "win-server": 0, "win-budget": 0, "win-personnel": 0, "win-sys-metrics": 0, "win-opex": 0, "win-absence": 0 });
-  const [anomaly, setAnomaly] = useState<Record<string, boolean>>({});
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [det, setDet] = useState(playSaved?.det ?? 0);
+  const [timerSec, setTimerSec] = useState(playSaved?.timerSec ?? 0);
+  const [hackActive, setHackActive] = useState(playSaved?.hackActive ?? true);
+  const [revealed, setRevealed] = useState(playSaved?.revealed ?? false);
+  const [hackShown, setHackShown] = useState<Record<string, boolean>>(playSaved?.hackShown ?? {});
+  const [activeLead, setActiveLead] = useState<LeadId | null>(playSaved?.activeLead ?? null);
+  const [locked, setLocked] = useState<LeadId[]>(playSaved?.locked ?? []);
+  const [currentStep, setCurrentStep] = useState(playSaved?.currentStep ?? 0);
+  const [leadVisual, setLeadVisual] = useState<Record<LeadId, LeadVisual>>(
+    (playSaved?.leadVisual as Record<LeadId, LeadVisual> | undefined) ?? {
+      compute: "n-dimmed",
+      funding: "n-dimmed",
+      personnel: "n-dimmed",
+    }
+  );
+  const [leadStatusTxt, setLeadStatusTxt] = useState<Record<LeadId, string>>(
+    (playSaved?.leadStatusTxt as Record<LeadId, string> | undefined) ?? {
+      compute: "LOCKED",
+      funding: "LOCKED",
+      personnel: "LOCKED",
+    }
+  );
+  const [stepBanner, setStepBanner] = useState(playSaved?.stepBanner ?? "Select a lead on the board to begin investigation");
+  const [ebStep, setEbStep] = useState(playSaved?.ebStep ?? "");
+  const [ebHint, setEbHint] = useState(playSaved?.ebHint ?? "");
+  const [openWins, setOpenWins] = useState<string[]>(playSaved?.openWins ?? []);
+  const [zOrder, setZOrder] = useState<string[]>(playSaved?.zOrder ?? []);
+  const [pos, setPos] = useState(playSaved?.pos ?? WIN_POS);
+  const [activeTab, setActiveTab] = useState<Record<string, number>>(
+    playSaved?.activeTab ?? {
+      "win-server": 0,
+      "win-budget": 0,
+      "win-personnel": 0,
+      "win-sys-metrics": 0,
+      "win-opex": 0,
+      "win-absence": 0,
+    }
+  );
+  const [anomaly, setAnomaly] = useState<Record<string, boolean>>(playSaved?.anomaly ?? {});
+  const [messages, setMessages] = useState<ChatMsg[]>((playSaved?.messages as ChatMsg[] | undefined) ?? []);
   const [typing, setTyping] = useState<Sender | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [verifyLead, setVerifyLead] = useState<LeadId | null>(null);
-  const [verifyOpen, setVerifyOpen] = useState(false);
-  const [chipIdx, setChipIdx] = useState<(number | null)[]>([]);
-  const [chipState, setChipState] = useState<Record<string, "sel" | "correct" | "wrong">>({});
-  const [paramErr, setParamErr] = useState<Record<number, string>>({});
-  const [hintCd, setHintCd] = useState(0);
-  const [pptSlide, setPptSlide] = useState(0);
-  const [pptZoomLvl, setPptZoomLvl] = useState(100);
-  const [synthOn, setSynthOn] = useState(false);
-  const [synthDone, setSynthDone] = useState(false);
-  const [breachOn, setBreachOn] = useState(false);
-  const [breachAlert, setBreachAlert] = useState("CONNECTION COMPROMISED");
-  const [breachGlitch, setBreachGlitch] = useState("");
-  const [breachRecon, setBreachRecon] = useState("");
-  const [gameOver, setGameOver] = useState(false);
-  const [glitching, setGlitching] = useState(false);
-  const [dialog, setDialog] = useState<string | null>(null);
-  const [synthBtnReady, setSynthBtnReady] = useState(false);
-  const [synthBtnEnabled, setSynthBtnEnabled] = useState(false);
+  const [verifyLead, setVerifyLead] = useState<LeadId | null>(playSaved?.verifyLead ?? null);
+  const [verifyOpen, setVerifyOpen] = useState(playSaved?.verifyOpen ?? false);
+  const [chipIdx, setChipIdx] = useState<(number | null)[]>(playSaved?.chipIdx ?? []);
+  const [chipState, setChipState] = useState<Record<string, "sel" | "correct" | "wrong">>(playSaved?.chipState ?? {});
+  const [paramErr, setParamErr] = useState<Record<number, string>>(playSaved?.paramErr ?? {});
+  const [hintCd, setHintCd] = useState(playSaved?.hintCd ?? 0);
+  const [pptSlide, setPptSlide] = useState(playSaved?.pptSlide ?? 0);
+  const [pptZoomLvl, setPptZoomLvl] = useState(playSaved?.pptZoomLvl ?? 100);
+  const [synthOn, setSynthOn] = useState(playSaved?.synthOn ?? false);
+  const [synthDone, setSynthDone] = useState(playSaved?.synthDone ?? false);
+  const [breachOn, setBreachOn] = useState(playSaved?.breachOn ?? false);
+  const [breachAlert, setBreachAlert] = useState(playSaved?.breachAlert ?? "CONNECTION COMPROMISED");
+  const [breachGlitch, setBreachGlitch] = useState(playSaved?.breachGlitch ?? "");
+  const [breachRecon, setBreachRecon] = useState(playSaved?.breachRecon ?? "");
+  const [gameOver, setGameOver] = useState(playSaved?.gameOver ?? false);
+  const [glitching, setGlitching] = useState(playSaved?.glitching ?? false);
+  const [dialog, setDialog] = useState<string | null>(playSaved?.dialog ?? null);
+  const [synthBtnReady, setSynthBtnReady] = useState(playSaved?.synthBtnReady ?? false);
+  const [synthBtnEnabled, setSynthBtnEnabled] = useState(playSaved?.synthBtnEnabled ?? false);
 
   // ── refs (logic bookkeeping) ──
   const gs = useRef({
@@ -145,9 +179,131 @@ export function MargusM1Game({ onComplete }: { onComplete: (stats: GameStats) =>
   const resizeRef = useRef<{ id: string; dir: ResizeDir; startX: number; startY: number; startL: number; startT: number; startW: number; startH: number } | null>(null);
   const restoreRects = useRef<Record<string, WinRect>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const [maximized, setMaximized] = useState<string[]>([]);
+  const [maximized, setMaximized] = useState<string[]>(playSaved?.maximized ?? []);
   const synthSvgRef = useRef<SVGSVGElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!playSaved?.gs) return;
+    const g = playSaved.gs;
+    Object.assign(gs.current, {
+      ...g,
+      foldersOpened: new Set(g.foldersOpened),
+      warned: { ...g.warned },
+    });
+  }, [playSaved]);
+
+  const sessionSnapshot = useMemo(
+    (): MargusM1PlaySnapshot => ({
+      det,
+      timerSec,
+      hackActive,
+      revealed,
+      hackShown,
+      activeLead,
+      locked,
+      currentStep,
+      leadVisual,
+      leadStatusTxt,
+      stepBanner,
+      ebStep,
+      ebHint,
+      openWins,
+      zOrder,
+      pos,
+      activeTab,
+      anomaly,
+      messages,
+      verifyLead,
+      verifyOpen,
+      chipIdx,
+      chipState,
+      paramErr,
+      hintCd,
+      pptSlide,
+      pptZoomLvl,
+      synthOn,
+      synthDone,
+      breachOn,
+      breachAlert,
+      breachGlitch,
+      breachRecon,
+      gameOver,
+      glitching,
+      dialog,
+      synthBtnReady,
+      synthBtnEnabled,
+      maximized,
+      gs: {
+        decoyDetection: gs.current.decoyDetection,
+        clickDetection: gs.current.clickDetection,
+        verifyDetection: gs.current.verifyDetection,
+        hintDetection: gs.current.hintDetection,
+        passiveDetection: gs.current.passiveDetection,
+        errors: gs.current.errors,
+        hintsUsed: gs.current.hintsUsed,
+        reconnected: gs.current.reconnected,
+        hackDone: gs.current.hackDone,
+        warned: { ...gs.current.warned },
+        foldersOpened: [...gs.current.foldersOpened],
+        personalNotesSeen: gs.current.personalNotesSeen,
+        sysMetricsSeen: gs.current.sysMetricsSeen,
+        msgId: gs.current.msgId,
+        toastId: gs.current.toastId,
+        zTop: gs.current.zTop,
+        gameOver: gs.current.gameOver,
+        synthStarted: gs.current.synthStarted,
+      },
+    }),
+    [
+      det,
+      timerSec,
+      hackActive,
+      revealed,
+      hackShown,
+      activeLead,
+      locked,
+      currentStep,
+      leadVisual,
+      leadStatusTxt,
+      stepBanner,
+      ebStep,
+      ebHint,
+      openWins,
+      zOrder,
+      pos,
+      activeTab,
+      anomaly,
+      messages,
+      verifyLead,
+      verifyOpen,
+      chipIdx,
+      chipState,
+      paramErr,
+      hintCd,
+      pptSlide,
+      pptZoomLvl,
+      synthOn,
+      synthDone,
+      breachOn,
+      breachAlert,
+      breachGlitch,
+      breachRecon,
+      gameOver,
+      glitching,
+      dialog,
+      synthBtnReady,
+      synthBtnEnabled,
+      maximized,
+    ]
+  );
+
+  useGameSessionPersist({
+    missionId: "m1",
+    state: sessionSnapshot,
+    serialize: serializeMargusM1Play,
+    enabled: revealed && !synthDone && !gameOver,
+  });
 
   // ─── AUDIO ─── (mirrors m3/m4: state-diff cue hook)
   const audioState = useMemo(

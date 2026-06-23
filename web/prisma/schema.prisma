@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  passwordHash String
-  role         String         @default("player")
-  createdAt    DateTime       @default(now())
-  progress     UserProgress[]
+  id                String         @id @default(cuid())
+  email             String         @unique
+  passwordHash      String
+  role              String         @default("player")
+  emailReportOptIn  Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  progress          UserProgress[]
 }
 
 model UserProgress {

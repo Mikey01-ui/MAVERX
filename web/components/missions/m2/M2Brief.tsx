@@ -141,7 +141,13 @@ export function M2Brief({ onContinue, onSkip }: { onContinue: () => void; onSkip
         </div>
 
         <div className="button-section">
-          <button className={`btn-next${unlocked ? "" : " is-locked"}`} id="btn-continue" disabled={!unlocked} onClick={onContinue}>
+          <button
+            className={`btn-next btn-sweep${unlocked ? "" : " is-locked"}`}
+            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
+            id="btn-continue"
+            disabled={!unlocked}
+            onClick={onContinue}
+          >
             <div className="btn-inner">
               <span>Continue</span>
               <span className="btn-arrow">→</span>

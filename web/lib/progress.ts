@@ -138,12 +138,20 @@ export function findLatestInProgress(progress: ProgressRecord[]): ProgressRecord
   );
 }
 
+/** True when the player has not yet passed the intro / first brief for this mission. */
+export function isFreshMissionStart(record: ProgressRecord | null | undefined): boolean {
+  if (!record || record.status !== "in_progress") return false;
+  if (record.stateJson) return false;
+  const checkpoint = record.checkpoint ?? "start";
+  return checkpoint === "start" || checkpoint === "intro";
+}
+
 /** True when the player has moved past a fresh start and should resume, not restart. */
 export function hasResumableSession(record: ProgressRecord | null | undefined): boolean {
   if (!record || record.status !== "in_progress") return false;
   if (record.stateJson) return true;
   const checkpoint = record.checkpoint;
-  return !!checkpoint && checkpoint !== "start";
+  return !!checkpoint && checkpoint !== "start" && checkpoint !== "intro";
 }
 
 /** Hub “continue” target: earliest in-progress mission, else next unlocked mission after last completed. */
@@ -156,7 +164,7 @@ export function findContinueMission(
 
   for (const mission of sorted) {
     const record = map.get(mission.id);
-    if (record?.status === "in_progress") {
+    if (record?.status === "in_progress" && !isFreshMissionStart(record)) {
       return {
         missionId: mission.id,
         checkpoint: record.checkpoint ?? "start",

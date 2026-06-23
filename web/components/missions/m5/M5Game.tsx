@@ -20,6 +20,7 @@ import {
   VIZ_OPTIONS,
 } from "@/lib/game/m5/data";
 import { buildM5Debrief } from "@/lib/game/debriefBuilders";
+import { m5ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { M5GameProvider, useM5Game } from "@/lib/game/m5/context";
 import { getDetectionClass } from "@/lib/game/m5/reducer";
 import { useM5MissionAudio } from "@/lib/audio/useM5MissionAudio";
@@ -118,6 +119,7 @@ function M5GameInner() {
   }, [state.phase]);
 
   const completeMission = useCallback(async () => {
+    const snapshot = m5ReportSnapshot(state);
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
@@ -126,19 +128,13 @@ function M5GameInner() {
         missionId: "m5",
         status: "completed",
         checkpoint: "completed",
-        score: state.score,
-        stateJson: {
-          version: 1,
-          commits: state.commits,
-          ships: state.ships,
-          detection: state.detection,
-          timerSec: state.timerSec,
-        },
+        score: snapshot.score,
+        stateJson: snapshot.stateJson,
       }),
     });
-    router.push("/hub");
+    router.push("/finale");
     router.refresh();
-  }, [router, state.commits, state.detection, state.score, state.ships, state.timerSec]);
+  }, [router, state]);
 
   const debrief = useMemo(() => buildM5Debrief(state), [state]);
 
@@ -379,14 +375,16 @@ function M5GameInner() {
         </>
       )}
 
-      {state.phase === "debrief" && <MissionDebriefScreen config={debrief} onContinue={completeMission} />}
+      {state.phase === "debrief" && (
+        <MissionDebriefScreen config={debrief} onContinue={() => void completeMission()} hubLink={false} />
+      )}
     </div>
   );
 }
 
-export function M5Game() {
+export function M5Game({ savedState }: { savedState?: Record<string, unknown> | null }) {
   return (
-    <M5GameProvider>
+    <M5GameProvider savedState={savedState}>
       <M5GameInner />
     </M5GameProvider>
   );

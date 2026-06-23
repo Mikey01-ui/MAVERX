@@ -10,6 +10,7 @@ type MissionRendererProps = {
   initialCheckpoint: string | null;
   resume: boolean;
   savedState?: Record<string, unknown> | null;
+  debriefPreview?: boolean;
 };
 
 export function MissionRenderer(props: MissionRendererProps) {

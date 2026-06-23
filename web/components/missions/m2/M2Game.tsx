@@ -7,6 +7,7 @@ import { M2SynthOverlay } from "@/components/missions/m2/M2SynthOverlay";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
 import { useXpWindows } from "@/components/missions/m2/useXpWindows";
 import { buildM2Debrief } from "@/lib/game/debriefBuilders";
+import { m2ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import {
   DISPUTES,
   FILES,
@@ -396,6 +397,7 @@ function M2GameInner() {
   );
 
   const completeMission = useCallback(async () => {
+    const snapshot = m2ReportSnapshot(state);
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
@@ -404,20 +406,13 @@ function M2GameInner() {
         missionId: "m2",
         status: "completed",
         checkpoint: "completed",
-        score: state.score,
-        stateJson: {
-          version: 2,
-          timerSec: state.timerSec,
-          tokens: state.tokens.length,
-          wrongRulings: state.wrongRulings,
-          verifyErrors: state.verifyErrors,
-          hintsUsed: state.hintsUsed,
-        },
+        score: snapshot.score,
+        stateJson: snapshot.stateJson,
       }),
     });
     router.push("/mission/m3");
     router.refresh();
-  }, [router, state.hintsUsed, state.score, state.timerSec, state.tokens.length, state.verifyErrors, state.wrongRulings]);
+  }, [router, state]);
 
   const debrief = useMemo(() => buildM2Debrief(state), [state]);
 

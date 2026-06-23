@@ -97,7 +97,8 @@ export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
       <div className={`mission-btn-section${isPremission ? " mission-btn-section--premission" : ""}`}>
         <button
           type="button"
-          className={`mission-btn-next${brief.ghostContinue ? " mission-btn-next--ghost" : ""}${canContinue ? "" : " is-locked"}`}
+          className={`mission-btn-next btn-sweep${brief.ghostContinue ? " mission-btn-next--ghost" : ""}${canContinue ? "" : " is-locked"}`}
+          style={{ "--sweep-ms": `${brief.continueDelayMs}ms` } as React.CSSProperties}
           disabled={!canContinue}
           onClick={onContinue}
         >

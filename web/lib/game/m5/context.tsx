@@ -2,13 +2,31 @@
 
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { CREW_QUESTIONS, HACK_LINES, INTRO_CHAT } from "@/lib/game/m5/data";
-import { createInitialM5State, m5Reducer } from "@/lib/game/m5/reducer";
+import { useGameSessionPersist } from "@/lib/game/sessionPersist";
+import { createInitialM5State, hydrateM5State, m5Reducer, serializeM5State } from "@/lib/game/m5/reducer";
 import type { CrewId, M5GameAction, M5GameState } from "@/lib/game/m5/types";
 
 const M5GameContext = createContext<{ state: M5GameState; dispatch: (action: M5GameAction) => void } | null>(null);
 
-export function M5GameProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(m5Reducer, undefined, createInitialM5State);
+function initM5State(saved: Record<string, unknown> | null | undefined) {
+  return hydrateM5State(saved) ?? createInitialM5State();
+}
+
+export function M5GameProvider({
+  children,
+  savedState,
+}: {
+  children: ReactNode;
+  savedState?: Record<string, unknown> | null;
+}) {
+  const [state, dispatch] = useReducer(m5Reducer, savedState, initM5State);
+
+  useGameSessionPersist({
+    missionId: "m5",
+    state,
+    serialize: serializeM5State,
+    enabled: true,
+  });
 
   useEffect(() => {
     if (state.phase !== "hack") return;

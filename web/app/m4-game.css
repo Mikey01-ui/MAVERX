@@ -104,9 +104,57 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game #gameover-overlay .go-sub { font-family:var(--font-mono); font-size:clamp(11px,1.1vw,14px); color:rgba(250,247,242,.45); letter-spacing:2px; text-align:center; max-width:420px; line-height:1.8; }
 
 .m4-game #broker-wrap { flex:1 1 0%; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.m4-game .broker-hdr {
+  min-height:0; background:var(--panel-bg); border-bottom:1px solid rgba(0,196,28,.22);
+  display:flex; align-items:center; padding:6px 12px 8px; gap:10px; flex-shrink:0;
+}
+.m4-game .bk-avatar {
+  width:34px; height:34px; border-radius:50%; background:#2f2238; border:1px solid rgba(0,196,28,.16);
+  display:flex; align-items:center; justify-content:center; font-size:17px; color:var(--green-stable);
+}
+.m4-game .bk-name {
+  color:var(--text-w); font-size:clamp(12px,1.3vw,15px); font-weight:600; font-family:'DM Sans',sans-serif;
+}
+.m4-game .bk-members {
+  display:flex; flex-wrap:wrap; gap:2px; font-size:clamp(10px,1vw,12px);
+  font-family:'DM Sans',sans-serif; line-height:1.35;
+}
+.m4-game .bk-member.online { color:var(--green-matrix); }
+.m4-game .bk-member.offline { color:rgba(100,100,100,.55); }
+.m4-game .bk-sep { color:rgba(100,100,100,.4); font-size:10px; }
+.m4-game .bk-icons { margin-left:auto; color:var(--green-stable); font-size:15px; }
+.m4-game #broker-body {
+  flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column;
+  min-height:0; background:var(--void);
+}
+.m4-game .bm-sep { display:flex; justify-content:center; margin:4px 0 14px; }
+.m4-game .bm-sep-pill {
+  background:rgba(43,32,52,.92); color:var(--green-stable); font-size:11px; padding:3px 14px;
+  border-radius:12px; border:1px solid rgba(0,196,28,.18);
+}
+.m4-game .bm-group {
+  display:flex; flex-direction:column; align-items:stretch; gap:0; margin-bottom:16px; min-width:0;
+}
+.m4-game .bm-sender {
+  font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:.5px; margin-bottom:6px; padding-left:4px;
+}
+.m4-game .bm-bubble {
+  align-self:flex-start; display:block; width:100%; max-width:min(420px,100%); padding:10px 12px;
+  border-radius:14px 14px 14px 3px; line-height:1.55; font-family:'DM Sans',sans-serif;
+  font-size:clamp(11px,1.15vw,14px); overflow-wrap:break-word; animation:m4BubbleIn 220ms ease forwards; opacity:0;
+}
+@keyframes m4BubbleIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.m4-game .bm-ts {
+  align-self:flex-end; font-size:10px; color:rgba(0,196,28,0.72); margin-top:4px; font-family:'DM Sans',sans-serif;
+}
+.m4-game .bm-ts::after { content:' ✓'; }
+.m4-game .bm-bubble.bm-d { background:rgba(43,32,52,.92); color:var(--text-w); border:1px solid rgba(0,196,28,.10); }
+.m4-game .bm-bubble.bm-ok { background:rgba(0,196,28,.08); color:#cfead2; border-left:2px solid rgba(0,196,28,.55); }
+.m4-game .bm-bubble.bm-err { background:rgba(211,25,114,.08); color:#efb5cf; border-left:2px solid rgba(211,25,114,.35); }
+.m4-game .bm-bubble.bm-h { background:rgba(143,68,232,.12); color:#dbc7f6; border-left:2px solid rgba(143,68,232,.40); }
 .m4-game .broker-footer {
   flex-shrink:0; padding:0 0 max(8px,env(safe-area-inset-bottom,0));
-  border-top:1px solid rgba(0,196,28,.22); background:rgba(34,24,41,.6);
+  border-top:1px solid rgba(0,196,28,.22); background:var(--panel-bg);
 }
 .m4-game .broker-input-bar { display:flex; align-items:center; gap:10px; padding:6px 12px 8px; }
 .m4-game .hint-wrap { position:relative; flex-shrink:0; }
@@ -118,21 +166,14 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game #hint-btn:disabled { opacity:.35; cursor:not-allowed; filter:none; }
 .m4-game .hint-tooltip {
   position:absolute; bottom:calc(100% + 6px); left:0; white-space:nowrap;
-  background:rgba(34,24,41,.96); color:#dbc7f6; font-size:10px; padding:4px 8px; border-radius:4px;
+  background:rgba(34,24,41,.96); color:#dbc7f6; font-size:11px; padding:4px 8px; border-radius:4px;
   opacity:0; pointer-events:none; border:1px solid rgba(143,68,232,.55); z-index:2;
 }
 .m4-game .hint-wrap:hover .hint-tooltip { opacity:1; }
 .m4-game #broker-input {
   flex:1; background:#2f2238; border:1px solid rgba(0,196,28,.16); border-radius:18px;
-  color:var(--green-stable); font-size:11px; padding:0 14px; height:34px; cursor:not-allowed;
+  color:var(--green-stable); font-size:12px; padding:0 14px; height:34px; cursor:not-allowed;
 }
-.m4-game .broker-hdr { display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid rgba(0,196,28,.22); background:rgba(34,24,41,.6); flex-shrink:0; }
-.m4-game .bk-avatar { width:32px; height:32px; border-radius:8px; background:rgba(0,196,28,.12); border:1px solid rgba(0,196,28,.28); display:flex; align-items:center; justify-content:center; color:var(--green-stable); font-size:14px; }
-.m4-game .bk-meta { flex:1; min-width:0; }
-.m4-game .bk-name { font-family:var(--font-display); font-size:12px; font-weight:600; color:var(--text-w); }
-.m4-game .bk-members { font-size:9px; color:#7a9aaa; margin-top:2px; }
-.m4-game .bk-icons { color:rgba(143,68,232,.7); font-size:11px; }
-.m4-game .broker-body-scroll { flex:1; overflow-y:auto; min-height:0; padding:8px 12px; background:var(--void,#1e0f1a); }
 .m4-game .r4-step-pop { position:absolute; left:12px; bottom:10px; z-index:6; max-width:min(420px,50vw);
   background:rgba(15,23,42,.97); border:1px solid rgba(245,158,11,.38); border-radius:14px; padding:18px 20px;
   box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(0,0,0,.2); pointer-events:auto;
@@ -159,7 +200,7 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game .r4-step-pop-label { color:#64748b; font-family:var(--font-mono); font-weight:600; text-transform:uppercase; font-size:9px; letter-spacing:.05em; margin-right:4px; }
 .m4-game #debrief-screen { position:fixed; inset:0; z-index:455; display:none; flex-direction:column; padding:24px 48px; background:rgba(0,0,0,.95); overflow:auto; }
 .m4-game #debrief-screen.active { display:flex; }
-.m4-game .db-cta { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:13px; font-weight:700; border-radius:4px; cursor:pointer; }
+.m4-game .db-cta:not(.btn-sweep) { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:13px; font-weight:700; border-radius:4px; cursor:pointer; }
 .m4-game .db-cta-row { display:flex; justify-content:center; margin-top:18px; }
 .m4-game #sort-help { font-size:11px; color:#7a9aaa; padding:8px 14px; background:rgba(0,0,0,.2); border-bottom:1px solid rgba(0,196,28,.14); flex-shrink:0; }
 .m4-game .fc-phase-bar { display:flex; gap:0; margin-bottom:10px; flex-shrink:0; }
@@ -218,14 +259,6 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game .m4-return-label { font-size:9px; color:#64748b; letter-spacing:.06em; text-transform:uppercase; }
 .m4-game .m4-return-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1px solid rgba(56,189,248,.45); background:rgba(30,58,95,.5); color:#bae6fd; font-size:9px; font-family:var(--font-mono); cursor:pointer; }
 .m4-game .m4-return-chip:hover { border-color:rgba(251,191,36,.6); color:#fde68a; }
-.m4-game .bm-group { margin-bottom:10px; }
-.m4-game .bm-sender { font-size:8px; letter-spacing:.14em; color:#64748b; margin-bottom:3px; }
-.m4-game .bm-bubble { padding:8px 10px; border-radius:8px; font-size:11px; line-height:1.5; }
-.m4-game .bm-bubble.bm-d { background:rgba(30,41,59,.85); border:1px solid rgba(71,85,105,.5); color:#e2e8f0; }
-.m4-game .bm-bubble.bm-ok { background:rgba(6,78,59,.35); border:1px solid rgba(34,197,94,.4); color:#bbf7d0; }
-.m4-game .bm-bubble.bm-err { background:rgba(127,29,29,.25); border:1px solid rgba(248,113,113,.4); color:#fecaca; }
-.m4-game .bm-bubble.bm-h { background:rgba(84,0,173,.2); border:1px solid rgba(143,68,232,.35); color:#e9d5ff; }
-.m4-game .bm-ts { font-size:8px; color:#475569; margin-top:3px; }
 .m4-game {
   --scroll-thumb:rgba(68,61,92,.92);
   --scroll-thumb-hover:rgba(108,96,138,.98);
@@ -235,26 +268,26 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game *::-webkit-scrollbar-track { background:transparent; }
 .m4-game *::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border-radius:999px; }
 .m4-game *::-webkit-scrollbar-thumb:hover { background:var(--scroll-thumb-hover); }
-.m4-game .broker-body-scroll,
+.m4-game #broker-body,
 .m4-game .r4-step-pop,
 .m4-game .fc-canvas,
 .m4-game #debrief-screen .mr-detect,
 .m4-game #debrief-screen .tc-content {
   scrollbar-width:thin; scrollbar-color:var(--scroll-thumb) transparent;
 }
-.m4-game .broker-body-scroll::-webkit-scrollbar,
+.m4-game #broker-body::-webkit-scrollbar,
 .m4-game .r4-step-pop::-webkit-scrollbar,
 .m4-game .fc-canvas::-webkit-scrollbar,
 .m4-game #debrief-screen .mr-detect::-webkit-scrollbar,
 .m4-game #debrief-screen .tc-content::-webkit-scrollbar { width:4px; }
-.m4-game .broker-body-scroll::-webkit-scrollbar-thumb,
+.m4-game #broker-body::-webkit-scrollbar-thumb,
 .m4-game .r4-step-pop::-webkit-scrollbar-thumb,
 .m4-game .fc-canvas::-webkit-scrollbar-thumb,
 .m4-game #debrief-screen .mr-detect::-webkit-scrollbar-thumb,
 .m4-game #debrief-screen .tc-content::-webkit-scrollbar-thumb {
   background:var(--scroll-thumb); border-radius:999px;
 }
-.m4-game .broker-body-scroll::-webkit-scrollbar-thumb:hover,
+.m4-game #broker-body::-webkit-scrollbar-thumb:hover,
 .m4-game #debrief-screen .mr-detect::-webkit-scrollbar-thumb:hover,
 .m4-game #debrief-screen .tc-content::-webkit-scrollbar-thumb:hover {
   background:var(--scroll-thumb-hover);

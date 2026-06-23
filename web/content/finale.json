@@ -1,0 +1,17 @@
+{
+  "statusLeft": ["OPERATION COMPLETE", "OMNI"],
+  "statusRight": ["SECURE CHANNEL"],
+  "eyebrow": "// Operation OMNI — The Data Heist",
+  "title": "Thank you for playing",
+  "totalScoreLabel": "Total operation score",
+  "paragraphs": [
+    "Five missions. One operation. You traced the footprint, settled the disputes, cleared the payload, mapped the flows, and won the final brief.",
+    "The Mastermind terminal is powering down. What you practiced — framing evidence, judging access, and earning commitment — stays with you."
+  ],
+  "pullquote": "The heist ends. What you learned doesn't.",
+  "scoresLabel": "// Your operation record",
+  "emailOptInLabel": "Email me a breakdown of my results across all five missions",
+  "emailOptInHint": "We'll email your detailed Operation OMNI breakdown (PDF) to {email}.",
+  "continueLabel": "Return to Hub",
+  "footer": "Operation OMNI · secure progress sync"
+}

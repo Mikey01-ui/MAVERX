@@ -73,14 +73,35 @@ export const STEP_DATA_HINT: Record<string, string> = {
 };
 
 export const WRONG_STEP_OVERRIDES: Record<string, Record<string, string>> = {
-  memo_847: { "identity-verify": "The offer letter is <strong>Legal's first step</strong> — it must be approved before IT can verify identity.", "background-check": "Legal reviews the <strong>offer terms</strong> first, then HR runs background checks." },
-  web_logs: { "offer-review": "Session logs verify <strong>identity</strong>, not <strong>contract terms</strong> — wrong starting step.", "background-check": "Portal logs are for <strong>identity verification</strong>, not <strong>background screening</strong>." },
-  risk_full: { "health-screen": "Background checks are <strong>risk assessment</strong>, not <strong>health screening</strong> — different HR lane.", "identity-verify": "This is <strong>HR compliance data</strong>, not <strong>IT identity verification</strong>." },
-  health: { "background-check": "Health screening is <strong>benefits enrollment</strong>, not <strong>compliance risk check</strong>.", "payroll-setup": "Medical data goes to <strong>health screening</strong>, not <strong>payroll setup</strong>." },
-  payroll: { "health-screen": "Compensation data is for <strong>payroll setup</strong>, not <strong>health screening</strong>.", "data-access": "Tax forms and salary go to <strong>HR Payroll</strong>, not <strong>IT Data Governance</strong>." },
-  cust_dump: { "payroll-setup": "System access isn't <strong>payroll</strong> — this is <strong>IT data provisioning</strong>." },
-  schools: { "performance-goals": "Dependent info is for <strong>benefits enrollment</strong>, not <strong>performance goals</strong>." },
-  omni_exec: { "dependent-benefits": "Performance reviews set <strong>goals</strong>, not <strong>benefits enrollment</strong>." },
+  memo_847: {
+    "identity-verify": "Legal must approve the offer and NDA before IT can verify anyone's identity — this file belongs at Offer Letter Review.",
+    "background-check": "Legal reviews contract terms first — HR cannot run a background check until the offer package is approved.",
+  },
+  web_logs: {
+    "offer-review": "Session logs prove who logged in — they do not belong at Legal's offer review step.",
+    "background-check": "Portal session logs are for IT identity verification, not HR's background screening lane.",
+  },
+  risk_full: {
+    "health-screen": "This is a criminal and employment risk assessment — Benefits health screening is a different HR lane.",
+    "identity-verify": "Background check results are HR compliance data — IT Security verifies identity with session logs, not HR risk scores.",
+  },
+  health: {
+    "background-check": "Medical screening results feed benefits enrollment — they are not part of HR's compliance risk check.",
+    "payroll-setup": "Health data goes to the health screening step — Payroll needs tax forms and salary rows, not exam results.",
+  },
+  payroll: {
+    "health-screen": "Compensation and tax withholding belong in payroll setup — not in the health screening lane.",
+    "data-access": "Salary and tax forms are for HR Payroll — IT Data Governance provisions system access, not paychecks.",
+  },
+  cust_dump: {
+    "payroll-setup": "This file defines database permissions and schema access — IT Data Governance provisions access, not Payroll.",
+  },
+  schools: {
+    "performance-goals": "Dependent names and birth dates are for family benefits enrollment — not for setting performance goals.",
+  },
+  omni_exec: {
+    "dependent-benefits": "Performance reviews and OKRs belong in the performance setup step — not in dependent benefits enrollment.",
+  },
 };
 
 export const FLOW_NODE_POSITIONS = [
@@ -195,7 +216,9 @@ export function wrongStepMessage(fileId: string, wrongStepId: string) {
   if (override) return override;
   const f = FILES.find((x) => x.id === fileId);
   const wrong = STEPS.find((s) => s.id === wrongStepId);
-  return `${f?.name} does not belong at ${wrong?.title}.`;
+  const correctId = correctStepForFile(fileId);
+  const correct = STEPS.find((s) => s.id === correctId);
+  return `${f?.name ?? "This file"} does not belong at ${wrong?.title ?? "that step"} — ${correct?.title ?? "another gate"} is the team that needs this data.`;
 }
 
 export const DEBRIEF = {

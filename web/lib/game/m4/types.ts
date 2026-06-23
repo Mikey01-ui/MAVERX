@@ -20,6 +20,16 @@ export type LeakFile = {
 
 export type ChatMessage = { id: string; sender: string; text: string; tone: ChatTone; ts: string };
 
+export type M4WrongAttempt = {
+  fileId: string;
+  file: string;
+  wrongGateId: string;
+  wrongGateTitle: string;
+  correctGateId: string;
+  correctGateTitle: string;
+  reason: string;
+};
+
 export type M4Phase = "hack" | "play" | "debrief" | "failed";
 
 export type M4GameState = {
@@ -33,6 +43,7 @@ export type M4GameState = {
   detectionWarned: { 30: boolean; 60: boolean; 80: boolean };
   gameOver: boolean;
   wrongAttempts: number;
+  wrongAttemptLog: M4WrongAttempt[];
   hintsUsed: number;
   hintCooldown: boolean;
   hintCooldownUntil: number | null;

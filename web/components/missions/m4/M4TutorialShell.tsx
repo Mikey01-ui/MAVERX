@@ -222,17 +222,21 @@ export const M4TutorialShell = forwardRef<M4TutorialShellHandle>(function M4Tuto
                 <div className="bk-avatar">
                   <i className="fas fa-shield-halved" aria-hidden />
                 </div>
-                <div className="bk-meta">
-                  <div className="bk-name">Operation channel</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="bk-name">Operation Channel</div>
                   <div className="bk-members">
-                    <span className="bk-member">Voss · Nova · Kade</span>
+                    <span className="bk-member online">Voss</span>
+                    <span className="bk-sep">·</span>
+                    <span className="bk-member online">Nova</span>
+                    <span className="bk-sep">·</span>
+                    <span className="bk-member online">Kade</span>
                   </div>
                 </div>
                 <div className="bk-icons">
                   <i className="fas fa-lock" aria-hidden />
                 </div>
               </div>
-              <div className="broker-body-scroll" id="broker-body">
+              <div id="broker-body">
                 <div className="bm-sep">
                   <div className="bm-sep-pill">Process map queue · live</div>
                 </div>

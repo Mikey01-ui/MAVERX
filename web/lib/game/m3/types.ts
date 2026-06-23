@@ -21,6 +21,14 @@ export type ChatMessage = {
   ts: string;
 };
 
+export type M3WrongAttempt = {
+  fileId: string;
+  file: string;
+  choice: Channel;
+  correct: Channel;
+  reason: string;
+};
+
 export type M3Phase = "hack" | "desktop" | "play" | "signoff" | "debrief" | "failed";
 
 export type M3GameState = {
@@ -34,6 +42,7 @@ export type M3GameState = {
   selectedId: string | null;
   timerSec: number;
   wrongRoutes: number;
+  wrongAttemptLog: M3WrongAttempt[];
   catastrophic: number;
   hintsUsed: number;
   hintCooldown: boolean;

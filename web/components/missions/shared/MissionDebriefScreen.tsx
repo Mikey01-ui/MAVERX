@@ -116,8 +116,14 @@ export function MissionDebriefScreen({ config, onContinue, hubLink = true }: Pro
       </div>
 
       <div className={`db-cta-row${show(totalSteps) ? " show" : ""}`}>
-        <button type="button" className="db-cta" onClick={onContinue}>
-          {config.cta}
+        <button
+          type="button"
+          className="db-cta btn-sweep"
+          style={{ "--sweep-ms": "1820ms" } as React.CSSProperties}
+          disabled={!show(totalSteps)}
+          onClick={onContinue}
+        >
+          <span>{config.cta}</span>
         </button>
       </div>
       {hubLink && (

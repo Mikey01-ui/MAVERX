@@ -167,6 +167,21 @@ const missionMediaSchema = z.object({
   sfx: z.record(z.string(), z.string()).optional(),
 });
 
+const finaleSchema = z.object({
+  statusLeft: z.array(z.string()),
+  statusRight: z.array(z.string()),
+  eyebrow: z.string(),
+  title: z.string(),
+  totalScoreLabel: z.string(),
+  paragraphs: z.array(z.string()),
+  pullquote: z.string(),
+  scoresLabel: z.string(),
+  emailOptInLabel: z.string(),
+  emailOptInHint: z.string(),
+  continueLabel: z.string(),
+  footer: z.string(),
+});
+
 async function readJson<T>(filePath: string, schema: z.ZodType<T>): Promise<T> {
   const raw = await readFile(filePath, "utf8");
   return schema.parse(JSON.parse(raw));
@@ -178,6 +193,7 @@ export type VideoIntroContent = z.infer<typeof videoIntroSchema>;
 export type MissionMeta = z.infer<typeof missionMetaSchema>;
 export type MissionIntro = z.infer<typeof missionIntroSchema>;
 export type MissionMedia = z.infer<typeof missionMediaSchema>;
+export type FinaleContent = z.infer<typeof finaleSchema>;
 
 export async function getLoginContent(): Promise<LoginContent> {
   return readJson(path.join(contentRoot, "login.json"), loginSchema);
@@ -220,4 +236,8 @@ export async function getMissionIntro(missionId: string): Promise<MissionIntro> 
     path.join(contentRoot, "missions", missionId, "intro.json"),
     missionIntroSchema
   );
+}
+
+export async function getFinaleContent(): Promise<FinaleContent> {
+  return readJson(path.join(contentRoot, "finale.json"), finaleSchema);
 }

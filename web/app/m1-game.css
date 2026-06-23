@@ -742,8 +742,8 @@ button.lead{border:none;font:inherit;color:inherit}
 /* Debrief CTA */
 .db-cta-row { display:flex; justify-content:center; margin-top:18px; flex-shrink:0; opacity:0; transition:opacity .4s; }
 .db-cta-row.show { opacity:1; }
-.db-cta { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; border-radius:4px; cursor:pointer; box-shadow:0 0 10px rgba(247,148,33,.22); transition:all .25s; }
-.db-cta:hover { background:rgba(247,148,33,.46); box-shadow:0 0 26px rgba(247,148,33,.55); transform:translateY(-2px); }
+.db-cta:not(.btn-sweep) { padding:14px 36px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; border-radius:4px; cursor:pointer; box-shadow:0 0 10px rgba(247,148,33,.22); transition:all .25s; }
+.db-cta:not(.btn-sweep):hover { background:rgba(247,148,33,.46); box-shadow:0 0 26px rgba(247,148,33,.55); transform:translateY(-2px); }
 
 /* Prominent scrollbars + bottom-fade cue for scrollable panels */
 .mr-detect::-webkit-scrollbar, .tc-content::-webkit-scrollbar { width:8px; }

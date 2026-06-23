@@ -111,7 +111,7 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
           <div className="vi-start-label">{content.startLabel}</div>
           <button
             type="button"
-            className={`vi-btn-start vi-btn-sweep ${!armed ? "is-locked" : ""}`}
+            className={`vi-btn-start btn-sweep ${!armed ? "is-locked" : ""}`}
             style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
             onClick={handleStartMission}
             disabled={starting || !armed}

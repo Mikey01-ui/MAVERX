@@ -11,6 +11,9 @@ services:
       POSTGRES_DB: omni
     volumes:
       - datagame_pg_data:/var/lib/postgresql/data
+    ports:
+      # 5433 on host — chosotrack already uses 5432. Forward this port for Vercel → homelab DB.
+      - "5433:5432"
     networks:
       - datagame
     healthcheck:

@@ -1,15 +1,5 @@
 {
-  "missionId": "m5",
-  "intro": {
-    "type": "video",
-    "src": "/media/m5/intro.mp4",
-    "poster": "/media/m5/intro-poster.jpg",
-    "captions": "/media/m5/intro.vtt"
-  },
-  "echoCue": {
-    "type": "audio",
-    "src": "/media/m5/echo-chime.mp3"
-  },
+  "missionId": "m2",
   "ambient": {
     "type": "audio",
     "src": "/media/m3/ambient-the-plan.mp3?v=1",
@@ -19,6 +9,7 @@
     "correct": "/media/m3/sfx-correct.mp3",
     "wrong": "/media/m3/sfx-wrong.mp3",
     "detectionWarn": "/media/m3/sfx-detection-warn.mp3",
+    "gameOver": "/media/m3/sfx-game-over.mp3",
     "missionPass": "/media/shared/sfx-level-passed.mp3?v=1"
   }
 }

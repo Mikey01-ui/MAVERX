@@ -339,10 +339,6 @@
 .m2-mission #timer{ color:var(--text-b); }
 .m2-mission .live-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:livePulse 1.5s ease-in-out infinite; }
 @keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.m2-mission .lang-toggle{ display:flex; border:1px solid var(--border-b); border-radius:4px; overflow:hidden; }
-.m2-mission .lang-btn{ padding:3px 9px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; background:transparent; color:var(--text-d); border:none; transition:all .2s; cursor:pointer; }
-.m2-mission .lang-btn.active{ background:var(--cyan); color:var(--bg); font-weight:700; }
-.m2-mission .lang-btn:hover:not(.active){ color:var(--cyan); }
 
 /* detection */
 .m2-mission #det-display{ font-family:var(--font-display); font-size:clamp(13px,1.3vw,16px); letter-spacing:1px; display:flex; align-items:center; gap:7px; transition:color .4s; }

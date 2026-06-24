@@ -326,7 +326,6 @@ function M2GameInner() {
     detection: state.detection,
     gameOver: state.gameOver,
   });
-  const [lang, setLang] = useState<"en" | "nl">("en");
   const preVerifyLeft = useRef<number | null>(null);
   const prevOpenRef = useRef<string[]>([]);
 
@@ -506,14 +505,6 @@ function M2GameInner() {
                 </span>
               </span>
               <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-              <div className="lang-toggle">
-                <button className={`lang-btn${lang === "en" ? " active" : ""}`} onClick={() => setLang("en")}>
-                  EN
-                </button>
-                <button className={`lang-btn${lang === "nl" ? " active" : ""}`} onClick={() => setLang("nl")}>
-                  NL
-                </button>
-              </div>
               <span id="timer">{timer}</span>
               <span className="live-dot" />
               <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>

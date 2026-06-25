@@ -5,13 +5,16 @@ services:
     image: boky/postfix:latest
     container_name: datagame-smtp
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     ports:
       - "0.0.0.0:587:587"
     env_file:
       - ${DATAGAME_SMTP_ENV_FILE:-smtp.env}
     environment:
       HOSTNAME: smtp.miltomy.com
-      ALLOWED_SENDER_DOMAINS: miltomy.com,gmail.com
+      ALLOWED_SENDER_DOMAINS: miltomy.com gmail.com
       RELAYHOST: smtp.gmail.com:587
       RELAYHOST_USE_TLS: "yes"
     networks:

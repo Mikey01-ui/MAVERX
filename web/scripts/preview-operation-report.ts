@@ -1,6 +1,6 @@
 import { buildOperationReportPdf } from "../lib/email/operationReportPdf";
 import { buildSampleReportSections } from "../lib/finale/reportInsights";
-import { calculateOperationTotalScore } from "../lib/game/operationScore";
+import { calculateOperationTotalScore } from "../lib/finale/operationScores";
 import { writeFile } from "fs/promises";
 import path from "path";
 

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { buildOperationReportPdf } from "../lib/email/operationReportPdf";
 import { buildSampleReportSections } from "../lib/finale/reportInsights";
-import { calculateOperationTotalScore } from "../lib/game/operationScore";
+import { calculateOperationTotalScore } from "../lib/finale/operationScores";
 import { createSmtpTransporter, getSmtpConfig } from "../lib/email/smtp";
 
 const to = process.argv[2] ?? "miltomy01@gmail.com";

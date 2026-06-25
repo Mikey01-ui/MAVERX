@@ -1,27 +1,14 @@
-import type { ProgressRecord } from "@/lib/progress";
 import { getMissionCatalog } from "@/lib/content";
 import { prisma } from "@/lib/db";
-import { calculateOperationTotalScore, normalizeMissionScore } from "@/lib/game/operationScore";
 import { buildMissionReportSections, type MissionReportSection } from "@/lib/finale/reportInsights";
+import {
+  buildOperationScoreRows,
+  calculateOperationTotalScore,
+  type OperationScoreRow,
+} from "@/lib/finale/operationScores";
 import { getUserProgress } from "@/lib/progress";
 
-export function resolveMissionReportStatus(
-  row: Pick<ProgressRecord, "status" | "checkpoint" | "score"> | null | undefined,
-): string {
-  if (!row) return "locked";
-  if (row.status === "completed") return "completed";
-  if (row.checkpoint === "failed") return "failed";
-  if (row.score !== null) return "in_progress";
-  return row.status;
-}
-
-export type OperationReportMission = {
-  missionId: string;
-  label: string;
-  name: string;
-  score: number | null;
-  status: string;
-};
+export type OperationReportMission = OperationScoreRow;
 
 export type OperationReportData = {
   email: string;
@@ -47,18 +34,7 @@ export async function getOperationReportData(userId: string): Promise<OperationR
     getUserProgress(userId),
   ]);
 
-  const progressMap = new Map(progress.map((p) => [p.missionId, p]));
-  const rows = missions.map((m) => {
-    const row = progressMap.get(m.id);
-    const stateJson = (row?.stateJson as Record<string, unknown> | null) ?? null;
-    return {
-      missionId: m.id,
-      label: m.label,
-      name: m.name,
-      score: normalizeMissionScore(m.id, row?.score ?? null, stateJson),
-      status: resolveMissionReportStatus(row),
-    };
-  });
+  const rows = buildOperationScoreRows(missions, progress);
 
   return {
     email: reportEmail,
@@ -67,3 +43,6 @@ export async function getOperationReportData(userId: string): Promise<OperationR
     sections: buildMissionReportSections(rows, progress),
   };
 }
+
+// Re-export for callers that only need status resolution.
+export { resolveMissionReportStatus } from "@/lib/finale/operationScores";

@@ -4,15 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FinaleContent } from "@/lib/content";
 import { MissionChrome } from "@/components/missions/MissionChrome";
-import { calculateOperationTotalScore } from "@/lib/game/operationScore";
+import { calculateOperationTotalScore, type OperationScoreRow } from "@/lib/finale/operationScores";
 
-export type FinaleMissionScore = {
-  missionId: string;
-  label: string;
-  name: string;
-  score: number | null;
-  status: string;
-};
+export type FinaleMissionScore = OperationScoreRow;
 
 type FinaleScreenProps = {
   content: FinaleContent;

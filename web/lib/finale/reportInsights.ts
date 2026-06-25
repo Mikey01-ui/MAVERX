@@ -1,6 +1,5 @@
 import type { ProgressRecord } from "@/lib/progress";
 import type { OperationReportMission } from "@/lib/finale/reportData";
-import { normalizeMissionScore } from "@/lib/game/operationScore";
 
 export type MissionReportSection = {
   missionId: string;
@@ -381,7 +380,7 @@ export function buildMissionReportSections(
     const template = TEMPLATES[m.missionId];
     const row = progressMap.get(m.missionId);
     const state = (row?.stateJson as Record<string, unknown> | null) ?? null;
-    const score = normalizeMissionScore(m.missionId, row?.score ?? m.score, state);
+    const score = m.score;
     const insights = INSIGHT_BUILDERS[m.missionId]?.(state) ?? {
       strengths: m.status === "completed" ? ["Mission completed."] : [],
       improvements: [],

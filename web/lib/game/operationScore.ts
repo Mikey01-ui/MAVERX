@@ -1,10 +1,3 @@
-export type OperationScoreInput = {
-  missionId?: string;
-  score: number | null;
-  status: string;
-  stateJson?: Record<string, unknown> | null;
-};
-
 /** Normalize stored progress score to 0–100 (handles legacy M2/M5 point totals). */
 export function normalizeMissionScore(
   missionId: string,
@@ -22,18 +15,4 @@ export function normalizeMissionScore(
   }
 
   return Math.min(100, score);
-}
-
-/** Mean of scored missions (completed or failed), rounded. */
-export function calculateOperationTotalScore(scores: OperationScoreInput[]): number | null {
-  const scored = scores.filter((s) => s.score !== null && s.status !== "locked");
-  if (scored.length === 0) return null;
-  const sum = scored.reduce((acc, s) => {
-    const normalized =
-      s.missionId !== undefined
-        ? normalizeMissionScore(s.missionId, s.score, s.stateJson)
-        : s.score;
-    return acc + (normalized ?? 0);
-  }, 0);
-  return Math.round(sum / scored.length);
 }

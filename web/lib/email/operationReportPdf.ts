@@ -194,7 +194,7 @@ function drawCover(ctx: PdfCtx, logo: Buffer, data: OperationReportData) {
     .fillColor(C.muted)
     .font("Helvetica")
     .fontSize(9)
-    .text("Average across completed missions · full per-mission analysis inside", MARGIN + 16, ctx.y + 72, { width: boxW - 32 });
+    .text("Average across missions you've played · full per-mission analysis inside", MARGIN + 16, ctx.y + 72, { width: boxW - 32 });
 
   ctx.y += 110;
 
@@ -207,7 +207,7 @@ function drawCover(ctx: PdfCtx, logo: Buffer, data: OperationReportData) {
   drawSectionLabel(ctx, "// MISSION SCORES AT A GLANCE");
   const colW = (w - MARGIN * 2) / 5;
   let x = MARGIN;
-  for (const s of data.sections) {
+  for (const s of data.missions) {
     doc.rect(x, ctx.y, colW - 4, 52).fill(C.panel);
     doc.fillColor(C.purpleLight).font("Helvetica").fontSize(6.5).text(s.label.replace("Mission ", "M"), x + 6, ctx.y + 8, { width: colW - 12 });
     doc

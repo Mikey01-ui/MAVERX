@@ -136,15 +136,16 @@ function lockToken(state: M2GameState, disputeId: DisputeId): M2GameState {
 }
 
 export function getDetectionClass(det: number) {
-  if (det < 35) return "det-green";
-  if (det < 70) return "det-amber";
+  if (det < 30) return "det-green";
+  if (det < 60) return "det-amber";
   return "det-red";
 }
 
 export function getDetectionLabel(det: number) {
-  if (det < 35) return "DARK";
-  if (det < 70) return "SCANNING";
-  return "ALERT";
+  if (det < 30) return "DARK";
+  if (det < 60) return "SCANNING";
+  if (det < 80) return "ALERT";
+  return "CRITICAL";
 }
 
 export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState {

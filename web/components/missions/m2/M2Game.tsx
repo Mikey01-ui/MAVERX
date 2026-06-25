@@ -334,8 +334,8 @@ function M2GameInner() {
   const detClass = getDetectionClass(det);
   const detLabel = getDetectionLabel(det);
   const detInfo = DET_INFO[detLabel] ?? DET_INFO.DARK;
-  const barClass = det < 35 ? "det-bar-green" : det < 70 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = det < 35 ? "fa-shield-alt" : det < 70 ? "fa-eye" : "fa-exclamation-triangle";
+  const barClass = det < 30 ? "det-bar-green" : det < 60 ? "det-bar-amber" : "det-bar-red";
+  const detIcon = det < 30 ? "fa-shield-alt" : det < 60 ? "fa-eye" : det < 80 ? "fa-exclamation-triangle" : "fa-skull";
 
   // Restore + focus windows the reducer opens (e.g. Inspector on file dblclick).
   useEffect(() => {

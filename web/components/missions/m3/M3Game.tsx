@@ -9,6 +9,8 @@ import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebrie
 import { CHANNEL_LABELS, DATASETS, DETECTION, HACK_LINES, SIGNOFF_DETECTION_MAX } from "@/lib/game/m3/data";
 import { buildM3Debrief } from "@/lib/game/debriefBuilders";
 import { m3ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
+import { persistMissionReport } from "@/lib/finale/persistMissionReport";
+import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import { M3Header } from "@/components/missions/m3/M3DetectionHeader";
 import { useM3MissionAudio } from "@/lib/audio/useM3MissionAudio";
 import { M3GameProvider, useM3Game } from "@/lib/game/m3/context";
@@ -176,18 +178,7 @@ function M3GameInner() {
 
   const completeMission = useCallback(async () => {
     const snapshot = m3ReportSnapshot(state);
-    await fetch("/api/progress", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        missionId: "m3",
-        status: "completed",
-        checkpoint: "completed",
-        score: snapshot.score,
-        stateJson: snapshot.stateJson,
-      }),
-    });
+    await persistMissionReport("m3", snapshot, "completed");
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
@@ -203,6 +194,8 @@ function M3GameInner() {
   }, [router, state]);
 
   const debrief = useMemo(() => buildM3Debrief(state), [state]);
+  const reportSnapshot = useCallback(() => m3ReportSnapshot(state), [state]);
+  usePersistFailedMissionReport("m3", state.gameOver, reportSnapshot);
 
   const handleDebriefContinue = useCallback(() => {
     if (state.detection >= 100 || state.phase === "failed") {

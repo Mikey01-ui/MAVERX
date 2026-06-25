@@ -1,8 +1,19 @@
+import type { ProgressRecord } from "@/lib/progress";
 import { getMissionCatalog } from "@/lib/content";
 import { prisma } from "@/lib/db";
 import { calculateOperationTotalScore, normalizeMissionScore } from "@/lib/game/operationScore";
 import { buildMissionReportSections, type MissionReportSection } from "@/lib/finale/reportInsights";
 import { getUserProgress } from "@/lib/progress";
+
+export function resolveMissionReportStatus(
+  row: Pick<ProgressRecord, "status" | "checkpoint" | "score"> | null | undefined,
+): string {
+  if (!row) return "locked";
+  if (row.status === "completed") return "completed";
+  if (row.checkpoint === "failed") return "failed";
+  if (row.score !== null) return "in_progress";
+  return row.status;
+}
 
 export type OperationReportMission = {
   missionId: string;
@@ -45,7 +56,7 @@ export async function getOperationReportData(userId: string): Promise<OperationR
       label: m.label,
       name: m.name,
       score: normalizeMissionScore(m.id, row?.score ?? null, stateJson),
-      status: row?.status ?? "locked",
+      status: resolveMissionReportStatus(row),
     };
   });
 

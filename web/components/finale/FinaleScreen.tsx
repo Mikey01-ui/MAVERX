@@ -111,7 +111,7 @@ export function FinaleScreen({ content, email, reportEmail, initialOptIn, scores
                     className={`finale-score-value${row.score === null ? " pending" : ""}`}
                     title={row.name}
                   >
-                    {row.status === "completed" && row.score !== null ? `${row.score}%` : "—"}
+                    {row.score !== null ? `${row.score}%` : "—"}
                   </div>
                 </div>
               ))}

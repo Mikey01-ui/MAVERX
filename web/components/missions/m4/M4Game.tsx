@@ -11,6 +11,8 @@ import { M4DetectionHeader } from "@/components/missions/m4/M4DetectionHeader";
 import { DETECTION, FILES, HACK_LINES, HINT_COOLDOWN_SEC, STEPS, getDatasetCandidatesForStep, isStepSatisfied } from "@/lib/game/m4/data";
 import { buildM4Debrief } from "@/lib/game/debriefBuilders";
 import { m4ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
+import { persistMissionReport } from "@/lib/finale/persistMissionReport";
+import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import { useM4MissionAudio } from "@/lib/audio/useM4MissionAudio";
 import { M4GameProvider, useM4Game } from "@/lib/game/m4/context";
 
@@ -41,23 +43,14 @@ function M4GameInner() {
 
   const completeMission = useCallback(async () => {
     const snapshot = m4ReportSnapshot(state);
-    await fetch("/api/progress", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        missionId: "m4",
-        status: "completed",
-        checkpoint: "completed",
-        score: snapshot.score,
-        stateJson: snapshot.stateJson,
-      }),
-    });
+    await persistMissionReport("m4", snapshot, "completed");
     router.push("/mission/m5");
     router.refresh();
   }, [router, state]);
 
   const debrief = useMemo(() => buildM4Debrief(state), [state]);
+  const reportSnapshot = useCallback(() => m4ReportSnapshot(state), [state]);
+  usePersistFailedMissionReport("m4", state.gameOver, reportSnapshot);
 
   const handleDebriefContinue = useCallback(() => {
     if (state.detection >= 100 || state.phase === "failed") {

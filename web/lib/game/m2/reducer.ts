@@ -83,7 +83,24 @@ export function createInitialM2State(): M2GameState {
 }
 
 function addDetection(state: M2GameState, amount: number): M2GameState {
-  return { ...state, detection: Math.min(100, state.detection + amount) };
+  if (amount <= 0 || state.gameOver) return state;
+  const detection = Math.min(100, state.detection + amount);
+  if (detection >= 100) {
+    return {
+      ...state,
+      detection: 100,
+      gameOver: true,
+      phase: "failed",
+      stepBanner: "Detection ceiling exceeded — tribunal session terminated.",
+      messages: pushChat(
+        state,
+        "Atlas",
+        "They traced the governance mirror. Detection hit 100% — the Master Key compile is dead.",
+        "bm-err",
+      ),
+    };
+  }
+  return { ...state, detection };
 }
 
 function disputeById(id: DisputeId) {
@@ -288,8 +305,10 @@ export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState
     case "CLEAR_SHAKE":
       return { ...state, wrongShake: null };
     case "PASSIVE_DETECTION":
-      if (state.phase !== "play" || !state.hackDone) return state;
+      if (state.phase !== "play" || !state.hackDone || state.gameOver) return state;
       return addDetection(state, DETECTION.passivePerTick);
+    case "RESET_MISSION":
+      return createInitialM2State();
     default:
       return state;
   }
@@ -300,5 +319,12 @@ export function serializeM2State(state: M2GameState): Record<string, unknown> {
 }
 
 export function hydrateM2State(raw: Record<string, unknown> | null | undefined): M2GameState | null {
-  return restoreGameState(raw, 2, createInitialM2State, []);
+  const restored = restoreGameState(raw, 2, createInitialM2State, ["failed"]);
+  if (!restored) return null;
+  const gameOver = Boolean(raw?.gameOver) || restored.phase === "failed";
+  return {
+    ...restored,
+    gameOver,
+    phase: gameOver ? "failed" : restored.phase,
+  };
 }

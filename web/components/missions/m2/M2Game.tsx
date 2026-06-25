@@ -8,6 +8,8 @@ import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebrie
 import { useXpWindows } from "@/components/missions/m2/useXpWindows";
 import { buildM2Debrief } from "@/lib/game/debriefBuilders";
 import { m2ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
+import { persistMissionReport } from "@/lib/finale/persistMissionReport";
+import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import {
   DISPUTES,
   FILES,
@@ -397,16 +399,15 @@ function M2GameInner() {
 
   const completeMission = useCallback(async () => {
     const snapshot = m2ReportSnapshot(state);
+    await persistMissionReport("m2", snapshot, "completed");
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        missionId: "m2",
-        status: "completed",
-        checkpoint: "completed",
-        score: snapshot.score,
-        stateJson: snapshot.stateJson,
+        missionId: "m3",
+        status: "in_progress",
+        checkpoint: "start",
       }),
     });
     router.push("/mission/m3");
@@ -414,6 +415,16 @@ function M2GameInner() {
   }, [router, state]);
 
   const debrief = useMemo(() => buildM2Debrief(state), [state]);
+  const reportSnapshot = useCallback(() => m2ReportSnapshot(state), [state]);
+  usePersistFailedMissionReport("m2", state.gameOver, reportSnapshot);
+
+  const handleDebriefContinue = useCallback(() => {
+    if (state.detection >= 100 || state.phase === "failed" || state.gameOver) {
+      dispatch({ type: "RESET_MISSION" });
+      return;
+    }
+    void completeMission();
+  }, [completeMission, dispatch, state.detection, state.gameOver, state.phase]);
 
   const activeDispute = state.activeDispute ?? 1;
   const vd = state.verifyDispute ? VERIFY[state.verifyDispute] : null;
@@ -836,9 +847,30 @@ function M2GameInner() {
         </div>
       </div>
 
-      {state.phase === "synth" && <M2SynthOverlay onDone={() => dispatch({ type: "SYNTH_DONE" })} />}
+      {state.phase === "synth" && !state.gameOver && (
+        <M2SynthOverlay onDone={() => dispatch({ type: "SYNTH_DONE" })} />
+      )}
 
-      {state.phase === "debrief" && <MissionDebriefScreen config={debrief} onContinue={completeMission} />}
+      {state.gameOver && (
+        <div id="gameover-overlay" className="active">
+          <div className="go-title">MASTER KEY COMPROMISED</div>
+          <div className="go-sub">
+            MegaCorp traced the governance tribunal. Detection hit 100% — compile aborted.
+          </div>
+          <button
+            type="button"
+            className="db-cta btn-sweep"
+            style={{ "--sweep-ms": "1200ms" } as React.CSSProperties}
+            onClick={() => dispatch({ type: "RESET_MISSION" })}
+          >
+            RETRY MISSION
+          </button>
+        </div>
+      )}
+
+      {state.phase === "debrief" && !state.gameOver && (
+        <MissionDebriefScreen config={debrief} onContinue={() => void handleDebriefContinue()} />
+      )}
     </div>
   );
 }

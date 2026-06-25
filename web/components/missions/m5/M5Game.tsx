@@ -21,6 +21,8 @@ import {
 } from "@/lib/game/m5/data";
 import { buildM5Debrief } from "@/lib/game/debriefBuilders";
 import { m5ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
+import { persistMissionReport } from "@/lib/finale/persistMissionReport";
+import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import { M5GameProvider, useM5Game } from "@/lib/game/m5/context";
 import { getDetectionClass } from "@/lib/game/m5/reducer";
 import { useM5MissionAudio } from "@/lib/audio/useM5MissionAudio";
@@ -130,23 +132,14 @@ function M5GameInner() {
 
   const completeMission = useCallback(async () => {
     const snapshot = m5ReportSnapshot(state);
-    await fetch("/api/progress", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        missionId: "m5",
-        status: "completed",
-        checkpoint: "completed",
-        score: snapshot.score,
-        stateJson: snapshot.stateJson,
-      }),
-    });
+    await persistMissionReport("m5", snapshot, "completed");
     router.push("/finale");
     router.refresh();
   }, [router, state]);
 
   const debrief = useMemo(() => buildM5Debrief(state), [state]);
+  const reportSnapshot = useCallback(() => m5ReportSnapshot(state), [state]);
+  usePersistFailedMissionReport("m5", state.gameOver, reportSnapshot);
 
   const handleDebriefContinue = useCallback(() => {
     if (state.detection >= 100 || state.phase === "failed" || !state.ships) {

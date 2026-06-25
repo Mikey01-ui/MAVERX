@@ -37,7 +37,7 @@ export function M2GameProvider({
     missionId: "m2",
     state,
     serialize: serializeM2State,
-    enabled: true,
+    enabled: state.phase !== "failed" && !state.gameOver,
   });
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function M2GameProvider({
   }, [state.hackDone, state.introScheduled]);
 
   useEffect(() => {
-    if (state.phase !== "play" || !state.hackDone) return;
+    if (state.phase !== "play" || !state.hackDone || state.gameOver) return;
     const tick = setInterval(() => dispatch({ type: "TICK" }), 1000);
     const passive = setInterval(() => dispatch({ type: "PASSIVE_DETECTION" }), DETECTION.passiveIntervalMs);
     return () => {

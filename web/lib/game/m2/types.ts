@@ -68,7 +68,7 @@ export type ChatMessage = {
   ts: string;
 };
 
-export type M2Phase = "hack" | "play" | "synth" | "debrief";
+export type M2Phase = "hack" | "play" | "synth" | "debrief" | "failed";
 
 export type M2GameState = {
   phase: M2Phase;
@@ -128,4 +128,5 @@ export type M2GameAction =
   | { type: "SYNTH_DONE" }
   | { type: "CLEAR_SHAKE" }
   | { type: "CLEAR_VERIFY_FEEDBACK" }
-  | { type: "PASSIVE_DETECTION" };
+  | { type: "PASSIVE_DETECTION" }
+  | { type: "RESET_MISSION" };

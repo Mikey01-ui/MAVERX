@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import type { GameStats } from "@/components/missions/margus-m1/MargusM1Game";
 import { m1ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
+import { persistMissionReport } from "@/lib/finale/persistMissionReport";
 import { isMargusM1DebriefState, serializeMargusM1Debrief } from "@/lib/game/margus-m1/session";
 import { useMissionProgress } from "@/lib/game/useMissionProgress";
 
@@ -87,12 +88,7 @@ export function M1MargusMission({ debriefPreview = false, savedState = null }: M
     }
     if (!stats) return;
     const snapshot = m1ReportSnapshot(stats);
-    await save({
-      status: "completed",
-      checkpoint: "completed",
-      score: snapshot.score,
-      stateJson: snapshot.stateJson,
-    });
+    await persistMissionReport("m1", snapshot, "completed");
     await fetch("/api/progress", {
       method: "PATCH",
       credentials: "include",

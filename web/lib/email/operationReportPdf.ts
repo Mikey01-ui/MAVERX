@@ -248,7 +248,8 @@ export async function buildOperationReportPdf(data: OperationReportData): Promis
     drawSectionLabel(ctx, "// MISSION-BY-MISSION BREAKDOWN");
 
     for (const section of data.sections) {
-      const attempted = section.status === "completed" || section.score !== null;
+      const attempted =
+        section.status === "completed" || section.status === "failed" || section.score !== null;
       if (!attempted) {
         ensureSpace(ctx, 60);
         drawParagraph(ctx, `${section.label} — ${section.name}: Not started yet.`, { color: C.muted });

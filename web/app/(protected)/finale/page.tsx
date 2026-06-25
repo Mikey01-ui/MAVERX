@@ -4,6 +4,7 @@ import { getFinaleContent, getMissionCatalog } from "@/lib/content";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { normalizeMissionScore } from "@/lib/game/operationScore";
+import { resolveMissionReportStatus } from "@/lib/finale/reportData";
 import { getUserProgress } from "@/lib/progress";
 
 type PageProps = {
@@ -46,7 +47,7 @@ export default async function FinalePage({ searchParams }: PageProps) {
       label: m.label,
       name: m.name,
       score: normalizeMissionScore(m.id, row?.score ?? null, stateJson),
-      status: row?.status ?? "locked",
+      status: resolveMissionReportStatus(row),
     };
   });
 

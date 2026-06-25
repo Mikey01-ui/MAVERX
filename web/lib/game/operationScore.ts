@@ -24,16 +24,16 @@ export function normalizeMissionScore(
   return Math.min(100, score);
 }
 
-/** Mean of completed mission scores (0–100), rounded. */
+/** Mean of scored missions (completed or failed), rounded. */
 export function calculateOperationTotalScore(scores: OperationScoreInput[]): number | null {
-  const completed = scores.filter((s) => s.status === "completed" && s.score !== null);
-  if (completed.length === 0) return null;
-  const sum = completed.reduce((acc, s) => {
+  const scored = scores.filter((s) => s.score !== null && s.status !== "locked");
+  if (scored.length === 0) return null;
+  const sum = scored.reduce((acc, s) => {
     const normalized =
       s.missionId !== undefined
         ? normalizeMissionScore(s.missionId, s.score, s.stateJson)
         : s.score;
     return acc + (normalized ?? 0);
   }, 0);
-  return Math.round(sum / completed.length);
+  return Math.round(sum / scored.length);
 }

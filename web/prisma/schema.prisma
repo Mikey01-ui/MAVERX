@@ -13,6 +13,7 @@ model User {
   passwordHash      String
   role              String         @default("player")
   emailReportOptIn  Boolean        @default(false)
+  reportEmail       String?
   createdAt         DateTime       @default(now())
   progress          UserProgress[]
 }

@@ -8,7 +8,7 @@ type Props = {
   ships: boolean;
   commits: number;
   crewState: Record<CrewId, { status: string }>;
-  onDone: () => void;
+  onSkip: () => void;
 };
 
 const CREW_NODES = [
@@ -18,23 +18,27 @@ const CREW_NODES = [
   { id: "kade" as const, lbl: "KADE", x: 440, y: 250, col: "#8f44e8" },
 ];
 
-export function M5SynthOverlay({ active, ships, commits, crewState, onDone }: Props) {
+export function M5SynthOverlay({ active, ships, commits, crewState, onSkip }: Props) {
   const [label, setLabel] = useState("");
   const [showCenter, setShowCenter] = useState(false);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      setShowCenter(false);
+      setLabel("");
+      return;
+    }
+    setShowCenter(false);
+    setLabel("");
     const t1 = setTimeout(() => setShowCenter(true), 1800);
     const t2 = setTimeout(() => {
-      setLabel(ships ? "✓ OPERATION SHIPS — VAULT ACCESS GRANTED" : "✗ OPERATION ABORTED — THRESHOLD NOT MET");
+      setLabel(ships ? "✓ OPERATION SHIPS — VAULT ACCESS GRANTED" : "✗ MISSION FAILED — THRESHOLD NOT MET");
     }, 2200);
-    const t3 = setTimeout(onDone, 4200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
-      clearTimeout(t3);
     };
-  }, [active, onDone, ships]);
+  }, [active, ships]);
 
   if (!active) return null;
 
@@ -42,8 +46,18 @@ export function M5SynthOverlay({ active, ships, commits, crewState, onDone }: Pr
   const cy = 160;
 
   return (
-    <div id="synth-overlay" className="active">
-      <svg id="synth-svg" viewBox="0 0 520 320" width="520" height="320">
+    <div
+      id="synth-overlay"
+      className="active"
+      role="button"
+      tabIndex={0}
+      onClick={onSkip}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSkip();
+      }}
+      aria-label="Continue to debrief card"
+    >
+      <svg id="synth-svg" viewBox="0 0 520 320" width="520" height="320" style={{ pointerEvents: "none" }}>
         <defs>
           <filter id="sg2">
             <feGaussianBlur stdDeviation="3" result="b" />
@@ -81,6 +95,7 @@ export function M5SynthOverlay({ active, ships, commits, crewState, onDone }: Pr
       <div id="synth-label" className="show" style={{ color: ships ? "var(--green-matrix)" : "var(--pink)" }}>
         {label}
       </div>
+      <p className="synth-skip-hint">Click anywhere to continue</p>
     </div>
   );
 }

@@ -106,6 +106,16 @@
 .m5-game #synth-overlay.active { display:flex; }
 .m5-game #synth-label { font-family:var(--font-display); font-size:1rem; font-weight:700; letter-spacing:1px; margin-top:20px; opacity:0; transition:opacity .5s; }
 .m5-game #synth-label.show { opacity:1; }
+.m5-game .synth-skip-hint {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grey-text);
+  opacity: 0.85;
+  animation: m5FadeUp 0.4s ease 2.2s both;
+}
 .m5-game #vote-overlay { position:fixed; inset:0; background:rgba(0,0,0,.96); z-index:455; display:none; align-items:center; justify-content:center; }
 .m5-game #vote-overlay.active { display:flex; }
 .m5-game .vote-card { width:660px; max-width:92vw; background:var(--panel-bg); border:1px solid rgba(0,255,65,.55); border-radius:8px; padding:2.2rem 2.4rem; box-shadow:0 0 70px rgba(84,0,173,.16); }
@@ -118,6 +128,12 @@
 .m5-game .vote-outcome { font-size:1.1rem; font-weight:600; margin-bottom:6px; }
 .m5-game .vote-sub { font-size:0.8rem; color:var(--grey-text); line-height:1.6; margin-bottom:20px; }
 .m5-game .vote-cta { width:100%; padding:14px; background:rgba(247,148,33,.32); border:1px solid var(--orange); color:var(--orange); font-family:var(--font-display); font-size:0.85rem; font-weight:700; border-radius:4px; cursor:pointer; }
+.m5-game .vote-card.failed { border-color:rgba(211,25,114,.55); box-shadow:0 0 70px rgba(211,25,114,.12); }
+.m5-game .vote-card.failed .vote-title { color:var(--pink); }
+.m5-game #gameover-overlay { position:fixed; inset:0; z-index:460; background:rgba(0,0,0,.97); display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
+.m5-game #gameover-overlay.active { display:flex; }
+.m5-game #gameover-overlay .go-title { font-family:var(--font-display); font-size:clamp(22px,3vw,40px); font-weight:700; color:var(--pink); letter-spacing:3px; text-align:center; text-shadow:0 0 30px rgba(211,25,114,.6),0 0 60px rgba(211,25,114,.2); }
+.m5-game #gameover-overlay .go-sub { font-family:var(--font-mono); font-size:clamp(11px,1.1vw,14px); color:rgba(250,247,242,.45); letter-spacing:2px; text-align:center; max-width:420px; line-height:1.8; }
 
 /* Legacy Mission 5.html alignment */
 .m5-game .ev-card { position:relative; transition:border-color .3s,box-shadow .3s,transform .3s; }

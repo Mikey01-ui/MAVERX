@@ -8,7 +8,12 @@ import { getMissionProgress } from "@/lib/progress";
 
 const patchSchema = z.object({
   optIn: z.boolean(),
+  email: z.string().email().optional(),
 });
+
+function resolveReportEmail(user: { email: string; reportEmail: string | null }) {
+  return user.reportEmail?.trim() || user.email;
+}
 
 export async function PATCH(request: Request) {
   const session = await auth();
@@ -25,7 +30,7 @@ export async function PATCH(request: Request) {
 
     const before = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true, emailReportOptIn: true },
+      select: { email: true, reportEmail: true, emailReportOptIn: true },
     });
 
     if (!before) {
@@ -34,10 +39,14 @@ export async function PATCH(request: Request) {
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
-      data: { emailReportOptIn: parsed.data.optIn },
-      select: { email: true, emailReportOptIn: true },
+      data: {
+        emailReportOptIn: parsed.data.optIn,
+        ...(parsed.data.email !== undefined ? { reportEmail: parsed.data.email } : {}),
+      },
+      select: { email: true, reportEmail: true, emailReportOptIn: true },
     });
 
+    const reportEmail = resolveReportEmail(user);
     let reportSent = false;
     let reportError: string | null = null;
 
@@ -49,10 +58,10 @@ export async function PATCH(request: Request) {
         reportError = "Email delivery is not configured on this server.";
       } else {
         try {
-          const sent = await sendOperationReportEmail(session.user.id);
+          const sent = await sendOperationReportEmail(session.user.id, reportEmail);
           reportSent = true;
-          if (sent.to !== user.email) {
-            console.warn("operation report recipient mismatch", { expected: user.email, sent: sent.to });
+          if (sent.to !== reportEmail) {
+            console.warn("operation report recipient mismatch", { expected: reportEmail, sent: sent.to });
           }
         } catch (err) {
           console.error("operation report email error", err);
@@ -62,7 +71,7 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({
-      email: user.email,
+      email: reportEmail,
       optIn: user.emailReportOptIn,
       reportSent,
       reportError,
@@ -81,12 +90,15 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true, emailReportOptIn: true },
+    select: { email: true, reportEmail: true, emailReportOptIn: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ email: user.email, optIn: user.emailReportOptIn });
+  return NextResponse.json({
+    email: resolveReportEmail(user),
+    optIn: user.emailReportOptIn,
+  });
 }

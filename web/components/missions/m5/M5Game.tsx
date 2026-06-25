@@ -103,7 +103,7 @@ function framingReady(choices: ReturnType<typeof useM5Game>["state"]["frameChoic
 function M5GameInner() {
   const { state, dispatch } = useM5Game();
   const router = useRouter();
-  const [voteUiReady, setVoteUiReady] = useState(false);
+  const [voteCardVisible, setVoteCardVisible] = useState(false);
   const timer = `${String(Math.floor(state.timerSec / 60)).padStart(2, "0")}:${String(state.timerSec % 60).padStart(2, "0")}`;
   const detClass = getDetectionClass(state.detection);
   useM5MissionAudio({
@@ -112,11 +112,21 @@ function M5GameInner() {
     commits: state.commits,
     detection: state.detection,
     ships: state.ships,
+    gameOver: state.gameOver,
   });
 
   useEffect(() => {
-    if (state.phase === "vote") setVoteUiReady(false);
-  }, [state.phase]);
+    if (state.phase !== "vote" || !state.ships) {
+      setVoteCardVisible(false);
+      return;
+    }
+    setVoteCardVisible(false);
+    const t = setTimeout(() => setVoteCardVisible(true), 4200);
+    return () => clearTimeout(t);
+  }, [state.phase, state.ships]);
+
+  const skipToVoteCard = useCallback(() => setVoteCardVisible(true), []);
+  const openDebrief = useCallback(() => dispatch({ type: "TRIGGER_VOTE" }), [dispatch]);
 
   const completeMission = useCallback(async () => {
     const snapshot = m5ReportSnapshot(state);
@@ -137,6 +147,14 @@ function M5GameInner() {
   }, [router, state]);
 
   const debrief = useMemo(() => buildM5Debrief(state), [state]);
+
+  const handleDebriefContinue = useCallback(() => {
+    if (state.detection >= 100 || state.phase === "failed" || !state.ships) {
+      dispatch({ type: "RESET_MISSION" });
+      return;
+    }
+    void completeMission();
+  }, [completeMission, dispatch, state.detection, state.phase, state.ships]);
 
   return (
     <div id="gp-root" className="m5-game">
@@ -356,27 +374,48 @@ function M5GameInner() {
 
       {state.phase === "hack" && <M1HackOverlay lines={HACK_LINES} visibleCount={state.hackLine + 1} />}
 
-      {state.phase === "vote" && state.ships !== null && (
+      {state.phase === "vote" && state.ships && (
         <>
           <M5SynthOverlay
-            active={!voteUiReady}
-            ships={state.ships}
+            active={!voteCardVisible}
+            ships
             commits={state.commits}
             crewState={state.crewState}
-            onDone={() => setVoteUiReady(true)}
+            onSkip={skipToVoteCard}
           />
           <M5VoteOverlay
-            active={voteUiReady}
-            ships={state.ships}
+            active={voteCardVisible}
+            ships
             commits={state.commits}
             crewState={state.crewState}
-            onContinue={() => dispatch({ type: "TRIGGER_VOTE" })}
+            onContinue={openDebrief}
           />
         </>
       )}
 
-      {state.phase === "debrief" && (
-        <MissionDebriefScreen config={debrief} onContinue={() => void completeMission()} hubLink={false} />
+      {state.gameOver && (
+        <div id="gameover-overlay" className="active">
+          <div className="go-title">
+            {state.failReason === "vote" ? "MISSION FAILED" : "BRIEFING COMPROMISED"}
+          </div>
+          <div className="go-sub">
+            {state.failReason === "vote"
+              ? `Only ${state.commits} of 4 specialists committed. You needed all four to ship the operation.`
+              : "MegaCorp traced the final brief. Detection hit 100% — the vault stays locked."}
+          </div>
+          <button
+            type="button"
+            className="db-cta btn-sweep"
+            style={{ "--sweep-ms": "1200ms" } as React.CSSProperties}
+            onClick={() => dispatch({ type: "RESET_MISSION" })}
+          >
+            RETRY MISSION
+          </button>
+        </div>
+      )}
+
+      {state.phase === "debrief" && state.ships && (
+        <MissionDebriefScreen config={debrief} onContinue={() => void handleDebriefContinue()} hubLink={false} />
       )}
     </div>
   );

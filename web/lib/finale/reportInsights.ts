@@ -322,14 +322,14 @@ function insightsM4(state: Record<string, unknown> | null): Pick<MissionReportSe
 
 function insightsM5(state: Record<string, unknown> | null): Pick<MissionReportSection, "strengths" | "improvements" | "mistakes"> {
   const commits = state ? num(state, "commits") : 0;
-  const ships = state ? state.ships === true : commits >= 3;
+  const ships = state ? state.ships === true : commits >= 4;
   const detection = state ? num(state, "detection") : 0;
   const strengths: string[] = [];
   const improvements: string[] = [];
   const mistakes: string[] = [];
 
   if (ships) {
-    strengths.push("Operation shipped — three or more specialists committed after the final brief.");
+    strengths.push("Operation shipped — all four specialists committed after the final brief.");
   } else {
     mistakes.push("Operation aborted — the room did not commit; review framing and crew-specific answers.");
   }

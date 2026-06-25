@@ -358,7 +358,7 @@ export function M5TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
 
   const bodyHtml =
     isDemo && demoDone
-      ? "<p><strong>Replay done.</strong> Frame cards with ECHO, then win <strong>3 of 4</strong> crew commits.</p><p>Tap <strong>Start mission</strong> for the full run.</p>"
+      ? "<p><strong>Replay done.</strong> Frame cards with ECHO, then win <strong>all 4</strong> crew commits.</p><p>Tap <strong>Start mission</strong> for the full run.</p>"
       : (step?.html ?? "");
 
   return (

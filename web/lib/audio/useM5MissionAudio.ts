@@ -10,6 +10,7 @@ export type M5AudioState = {
   commits: number;
   detection: number;
   ships: boolean | null;
+  gameOver: boolean;
 };
 
 export function useM5MissionAudio(state: M5AudioState) {
@@ -19,6 +20,7 @@ export function useM5MissionAudio(state: M5AudioState) {
     detection: state.detection,
     phase: state.phase,
     ships: state.ships,
+    gameOver: state.gameOver,
   });
 
   useEffect(() => {
@@ -51,11 +53,16 @@ export function useM5MissionAudio(state: M5AudioState) {
       audio.playSfx("missionPass", 0.9);
     }
 
+    if (!p.gameOver && state.gameOver) {
+      audio.playSfx("wrong", 0.85);
+    }
+
     prev.current = {
       commits: state.commits,
       detection: state.detection,
       phase: state.phase,
       ships: state.ships,
+      gameOver: state.gameOver,
     };
   }, [audio, state]);
 }

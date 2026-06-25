@@ -25,7 +25,7 @@ export function M5GameProvider({
     missionId: "m5",
     state,
     serialize: serializeM5State,
-    enabled: true,
+    enabled: state.phase !== "failed" && !state.gameOver,
   });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function M5GameProvider({
   }, [state.hackDone, state.messages.length]);
 
   useEffect(() => {
-    if (state.phase === "hack" || state.phase === "debrief") return;
+    if (state.phase === "hack" || state.phase === "debrief" || state.phase === "failed") return;
     const id = setInterval(() => dispatch({ type: "TICK" }), 1000);
     return () => clearInterval(id);
   }, [state.phase]);

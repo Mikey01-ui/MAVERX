@@ -2,7 +2,7 @@ export type ChatTone = "bm-d" | "bm-ok" | "bm-err" | "bm-h" | "bm-win";
 export type FrameKey = "risk" | "opportunity" | "neutral";
 export type CrewId = "zex" | "atlas" | "nova" | "kade";
 export type CrewStatus = "pending" | "asking" | "committed" | "sceptical";
-export type M5Phase = "hack" | "framing" | "briefing" | "vote" | "debrief";
+export type M5Phase = "hack" | "framing" | "briefing" | "vote" | "debrief" | "failed";
 
 export type CardChoice = { frame?: FrameKey; viz?: string };
 
@@ -29,6 +29,8 @@ export type M5GameState = {
   messages: ChatMessage[];
   stepBanner: string;
   ships: boolean | null;
+  gameOver: boolean;
+  failReason: "detection" | "vote" | null;
 };
 
 export type M5GameAction =
@@ -43,4 +45,5 @@ export type M5GameAction =
   | { type: "CREW_RETRY_READY"; crewId: CrewId }
   | { type: "ADVANCE_CREW"; crewId: CrewId }
   | { type: "TRIGGER_VOTE" }
+  | { type: "RESET_MISSION" }
   | { type: "ADD_CHAT"; sender: string; text: string; tone?: ChatTone };

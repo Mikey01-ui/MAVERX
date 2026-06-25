@@ -17,14 +17,16 @@ export type FinaleMissionScore = {
 type FinaleScreenProps = {
   content: FinaleContent;
   email: string;
+  reportEmail: string;
   initialOptIn: boolean;
   scores: FinaleMissionScore[];
   preview?: boolean;
 };
 
-export function FinaleScreen({ content, email, initialOptIn, scores }: FinaleScreenProps) {
+export function FinaleScreen({ content, email, reportEmail, initialOptIn, scores }: FinaleScreenProps) {
   const router = useRouter();
   const [optIn, setOptIn] = useState(initialOptIn);
+  const [reportEmailValue, setReportEmailValue] = useState(reportEmail);
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -34,20 +36,29 @@ export function FinaleScreen({ content, email, initialOptIn, scores }: FinaleScr
     setSubmitting(true);
     setStatusMessage(null);
     try {
+      if (optIn && !reportEmailValue.trim()) {
+        setStatusMessage("Enter an email address for your operation report.");
+        return;
+      }
+
       const res = await fetch("/api/player/email-report", {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ optIn }),
+        body: JSON.stringify({
+          optIn,
+          ...(optIn ? { email: reportEmailValue.trim() } : {}),
+        }),
       });
       const data = (await res.json()) as {
         email?: string;
         reportSent?: boolean;
         reportError?: string | null;
+        error?: string;
       };
 
       if (!res.ok) {
-        setStatusMessage(data.reportError ?? "Could not save your email preference.");
+        setStatusMessage(data.error ?? "Could not save your email preference.");
         return;
       }
 
@@ -56,7 +67,7 @@ export function FinaleScreen({ content, email, initialOptIn, scores }: FinaleScr
         await new Promise((resolve) => setTimeout(resolve, 1400));
       } else if (optIn && data.reportError) {
         setStatusMessage(data.reportError);
-        return;
+        await new Promise((resolve) => setTimeout(resolve, 1600));
       }
 
       router.push("/hub");
@@ -66,7 +77,7 @@ export function FinaleScreen({ content, email, initialOptIn, scores }: FinaleScr
     }
   }
 
-  const hint = content.emailOptInHint.replace("{email}", email);
+  const hint = content.emailOptInHint;
 
   return (
     <MissionChrome statusLeft={content.statusLeft} statusRight={content.statusRight}>
@@ -108,20 +119,35 @@ export function FinaleScreen({ content, email, initialOptIn, scores }: FinaleScr
           </div>
 
           <div className="finale-card">
-            <button
-              type="button"
-              className={`finale-opt-in${optIn ? " is-checked" : ""}`}
-              onClick={() => setOptIn((v) => !v)}
-              aria-pressed={optIn}
-            >
-              <div className="finale-opt-in-box">
-                <div className="finale-opt-in-tick" />
-              </div>
-              <div className="finale-opt-in-copy">
-                <span className="finale-opt-in-label">{content.emailOptInLabel}</span>
-                <span className="finale-opt-in-hint">{hint}</span>
-              </div>
-            </button>
+            <div className={`finale-opt-in-panel${optIn ? " is-checked" : ""}`}>
+              <button
+                type="button"
+                className="finale-opt-in"
+                onClick={() => setOptIn((v) => !v)}
+                aria-pressed={optIn}
+              >
+                <div className="finale-opt-in-box">
+                  <div className="finale-opt-in-tick" />
+                </div>
+                <div className="finale-opt-in-copy">
+                  <span className="finale-opt-in-label">{content.emailOptInLabel}</span>
+                  <span className="finale-opt-in-hint">{hint}</span>
+                </div>
+              </button>
+              {optIn && (
+                <label className="finale-email-field">
+                  <span className="finale-email-label">{content.emailFieldLabel}</span>
+                  <input
+                    type="email"
+                    className="finale-email-input"
+                    value={reportEmailValue}
+                    onChange={(e) => setReportEmailValue(e.target.value)}
+                    placeholder={email}
+                    autoComplete="email"
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           <div className="finale-actions mission-btn-section mission-btn-section--premission">

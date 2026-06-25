@@ -10,23 +10,23 @@
       { "label": "// Window", "value": "OPEN" },
       { "label": "// Detection Ceiling", "value": "100%" },
       { "label": "// Evidence Cards", "value": "4" },
-      { "label": "// Commit Threshold", "value": "3 OF 4 CREW" },
+      { "label": "// Commit Threshold", "value": "4 OF 4 CREW" },
       { "label": "// Outcome", "value": "OPERATION SHIPS" }
     ],
     "briefParagraphs": [
       "Four operations. Four objections answered. The <span class=\"gloss\" data-gloss=\"The four specialists who will vote on whether the operation ships. Each has a different reason to say no.\">crew</span> is in the room for the first time — all of them. <strong>I'm stepping back.</strong> The plan has to stand without me holding it up.",
       "ECHO works with you first: choose how to <span class=\"gloss\" data-gloss=\"Framing determines what the room focuses on — risk, opportunity, or neutral fact. The wrong framing gives the crew a reason to object before you open your mouth.\">frame each evidence card</span> and which <span class=\"gloss\" data-gloss=\"Visualisation format must match the type of evidence being shown. A node map proves connectivity. A traffic light grid proves ethical triage. A table proves nothing without context.\">visualisation format</span> makes it legible to a non-technical room.",
-      "Then you present. Each specialist challenges you once — a question from their domain. <strong>Get three of four to commit</strong> and the operation ships.",
+      "Then you present. Each specialist challenges you once — a question from their domain. <strong>Get all four to commit</strong> and the operation ships.",
       "You built this dossier across four operations. Now you have to sell it to the people who have to act on it."
     ],
     "pullquote": "The room doesn't care what you found. It cares what it means.",
     "dossier": [
       { "label": "HANDLER", "name": "Voss", "role": "Steps back — watching only" },
       { "label": "COMMS / FRAMING", "name": "Echo", "role": "Works with you on framing — already committed" },
-      { "label": "CREW VOTE", "name": "ZEX · ATLAS · NOVA · KADE", "role": "Each challenges you once — 3 of 4 must commit" }
+      { "label": "CREW VOTE", "name": "ZEX · ATLAS · NOVA · KADE", "role": "Each challenges you once — all 4 must commit" }
     ],
     "encryptedChannel": "VOSS",
-    "ackGateLabel": "I understand — three of four crew members must commit for the operation to ship",
+    "ackGateLabel": "I understand — all four crew members must commit for the operation to ship",
     "useHtml": true,
     "continueLabel": "Continue",
     "continueDelayMs": 3000
@@ -49,7 +49,7 @@
       {
         "number": "03",
         "title": "THE VOTE",
-        "description": "Three of four specialists must commit. VOSS closes the session either way. No retries on the vote — the debrief shows exactly which answers caused each crew member to stay sceptical."
+        "description": "All four specialists must commit. VOSS closes the session either way. No retries on the vote — the debrief shows exactly which answers caused each crew member to stay sceptical."
       }
     ],
     "detection": {

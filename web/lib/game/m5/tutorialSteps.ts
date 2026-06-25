@@ -41,13 +41,13 @@ export const M5_TUTORIAL_STEPS: M5TutorialStep[] = [
     title: "Crew challenges",
     html:
       "<p>Each specialist asks one multiple-choice question. Pick an answer, then <strong>SUBMIT</strong>.</p>" +
-      "<p>One retry per person costs +10% detection. You need <strong>3 of 4 commits</strong> to ship.</p>",
+      "<p>One retry per person costs +10% detection. You need <strong>all 4 commits</strong> to ship.</p>",
   },
   {
     selector: "#vote-overlay",
     pad: 12,
     phase: "tour",
-    title: "Win condition — 3 of 4",
+    title: "Win condition — 4 of 4",
     html:
       "<p>After all four crew challenges, specialists vote. <strong>Three commits</strong> ships the operation — you do not need all four.</p>" +
       "<p>VOSS closes the session; the debrief shows who stayed sceptical.</p>",

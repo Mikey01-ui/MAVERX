@@ -29,7 +29,7 @@ export default async function FinalePage({ searchParams }: PageProps) {
     getUserProgress(userId),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, emailReportOptIn: true },
+      select: { email: true, reportEmail: true, emailReportOptIn: true },
     }),
   ]);
 
@@ -61,6 +61,7 @@ export default async function FinalePage({ searchParams }: PageProps) {
     <FinaleScreen
       content={content}
       email={user.email}
+      reportEmail={user.reportEmail?.trim() || user.email}
       initialOptIn={user.emailReportOptIn}
       scores={scores}
       preview={isPreview}

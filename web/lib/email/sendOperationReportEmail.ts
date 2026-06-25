@@ -7,20 +7,24 @@ export type SendOperationReportResult = {
   totalScore: number | null;
 };
 
-/** Send the operation PDF to the user's registered email using saved mission progress. */
-export async function sendOperationReportEmail(userId: string): Promise<SendOperationReportResult> {
+/** Send the operation PDF using saved mission progress. */
+export async function sendOperationReportEmail(
+  userId: string,
+  toEmail?: string,
+): Promise<SendOperationReportResult> {
   const smtp = getSmtpConfig();
   if (!smtp) {
     throw new Error("SMTP is not configured.");
   }
 
   const report = await getOperationReportData(userId);
-  const pdf = await buildOperationReportPdf(report);
+  const recipient = toEmail?.trim() || report.email;
+  const pdf = await buildOperationReportPdf({ ...report, email: recipient });
   const transporter = createSmtpTransporter(smtp);
 
   await transporter.sendMail({
     from: smtp.from,
-    to: report.email,
+    to: recipient,
     subject: "Operation OMNI — Your results brief",
     text: [
       "Operation complete.",
@@ -46,5 +50,5 @@ export async function sendOperationReportEmail(userId: string): Promise<SendOper
     ],
   });
 
-  return { to: report.email, totalScore: report.totalScore };
+  return { to: recipient, totalScore: report.totalScore };
 }

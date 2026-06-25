@@ -3,7 +3,7 @@
   "order": 5,
   "label": "Mission 05",
   "name": "The Final Brief",
-  "description": "Frame the dossier with ECHO, then win three of four crew commits.",
+  "description": "Frame the dossier with ECHO, then win all four crew commits.",
   "renderer": "react",
   "legacyHtmlPath": "/reference/legacy-missions/Mission%205.html",
   "requiresMissionId": "m4",

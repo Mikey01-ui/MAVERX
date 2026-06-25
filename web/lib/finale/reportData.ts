@@ -22,12 +22,14 @@ export type OperationReportData = {
 export async function getOperationReportData(userId: string): Promise<OperationReportData> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { email: true, reportEmail: true },
   });
 
   if (!user) {
     throw new Error("User not found.");
   }
+
+  const reportEmail = user.reportEmail?.trim() || user.email;
 
   const [missions, progress] = await Promise.all([
     getMissionCatalog(),
@@ -48,7 +50,7 @@ export async function getOperationReportData(userId: string): Promise<OperationR
   });
 
   return {
-    email: user.email,
+    email: reportEmail,
     missions: rows,
     totalScore: calculateOperationTotalScore(rows),
     sections: buildMissionReportSections(rows, progress),

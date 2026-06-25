@@ -5,24 +5,20 @@ import type { CrewId } from "@/lib/game/m5/types";
 
 type Props = {
   active: boolean;
-  ships: boolean;
+  ships: true;
   commits: number;
   crewState: Record<CrewId, { status: string }>;
   onContinue: () => void;
 };
 
-export function M5VoteOverlay({ active, ships, commits, crewState, onContinue }: Props) {
+export function M5VoteOverlay({ active, commits, crewState, onContinue }: Props) {
   if (!active) return null;
-
-  const vossLine = ships
-    ? "Four people who don't agree on anything just agreed on you. That's not nothing. Move."
-    : "You built something real across four operations. The room didn't commit — but the work was real.";
 
   return (
     <div id="vote-overlay" className="active">
       <div className="vote-card">
         <div className="vote-title" id="vote-title">
-          {ships ? "OPERATION SHIPS" : "OPERATION ABORTED"}
+          OPERATION SHIPS
         </div>
         <div className="vote-tally" id="vote-tally">
           {CREW_ORDER.map((c) => {
@@ -35,13 +31,13 @@ export function M5VoteOverlay({ active, ships, commits, crewState, onContinue }:
           })}
         </div>
         <div className="vote-voss" id="vote-voss-line">
-          VOSS: {vossLine}
+          VOSS: Four people who don&apos;t agree on anything just agreed on you. That&apos;s not nothing. Move.
         </div>
-        <div className="vote-outcome" id="vote-outcome" style={{ color: ships ? "var(--green-stable)" : "var(--pink)" }}>
-          {ships ? `${commits}/4 specialists committed. The hack is a go.` : `${commits}/4 specialists committed. Threshold not met.`}
+        <div className="vote-outcome" id="vote-outcome" style={{ color: "var(--green-stable)" }}>
+          {commits}/4 specialists committed. The hack is a go.
         </div>
         <div className="vote-sub" id="vote-sub">
-          {ships ? "OMNI vault access initiated. Operation complete." : "Review the debrief to see which objections were not satisfied and why."}
+          OMNI vault access initiated. Operation complete.
         </div>
         <button type="button" className="vote-cta" onClick={onContinue}>
           VIEW DEBRIEF →

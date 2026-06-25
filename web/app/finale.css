@@ -124,6 +124,27 @@
   font-weight: 500;
 }
 
+.finale-opt-in-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.finale-opt-in-panel.is-checked .finale-opt-in-label {
+  color: var(--white);
+}
+
+.finale-opt-in-panel.is-checked .finale-opt-in-box {
+  border-color: var(--orange);
+  background: rgba(247, 148, 33, 0.08);
+}
+
+.finale-opt-in-panel.is-checked .finale-opt-in-tick {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .finale-opt-in {
   display: flex;
   align-items: flex-start;
@@ -143,8 +164,11 @@
   width: 100%;
 }
 
-.finale-opt-in:hover,
-.finale-opt-in.is-checked {
+.finale-opt-in:hover {
+  color: var(--white);
+}
+
+.finale-opt-in-panel.is-checked .finale-opt-in {
   color: var(--white);
 }
 
@@ -176,16 +200,6 @@
   box-shadow: 0 0 8px rgba(247, 148, 33, 0.6);
 }
 
-.finale-opt-in.is-checked .finale-opt-in-box {
-  border-color: var(--orange);
-  background: rgba(247, 148, 33, 0.08);
-}
-
-.finale-opt-in.is-checked .finale-opt-in-tick {
-  opacity: 1;
-  transform: scale(1);
-}
-
 .finale-opt-in-copy {
   display: flex;
   flex-direction: column;
@@ -201,10 +215,6 @@
   color: var(--grey-light);
 }
 
-.finale-opt-in.is-checked .finale-opt-in-label {
-  color: var(--white);
-}
-
 .finale-opt-in-hint {
   font-family: var(--font-body);
   font-size: 0.78rem;
@@ -212,6 +222,39 @@
   text-transform: none;
   color: var(--green-stable);
   line-height: 1.45;
+}
+
+.finale-email-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  width: 100%;
+}
+
+.finale-email-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grey-text);
+}
+
+.finale-email-input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(247, 148, 33, 0.35);
+  border-radius: 4px;
+  background: rgba(20, 12, 28, 0.75);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.finale-email-input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(247, 148, 33, 0.15);
 }
 
 .finale-actions {

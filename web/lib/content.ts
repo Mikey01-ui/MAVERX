@@ -179,6 +179,7 @@ const finaleSchema = z.object({
   scoresLabel: z.string(),
   emailOptInLabel: z.string(),
   emailOptInHint: z.string(),
+  emailFieldLabel: z.string(),
   continueLabel: z.string(),
   footer: z.string(),
 });

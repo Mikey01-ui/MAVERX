@@ -481,7 +481,7 @@ export const M5TutorialShell = forwardRef<M5TutorialShellHandle>(function M5Tuto
               3 OF 4 COMMITS — OPERATION SHIPS
             </div>
             <div className="vote-sub" id="vote-sub">
-              You needed three specialists on board. Detection meter still applies during framing and crew Q&A.
+              You needed all four specialists on board. Detection meter still applies during framing and crew Q&A.
             </div>
           </div>
         </div>

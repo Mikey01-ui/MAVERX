@@ -5,7 +5,7 @@ import {
   SIGNOFF_DETECTION_MAX,
 } from "@/lib/game/m3/data";
 import { getDetectionClass } from "@/lib/game/m3/detectionMeter";
-import { ECHO_FRAME, ECHO_VIZ, CREW_ORDER } from "@/lib/game/m5/data";
+import { ECHO_FRAME, ECHO_VIZ, CREW_ORDER, M5_REQUIRED_COMMITS } from "@/lib/game/m5/data";
 import type { M2GameState } from "@/lib/game/m2/types";
 import type { Channel, M3GameState, M3WrongAttempt } from "@/lib/game/m3/types";
 import type { M4GameState, M4WrongAttempt } from "@/lib/game/m4/types";
@@ -355,7 +355,8 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
 }
 
 export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
-  const ships = state.ships ?? state.commits >= 3;
+  const ships = state.ships ?? state.commits >= M5_REQUIRED_COMMITS;
+  const detectionMaxed = state.detection >= 100 || state.phase === "failed";
   let wrongF = 0;
   let wrongV = 0;
   for (let i = 1; i <= 4; i++) {
@@ -373,9 +374,41 @@ export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
     kade: { who: "KADE · Data Flows", text: "A bottleneck is a <strong>convergence point</strong> — if it fails, everything downstream stalls." },
   };
 
+  if (detectionMaxed) {
+    return {
+      eyebrow: "// Mission 05 — Brief compromised",
+      title: "DETECTION THRESHOLD EXCEEDED",
+      metrics: [
+        { value: formatTimer(state.timerSec), label: "TIME" },
+        { value: `${state.commits}/4`, label: "COMMITS" },
+        { value: String(state.score), label: "SCORE" },
+        { value: "100%", label: "DETECTION", valueClass: "det-red" },
+      ],
+      breakdownTitle: "PERFORMANCE BREAKDOWN",
+      breakdownRows: [
+        { label: "Framing accuracy", value: wrongF === 0 ? "PERFECT" : `${wrongF} wrong`, valueClass: wrongF === 0 ? "det-green" : "det-red" },
+        { label: "Visualisation accuracy", value: wrongV === 0 ? "PERFECT" : `${wrongV} wrong`, valueClass: wrongV === 0 ? "det-green" : "det-red" },
+        ...CREW_ORDER.map((c) => ({
+          label: LEARNING[c].who.split(" · ")[0],
+          value: state.crewState[c].status === "committed" ? "COMMITTED" : "SCEPTICAL",
+          valueClass: state.crewState[c].status === "committed" ? "det-green" : "det-red",
+        })),
+        { label: "Final detection", value: "100%", valueClass: "det-red", total: true },
+      ],
+      rating: "EXPOSED — MegaCorp flagged the final brief before the crew could commit.",
+      tradecraft: [{ html: "Detection maxed out during the briefing. Tighten framing and crew answers, then run the brief again." }],
+      learningRows: CREW_ORDER.map((c) => ({
+        who: LEARNING[c].who,
+        text: LEARNING[c].text,
+        ok: state.crewState[c].status === "committed",
+      })),
+      cta: "RETRY MISSION →",
+    };
+  }
+
   return {
-    eyebrow: ships ? "// Mission 5 — Operation Shipped" : "// Mission 5 — Operation Aborted",
-    title: ships ? "OMNI Exposed · Debrief" : "Operation Aborted · Debrief",
+    eyebrow: ships ? "// Mission 05 — Operation Shipped" : "// Mission 05 — Mission Failed",
+    title: ships ? "OMNI Exposed · Debrief" : "ROOM DID NOT COMMIT",
     metrics: [
       { value: formatTimer(state.timerSec), label: "TIME" },
       { value: `${state.commits}/4`, label: "COMMITS" },
@@ -393,15 +426,15 @@ export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
       })),
       { label: "Crew commits", value: `${state.commits} / 4`, valueClass: detCls, total: true },
     ],
-    rating: ships ? "Operation shipped. The room committed. That is the only metric that matters." : "Operation aborted. Review which framing and crew answers cost you the vote.",
+    rating: ships ? "Operation shipped. The room committed. That is the only metric that matters." : "Mission failed. Not enough specialists committed — review framing and crew challenges.",
     tradecraft: [
-      { html: ships ? "Four operations. Four objections answered. The crew committed and the hack ships." : "The dossier was real — the room did not commit. Review framing and crew challenges." },
+      { html: ships ? "Four operations. Four objections answered. The crew committed and the hack ships." : "The dossier was real — the room did not commit. You needed all four specialists." },
     ],
     learningRows: CREW_ORDER.map((c) => ({
       who: LEARNING[c].who,
       text: LEARNING[c].text,
       ok: state.crewState[c].status === "committed",
     })),
-    cta: "OPERATION COMPLETE — RETURN TO HUB →",
+    cta: ships ? "OPERATION COMPLETE — RETURN TO HUB →" : "RETRY MISSION →",
   };
 }

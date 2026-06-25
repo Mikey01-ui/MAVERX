@@ -1,5 +1,8 @@
 import type { CrewId, FrameKey } from "@/lib/game/m5/types";
 
+export const M5_CREW_COUNT = 4;
+export const M5_REQUIRED_COMMITS = 4;
+
 export const HACK_LINES = [
   { text: "MASTERMIND TERMINAL v5.0.0 — OPERATION OMNI", className: "ht-g" },
   { text: "Loading mission dossier from prior operations...", className: "ht-a" },

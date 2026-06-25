@@ -29,6 +29,7 @@ export function getSmtpConfig(): SmtpConfig | null {
 }
 
 export function createSmtpTransporter(config: SmtpConfig) {
+  const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false";
   const options: SMTPTransport.Options = {
     host: config.host,
     port: config.port,
@@ -36,6 +37,9 @@ export function createSmtpTransporter(config: SmtpConfig) {
     auth: {
       user: config.user,
       pass: config.pass,
+    },
+    tls: {
+      rejectUnauthorized,
     },
   };
 

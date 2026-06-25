@@ -169,7 +169,7 @@ function drawCover(ctx: PdfCtx, logo: Buffer, data: OperationReportData) {
     .text("OPERATION OMNI · CONFIDENTIAL RESULTS BRIEF", MARGIN, 98);
 
   ctx.y = 160;
-  doc.fillColor(C.purpleLight).font("Helvetica").fontSize(9).text("// OPERATION COMPLETE", MARGIN, ctx.y);
+  doc.fillColor(C.purpleLight).font("Helvetica").fontSize(9).text("// OPERATION OMNI RESULTS", MARGIN, ctx.y);
   ctx.y += 22;
 
   doc.fillColor(C.text).font("Helvetica-Bold").fontSize(26).text("Your detailed operation breakdown", MARGIN, ctx.y);
@@ -248,10 +248,19 @@ export async function buildOperationReportPdf(data: OperationReportData): Promis
     drawSectionLabel(ctx, "// MISSION-BY-MISSION BREAKDOWN");
 
     for (const section of data.sections) {
+      const attempted = section.status === "completed" || section.score !== null;
+      if (!attempted) {
+        ensureSpace(ctx, 60);
+        drawParagraph(ctx, `${section.label} — ${section.name}: Not started yet.`, { color: C.muted });
+        continue;
+      }
       if (section.status !== "completed") {
         ensureSpace(ctx, 60);
-        drawParagraph(ctx, `${section.label} — ${section.name}: Not completed.`, { color: C.muted });
-        continue;
+        drawParagraph(
+          ctx,
+          `${section.label} — ${section.name}: In progress${section.score !== null ? ` · current score ${section.score}%` : ""}.`,
+          { color: C.muted }
+        );
       }
       if (ctx.y > CONTENT_BOTTOM - 200) newPage(ctx);
       drawMissionBlock(ctx, section);

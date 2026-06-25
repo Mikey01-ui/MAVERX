@@ -54,6 +54,8 @@ const hubSchema = z.object({
   lockedLabel: z.string(),
   lockedHint: z.string(),
   signOut: z.string(),
+  reportLabel: z.string(),
+  reportHint: z.string(),
   footer: z.string(),
 });
 

@@ -47,6 +47,7 @@ export default async function HubPage() {
         url: `/mission/${continueTarget.missionId}?resume=1`,
       }
     : null;
+  const showReportLink = progress.some((p) => p.status === "completed" || p.status === "in_progress");
 
   return (
     <AmbientShell theme="theme-v2">
@@ -60,6 +61,7 @@ export default async function HubPage() {
         }))}
         access={access}
         continueMission={continueMission}
+        showReportLink={showReportLink}
       />
     </AmbientShell>
   );

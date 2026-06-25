@@ -27,18 +27,18 @@ export async function sendOperationReportEmail(
     to: recipient,
     subject: "Operation OMNI — Your results brief",
     text: [
-      "Operation complete.",
+      "Your Operation OMNI results brief is attached.",
       "",
       `Your total operation score: ${report.totalScore !== null ? `${report.totalScore}%` : "—"}`,
       "",
-      "Your full mission-by-mission breakdown is attached as a PDF.",
+      "The PDF includes a mission-by-mission breakdown for every mission you have played so far.",
       "",
       "— MaverX / Operation OMNI",
     ].join("\n"),
     html: [
-      `<p>Operation complete.</p>`,
+      `<p>Your Operation OMNI results brief is attached.</p>`,
       `<p><strong>Total operation score:</strong> ${report.totalScore !== null ? `${report.totalScore}%` : "—"}</p>`,
-      `<p>Your full mission-by-mission breakdown is attached as a PDF.</p>`,
+      `<p>The PDF includes a mission-by-mission breakdown for every mission you have played so far.</p>`,
       `<p>— MaverX / Operation OMNI</p>`,
     ].join(""),
     attachments: [

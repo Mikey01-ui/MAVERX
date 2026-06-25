@@ -10,8 +10,8 @@
   ],
   "pullquote": "The heist ends. What you learned doesn't.",
   "scoresLabel": "// Your operation record",
-  "emailOptInLabel": "Email me a breakdown of my results across all five missions",
-  "emailOptInHint": "We'll send your detailed Operation OMNI breakdown (PDF) to the address below.",
+  "emailOptInLabel": "Email me a breakdown of my mission results",
+  "emailOptInHint": "We'll send your Operation OMNI breakdown (PDF) for every mission you've played so far.",
   "emailFieldLabel": "Report email",
   "continueLabel": "Return to Hub",
   "footer": "Operation OMNI · secure progress sync"

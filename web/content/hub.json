@@ -15,5 +15,7 @@
   "lockedLabel": "Locked",
   "lockedHint": "Complete the prior mission first",
   "signOut": "Sign out",
+  "reportLabel": "Email your operation report",
+  "reportHint": "Get a PDF breakdown of the missions you've played so far — you don't need to finish the full operation.",
   "footer": "Operation OMNI · secure progress sync"
 }

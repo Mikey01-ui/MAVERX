@@ -29,6 +29,7 @@ type HubClientProps = {
   progress: SerializedProgress[];
   access: Record<string, { playable: boolean; continueUrl?: string; label: string }>;
   continueMission: ContinueMission | null;
+  showReportLink: boolean;
 };
 
 function resumeUrl(mission: ContinueMission): string {
@@ -44,6 +45,7 @@ export function HubClient({
   progress,
   access,
   continueMission,
+  showReportLink,
 }: HubClientProps) {
   const router = useRouter();
   const [restarting, setRestarting] = useState(false);
@@ -119,6 +121,14 @@ export function HubClient({
             </button>
           </div>
           <p className="hub-choice-hint">{content.restartHint}</p>
+          {showReportLink && (
+            <div className="hub-report-link">
+              <Link href="/finale" className="btn-secondary hub-choice-btn">
+                {content.reportLabel} →
+              </Link>
+              <p className="hub-report-hint">{content.reportHint}</p>
+            </div>
+          )}
         </section>
       ) : (
         <>
@@ -131,6 +141,17 @@ export function HubClient({
             {content.signOut}
           </button>
         </div>
+        {showReportLink && (
+          <div className="hub-report-banner">
+            <div>
+              <p className="hub-report-banner-title">{content.reportLabel}</p>
+              <p className="hub-report-banner-hint">{content.reportHint}</p>
+            </div>
+            <Link href="/finale" className="btn-secondary">
+              {content.reportLabel} →
+            </Link>
+          </div>
+        )}
         <ul className="round-grid">
           {missions.map((mission) => {
             const state = access[mission.id] ?? { playable: false, label: "locked" };

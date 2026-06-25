@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendOperationReportEmail } from "@/lib/email/sendOperationReportEmail";
 import { isSmtpConfigured } from "@/lib/email/smtp";
-import { getMissionProgress } from "@/lib/progress";
 
 const patchSchema = z.object({
   optIn: z.boolean(),
@@ -51,10 +50,7 @@ export async function PATCH(request: Request) {
     let reportError: string | null = null;
 
     if (parsed.data.optIn) {
-      const m5 = await getMissionProgress(session.user.id, "m5");
-      if (!m5 || m5.status !== "completed") {
-        reportError = "Complete Mission 5 before requesting your operation report.";
-      } else if (!isSmtpConfigured()) {
+      if (!isSmtpConfigured()) {
         reportError = "Email delivery is not configured on this server.";
       } else {
         try {

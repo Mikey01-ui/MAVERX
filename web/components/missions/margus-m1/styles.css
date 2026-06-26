@@ -1477,11 +1477,11 @@ body.gp-gameplay-active{background:var(--void)}
 .xtab.active{background:#fff;color:#000;font-weight:600;z-index:1;
   top:0;padding:9px 16px 14px;border-bottom:1px solid #fff}
 .xtab:hover:not(.active){background:#ccc}
-.xtab-panel{display:none;overflow-y:auto;overflow-x:hidden;flex:1;
+.xtab-panel{display:none;overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0;
   scrollbar-width:thin;scrollbar-color:#888 #f0ede5}
 .xtab-panel::-webkit-scrollbar{width:12px}
 .xtab-panel::-webkit-scrollbar-thumb{background:#888;border:3px solid #f0ede5;border-radius:6px}
-.xtab-panel.active{display:block}
+.xtab-panel.active{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 
 /* Folder Grid */
 .folder-grid{display:flex;flex-wrap:wrap;gap:18px 20px;padding:20px 18px 22px;background:#fff;
@@ -1736,10 +1736,14 @@ body.gp-gameplay-active{background:var(--void)}
 /* ═══════════════════════════════════════════════════
    CHART.JS WRAPPERS  (FIX 4)
 ═══════════════════════════════════════════════════ */
-.chart-wrap{padding:18px 20px 20px;background:#fff;position:relative}
+.chart-wrap{padding:18px 20px 20px;background:#fff;position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 .chart-ttl{font-family:'Tahoma',sans-serif;font-size:clamp(11px,1.1vw,13px);font-weight:700;color:#000;margin-bottom:4px}
 .chart-sub{font-family:'Tahoma',sans-serif;font-size:clamp(10px,1vw,12px);color:#666;margin:6px 0 14px;line-height:1.45}
-.chart-canvas-wrap{position:relative;height:260px}
+.chart-canvas-wrap{position:relative;flex:1 1 auto;min-height:260px;height:260px;width:100%}
+.chart-canvas-wrap--short{min-height:240px;height:240px}
+.chart-canvas-wrap--tall{min-height:300px;height:300px}
+.chart-canvas-wrap>div{position:relative;width:100%!important;height:100%!important}
+.chart-canvas-wrap canvas{display:block;width:100%!important;height:100%!important}
 .chart-anom-panel{position:absolute;inset:0;background:rgba(0,0,0,.88);
   display:none;flex-direction:column;align-items:center;justify-content:center;
   z-index:25;padding:20px}

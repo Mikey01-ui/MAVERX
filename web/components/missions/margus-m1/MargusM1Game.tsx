@@ -778,8 +778,13 @@ export function MargusM1Game({
   // A nested component type is recreated each render, so bringFront's re-render
   // (triggered by mousedown on the window) remounted the buttons mid-click and
   // the click never fired.
+  const selectTab = (win: string, idx: number) => {
+    setActiveTab((t) => ({ ...t, [win]: idx }));
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+  };
+
   const tab = (win: string, idx: number, label: string) => (
-    <button key={`${win}-tab-${idx}`} className={`xtab${activeTab[win] === idx ? " active" : ""}`} onClick={() => setActiveTab((t) => ({ ...t, [win]: idx }))}>{label}</button>
+    <button key={`${win}-tab-${idx}`} className={`xtab${activeTab[win] === idx ? " active" : ""}`} onClick={() => selectTab(win, idx)}>{label}</button>
   );
 
   return (
@@ -867,9 +872,9 @@ export function MargusM1Game({
             {renderWin("win-server", "fa-file-excel", "server_report.xls - Microsoft Excel", "IT Infrastructure Report · Oct 2003", (
               <>
                 <div className="xp-tabs">{tab("win-server", 0, "Network Traffic")}{tab("win-server", 1, "Server Load")}{tab("win-server", 2, "Disk Usage")}</div>
-                {activeTab["win-server"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Network Throughput, FY 2003</div><div className="chart-sub">Monthly total GB · Core backbone</div><div className="chart-canvas-wrap"><NetworkChart /></div></div></div>}
-                {activeTab["win-server"] === 1 && <div className="xtab-panel active"><div className="chart-wrap" style={{ position: "relative" }}><div className="chart-ttl">Sector Node Load Index, FY 2003</div><div className="chart-sub">Monthly avg load % · IT Infrastructure Report</div><div className="chart-canvas-wrap"><ServerLoadChart onAnomaly={() => foundAnomaly("compute", "cap", "Server load like that doesn't happen by accident. Infrastructure confirmed provisionally. Keep going.")} onWrong={wrongClick} /></div>{anomaly["cap"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap", "compute")}>September hit 118%, dwarfing every other month including the elevated spikes in June (72%) and October (81%). Nearly 3× the yearly average load.<br /><br />Tooltip reads: &quot;Ticket: Archived, DO NOT REOPEN&quot;</AnomalyPanel>}</div></div>}
-                {activeTab["win-server"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Disk Usage by Node, Q3 2003</div><div className="chart-sub">Automated snapshot · 01-Oct-2003</div><div className="chart-canvas-wrap"><DiskChart /></div></div></div>}
+                {activeTab["win-server"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Network Throughput, FY 2003</div><div className="chart-sub">Monthly total GB · Core backbone</div><NetworkChart /></div></div>}
+                {activeTab["win-server"] === 1 && <div className="xtab-panel active"><div className="chart-wrap" style={{ position: "relative" }}><div className="chart-ttl">Sector Node Load Index, FY 2003</div><div className="chart-sub">Monthly avg load % · IT Infrastructure Report</div><ServerLoadChart onAnomaly={() => foundAnomaly("compute", "cap", "Server load like that doesn't happen by accident. Infrastructure confirmed provisionally. Keep going.")} onWrong={wrongClick} />{anomaly["cap"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap", "compute")}>September hit 118%, dwarfing every other month including the elevated spikes in June (72%) and October (81%). Nearly 3× the yearly average load.<br /><br />Tooltip reads: &quot;Ticket: Archived, DO NOT REOPEN&quot;</AnomalyPanel>}</div></div>}
+                {activeTab["win-server"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Disk Usage by Node, Q3 2003</div><div className="chart-sub">Automated snapshot · 01-Oct-2003</div><DiskChart /></div></div>}
               </>
             ), 296)}
 
@@ -877,9 +882,9 @@ export function MargusM1Game({
             {renderWin("win-budget", "fa-file-excel", "budget_Q3.xls - Microsoft Excel", "Finance Portal · Restricted · 01-Oct-2003", (
               <>
                 <div className="xp-tabs">{tab("win-budget", 0, "Headcount Costs")}{tab("win-budget", 1, "Capex")}{tab("win-budget", 2, "Budget Allocation")}</div>
-                {activeTab["win-budget"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Headcount Costs, Q3 2003</div><div className="chart-sub">HR &amp; Finance Joint Report · Restricted</div><div className="chart-canvas-wrap"><HCCostChart /></div></div></div>}
-                {activeTab["win-budget"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Capital Expenditure, Q3 2003</div><div className="chart-sub">Finance · Capex Tracker · Authorised Items Only</div><div className="chart-canvas-wrap"><CapexChart /></div></div></div>}
-                {activeTab["win-budget"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Q3 2003 Budget Allocation</div><div className="chart-sub">Finance Portal · Restricted</div><div style={{ position: "relative" }}><div className="chart-canvas-wrap" style={{ height: 240 }}><BudgetAllocChart onAnomaly={() => foundAnomaly("funding", "cap-funding", "Hidden budget lines are how you fund things that don't officially exist.")} onWrong={wrongClick} /></div>{anomaly["cap-funding"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-funding", "funding")}>$7.1M sits under R&amp;D, Unallocated with no department owner. That is a lot of money to go nowhere official.</AnomalyPanel>}</div></div></div>}
+                {activeTab["win-budget"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Headcount Costs, Q3 2003</div><div className="chart-sub">HR &amp; Finance Joint Report · Restricted</div><HCCostChart /></div></div>}
+                {activeTab["win-budget"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Capital Expenditure, Q3 2003</div><div className="chart-sub">Finance · Capex Tracker · Authorised Items Only</div><CapexChart /></div></div>}
+                {activeTab["win-budget"] === 2 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Q3 2003 Budget Allocation</div><div className="chart-sub">Finance Portal · Restricted</div><div style={{ position: "relative" }}><BudgetAllocChart onAnomaly={() => foundAnomaly("funding", "cap-funding", "Hidden budget lines are how you fund things that don't officially exist.")} onWrong={wrongClick} />{anomaly["cap-funding"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-funding", "funding")}>$7.1M sits under R&amp;D, Unallocated with no department owner. That is a lot of money to go nowhere official.</AnomalyPanel>}</div></div></div>}
               </>
             ), 320)}
 
@@ -887,8 +892,8 @@ export function MargusM1Game({
             {renderWin("win-personnel", "fa-file-word", "staffing_hours_Sep.doc - Microsoft Word", "HR Analytics · RESTRICTED · All Divisions", (
               <>
                 <div className="xp-tabs">{tab("win-personnel", 0, "Q1–Q2 Summary")}{tab("win-personnel", 1, "September Breakdown")}{tab("win-personnel", 2, "Policy Notes")}</div>
-                {activeTab["win-personnel"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Overtime Summary, H1 2003 (Jan–Jun)</div><div className="chart-sub">HR Analytics · All Divisions</div><div className="chart-canvas-wrap"><H1Chart /></div></div></div>}
-                {activeTab["win-personnel"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">September 2003, Overtime by Division</div><div className="chart-sub">HR Analytics · RESTRICTED</div><div style={{ position: "relative" }}><div className="chart-canvas-wrap" style={{ height: 300 }}><SeptScatterChart onAnomaly={() => foundAnomaly("personnel", "cap-personnel")} onWrong={wrongClick} /></div>{anomaly["cap-personnel"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-personnel", "personnel")}>Engineering Classified logged 2,940 hours under a [REDACTED] project code. That is 7× the next highest division.</AnomalyPanel>}</div></div></div>}
+                {activeTab["win-personnel"] === 0 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">Overtime Summary, H1 2003 (Jan–Jun)</div><div className="chart-sub">HR Analytics · All Divisions</div><H1Chart /></div></div>}
+                {activeTab["win-personnel"] === 1 && <div className="xtab-panel active"><div className="chart-wrap"><div className="chart-ttl">September 2003, Overtime by Division</div><div className="chart-sub">HR Analytics · RESTRICTED</div><div style={{ position: "relative" }}><SeptScatterChart onAnomaly={() => foundAnomaly("personnel", "cap-personnel")} onWrong={wrongClick} />{anomaly["cap-personnel"] && <AnomalyPanel title="ANOMALY CONFIRMED" onVerify={() => hideAnomalyAndVerify("cap-personnel", "personnel")}>Engineering Classified logged 2,940 hours under a [REDACTED] project code. That is 7× the next highest division.</AnomalyPanel>}</div></div></div>}
                 {activeTab["win-personnel"] === 2 && <div className="xtab-panel active"><div className="dt-note"><strong>OVERTIME AUTHORISATION POLICY, MEGACORP HR</strong><br /><br />1. Standard overtime (under 200h/month per division) requires line manager approval.<br />2. Overtime exceeding 200h/month must be escalated to VP level.<br />3. Any overtime associated with classified projects requires SVP or above sign-off.<br />4. All overtime must be logged within 5 business days.<br />5. Project codes must be listed on all authorisation requests.<br />6. Records are retained for 7 years.<br /><br /><em>Effective: January 2003. Last reviewed: July 2003.</em></div></div>}
               </>
             ), 320)}
@@ -898,7 +903,7 @@ export function MargusM1Game({
               <div className="xp-body" style={{ height: 320, padding: "10px 12px", background: "#fff" }}>
                 <div className="chart-ttl">Avg Overtime Hours per Employee, September 2003</div>
                 <div className="chart-sub">HR Records · Staffing Metrics · All Divisions · hover segment for exact figure</div>
-                <div style={{ height: 250 }}><HeadcountPolarChart /></div>
+                <div style={{ flex: "1 1 auto", minHeight: 250 }}><HeadcountPolarChart /></div>
               </div>
             ), 320, true)}
 

@@ -65,24 +65,29 @@ jobs:
   deploy-azure:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.AZURE_CREDENTIALS != '' }}
     steps:
       - name: Check required secrets
+        id: check
         env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
-          missing=0
-          if [ -z "$AUTH_SECRET" ]; then echo "Missing GitHub secret AUTH_SECRET"; missing=1; fi
-          if [ -z "$POSTGRES_PASSWORD" ]; then echo "Missing GitHub secret POSTGRES_PASSWORD"; missing=1; fi
-          exit "$missing"
+          if [ -z "$AZURE_CREDENTIALS" ] || [ -z "$AUTH_SECRET" ] || [ -z "$POSTGRES_PASSWORD" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Azure secrets are not set yet. Image was pushed to ghcr.io/mikey01-ui/maverx; skipping Azure deploy."
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Log in to Azure
+        if: steps.check.outputs.skip != 'true'
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy Container App and Postgres
+        if: steps.check.outputs.skip != 'true'
         uses: azure/cli@v2
         env:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}

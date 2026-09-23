@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { signIn } from "next-auth/react";
 import type { LoginContent } from "@/lib/content";
 import {
   buildRegisterHref,
   resolveRegisterStep,
   type RegisterStep,
 } from "@/lib/register-steps";
+import { completeRegistration } from "@/app/(auth)/register/actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,6 +48,7 @@ export function RegisterForm({
   initialPreviewError = null,
   initialStep = null,
   initialEmail = "",
+  initialRegError = null,
 }: {
   content: LoginContent;
   inviteContext?: InviteContext;
@@ -58,6 +59,8 @@ export function RegisterForm({
   initialStep?: RegisterStep | null;
   /** From ?email= — carried across GET step forms. */
   initialEmail?: string;
+  /** From ?regError= — server-action failure echoed back without JS. */
+  initialRegError?: string | null;
 }) {
   const router = useRouter();
   const token = (inviteContext?.invite || inviteContext?.group || "").trim();
@@ -88,8 +91,7 @@ export function RegisterForm({
     return inviteContext?.initialLocale === "nl" ? "nl" : "en";
   });
   const [touched, setTouched] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(initialRegError);
 
   // Keep client step in sync when the server re-renders with a new ?step=.
   useEffect(() => {
@@ -171,49 +173,6 @@ export function RegisterForm({
     }
   }
 
-  async function handleSubmit() {
-    setTouched(true);
-    setError(null);
-    if (!emailValid || !passwordValid || !confirmValid || !token) return;
-
-    setLoading(true);
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        password,
-        preferredLocale,
-        invite: inviteContext?.invite || token,
-        group: inviteContext?.group ?? undefined,
-        lang: preview?.localeIsAny ? preferredLocale : preview?.locale ?? preferredLocale,
-        diff: preview?.difficulty ?? inviteContext?.diff ?? undefined,
-        co: preview?.company ?? inviteContext?.co ?? undefined,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setLoading(false);
-      setError(data.error ?? "Registration failed.");
-      return;
-    }
-
-    const signInResult = await signIn("credentials", {
-      email: email.trim().toLowerCase(),
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-
-    if (signInResult?.error) {
-      setError("Profile created but sign-in failed. Try logging in.");
-      return;
-    }
-
-    router.push("/intro");
-    router.refresh();
-  }
-
   if (previewLoading) {
     return (
       <div className="omni-panel">
@@ -275,7 +234,8 @@ export function RegisterForm({
   }) {
     return (
       <>
-        {inviteContext?.invite ? <input type="hidden" name="invite" value={inviteContext.invite} /> : null}
+        {/* Always send invite=token so group links satisfy the register server action. */}
+        <input type="hidden" name="invite" value={token} />
         {inviteContext?.group ? <input type="hidden" name="group" value={inviteContext.group} /> : null}
         {includeLang ? (
           <input type="hidden" name="lang" value={preferredLocale} />
@@ -309,7 +269,8 @@ export function RegisterForm({
       {step === "context" && (
         <div style={{ marginTop: "1.25rem" }}>
           <p className="locale-choice-hint">
-            You&apos;re registering with a personal invite
+            You&apos;re registering with a{" "}
+            {preview.type === "group" ? "group" : "personal"} invite
             {preview.company ? ` for ${preview.company}` : ""}.
           </p>
           <ul className="locale-choice-hint" style={{ marginTop: "1rem", paddingLeft: "1.1rem" }}>
@@ -448,13 +409,17 @@ export function RegisterForm({
       )}
 
       {step === "password" && (
-        <div style={{ marginTop: "1.25rem" }}>
+        <form action={completeRegistration} style={{ marginTop: "1.25rem" }}>
+          <InviteHiddenFields stepValue="password" includeLang />
+          <input type="hidden" name="email" value={email.trim()} />
+          <input type="hidden" name="preferredLocale" value={preferredLocale} />
           <div className="form-group">
             <label className="form-label" htmlFor="password">
               {content.passwordLabel}
             </label>
             <input
               id="password"
+              name="password"
               type="password"
               className="form-input"
               placeholder={content.passwordPlaceholder}
@@ -462,6 +427,8 @@ export function RegisterForm({
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               autoFocus
+              required
+              minLength={8}
             />
             <p className={`error-text${touched && password && !passwordValid ? " show" : ""}`}>
               {content.passwordError}
@@ -473,11 +440,14 @@ export function RegisterForm({
             </label>
             <input
               id="confirm"
+              name="confirm"
               type="password"
               className="form-input"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
+              required
+              minLength={8}
             />
             <p className={`error-text${touched && confirm && !confirmValid ? " show" : ""}`}>
               {content.register.confirmError}
@@ -485,21 +455,14 @@ export function RegisterForm({
           </div>
           {error && <p className="error-text show">{error}</p>}
           <div className="actions" style={{ display: "flex", gap: "0.75rem" }}>
-            <Link
-              href={backFromPasswordHref}
-              className={`btn-secondary${loading ? " is-disabled" : ""}`}
-              aria-disabled={loading}
-              onClick={(e) => {
-                if (loading) e.preventDefault();
-              }}
-            >
+            <Link href={backFromPasswordHref} className="btn-secondary">
               Back
             </Link>
-            <button type="button" className="btn-primary" disabled={loading} onClick={() => void handleSubmit()}>
+            <button type="submit" className="btn-primary">
               {content.submitRegister}
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       <Link href="/login" className="link-muted" style={{ marginTop: "1.25rem", display: "inline-block" }}>

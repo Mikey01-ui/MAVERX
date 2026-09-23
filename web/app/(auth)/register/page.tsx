@@ -52,6 +52,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     !!initialPreview?.localeIsAny,
   );
   const initialEmail = pick("email")?.trim() ?? "";
+  const initialRegError = pick("regError")?.trim() || null;
 
   return (
     <AmbientShell theme="theme-v2">
@@ -64,6 +65,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
           initialPreviewError={previewError}
           initialStep={initialStep}
           initialEmail={initialEmail}
+          initialRegError={initialRegError}
         />
       </main>
     </AmbientShell>

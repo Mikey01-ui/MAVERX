@@ -1147,6 +1147,7 @@ a {
   letter-spacing: 0.15em;
   box-shadow: 0 0 10px rgba(247, 148, 33, 0.22);
   transition: background 0.25s, box-shadow 0.25s, transform 0.25s;
+  text-decoration: none;
 }
 
 .theme-v2 .btn-primary.btn-sweep {

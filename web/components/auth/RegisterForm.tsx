@@ -33,19 +33,64 @@ type InvitePreview = {
   expiresAt?: string | null;
 };
 
-type Step = "context" | "language" | "email" | "password";
+export type RegisterStep = "context" | "language" | "email" | "password";
+
+const VALID_STEPS = new Set<RegisterStep>(["context", "language", "email", "password"]);
+
+export function parseRegisterStep(raw: string | null | undefined): RegisterStep | null {
+  if (!raw) return null;
+  const s = raw.trim().toLowerCase();
+  return VALID_STEPS.has(s as RegisterStep) ? (s as RegisterStep) : null;
+}
+
+/** Build /register?... preserving invite context + step (progressive enhancement). */
+export function buildRegisterHref(
+  ctx: InviteContext | undefined,
+  step: RegisterStep,
+  extras?: { email?: string; lang?: string | null },
+): string {
+  const params = new URLSearchParams();
+  if (ctx?.invite) params.set("invite", ctx.invite);
+  if (ctx?.group) params.set("group", ctx.group);
+  const lang = extras?.lang ?? ctx?.lang;
+  if (lang) params.set("lang", lang);
+  if (ctx?.diff) params.set("diff", ctx.diff);
+  if (ctx?.co) params.set("co", ctx.co);
+  if (ctx?.cohort) params.set("cohort", ctx.cohort);
+  if (ctx?.seats) params.set("seats", ctx.seats);
+  if (extras?.email) params.set("email", extras.email);
+  params.set("step", step);
+  return `/register?${params.toString()}`;
+}
+
+export function resolveRegisterStep(
+  requested: RegisterStep | null | undefined,
+  localeIsAny: boolean,
+): RegisterStep {
+  const steps: RegisterStep[] = ["context"];
+  if (localeIsAny) steps.push("language");
+  steps.push("email", "password");
+  if (requested && steps.includes(requested)) return requested;
+  return "context";
+}
 
 export function RegisterForm({
   content,
   inviteContext,
   initialPreview = null,
   initialPreviewError = null,
+  initialStep = null,
+  initialEmail = "",
 }: {
   content: LoginContent;
   inviteContext?: InviteContext;
   /** Server-validated invite — preferred so the wizard never hangs on client fetch. */
   initialPreview?: InvitePreview | null;
   initialPreviewError?: string | null;
+  /** From ?step= — server-rendered so Continue works without client hydration. */
+  initialStep?: RegisterStep | null;
+  /** From ?email= — carried across GET step forms. */
+  initialEmail?: string;
 }) {
   const router = useRouter();
   const token = (inviteContext?.invite || inviteContext?.group || "").trim();
@@ -60,17 +105,29 @@ export function RegisterForm({
     !!token && !initialPreview && !initialPreviewError,
   );
 
-  const [step, setStep] = useState<Step>("context");
-  const [email, setEmail] = useState(initialPreview?.emailHint ?? "");
+  const localeIsAny = !!preview?.localeIsAny;
+  const [step, setStep] = useState<RegisterStep>(() =>
+    resolveRegisterStep(initialStep, !!initialPreview?.localeIsAny),
+  );
+  const [email, setEmail] = useState(
+    () => initialEmail || initialPreview?.emailHint || "",
+  );
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [preferredLocale, setPreferredLocale] = useState<PreferredLocale>(() => {
     if (!initialPreview?.localeIsAny && initialPreview?.locale === "nl") return "nl";
+    if (inviteContext?.lang === "nl") return "nl";
+    if (inviteContext?.lang === "en") return "en";
     return inviteContext?.initialLocale === "nl" ? "nl" : "en";
   });
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Keep client step in sync when the server re-renders with a new ?step=.
+  useEffect(() => {
+    setStep(resolveRegisterStep(initialStep, localeIsAny));
+  }, [initialStep, localeIsAny]);
 
   useEffect(() => {
     // Server already resolved invite — nothing to fetch.
@@ -101,7 +158,7 @@ export function RegisterForm({
         } else {
           setPreview(data.invite as InvitePreview);
           setPreviewError(null);
-          if (data.invite?.emailHint) setEmail(data.invite.emailHint);
+          if (data.invite?.emailHint && !email) setEmail(data.invite.emailHint);
           if (!data.invite?.localeIsAny && data.invite?.locale === "nl") {
             setPreferredLocale("nl");
           }
@@ -117,6 +174,7 @@ export function RegisterForm({
       clearTimeout(timeout);
       controller.abort();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- email seed only on first resolve
   }, [token, inviteContext?.group, initialPreview, initialPreviewError]);
 
   const emailValid = EMAIL_RE.test(email.trim());
@@ -124,7 +182,7 @@ export function RegisterForm({
   const confirmValid = password === confirm && confirm.length > 0;
 
   const steps = useMemo(() => {
-    const list: Step[] = ["context"];
+    const list: RegisterStep[] = ["context"];
     if (preview?.localeIsAny) list.push("language");
     list.push("email", "password");
     return list;
@@ -132,18 +190,18 @@ export function RegisterForm({
 
   const stepIndex = Math.max(0, steps.indexOf(step));
 
+  function stepHref(target: RegisterStep, extras?: { email?: string; lang?: string | null }) {
+    return buildRegisterHref(inviteContext, target, extras);
+  }
+
   function goNext() {
     setError(null);
     setTouched(false);
     const next = steps[stepIndex + 1];
-    if (next) setStep(next);
-  }
-
-  function goBack() {
-    setError(null);
-    setTouched(false);
-    const prev = steps[stepIndex - 1];
-    if (prev) setStep(prev);
+    if (next) {
+      setStep(next);
+      router.push(stepHref(next, { email: email.trim() || undefined, lang: preferredLocale }));
+    }
   }
 
   async function handleSubmit() {
@@ -227,6 +285,47 @@ export function RegisterForm({
   const difficultyLabel =
     preview.difficulty.charAt(0).toUpperCase() + preview.difficulty.slice(1);
 
+  const nextAfterContext: RegisterStep = preview.localeIsAny ? "language" : "email";
+  const backFromEmail: RegisterStep = preview.localeIsAny ? "language" : "context";
+  const continueFromContextHref = stepHref(nextAfterContext, { lang: preferredLocale });
+  const backFromLanguageHref = stepHref("context");
+  const backFromEmailHref = stepHref(backFromEmail, {
+    email: email.trim() || undefined,
+    lang: preferredLocale,
+  });
+  const backFromPasswordHref = stepHref("email", {
+    email: email.trim() || undefined,
+    lang: preferredLocale,
+  });
+
+  /** Hidden fields so GET forms keep invite context without JS. */
+  function InviteHiddenFields({
+    stepValue,
+    includeLang,
+  }: {
+    stepValue: RegisterStep;
+    includeLang?: boolean;
+  }) {
+    return (
+      <>
+        {inviteContext?.invite ? <input type="hidden" name="invite" value={inviteContext.invite} /> : null}
+        {inviteContext?.group ? <input type="hidden" name="group" value={inviteContext.group} /> : null}
+        {includeLang ? (
+          <input type="hidden" name="lang" value={preferredLocale} />
+        ) : inviteContext?.lang ? (
+          <input type="hidden" name="lang" value={inviteContext.lang} />
+        ) : null}
+        {inviteContext?.diff ? <input type="hidden" name="diff" value={inviteContext.diff} /> : null}
+        {inviteContext?.co ? <input type="hidden" name="co" value={inviteContext.co} /> : null}
+        {inviteContext?.cohort ? (
+          <input type="hidden" name="cohort" value={inviteContext.cohort} />
+        ) : null}
+        {inviteContext?.seats ? <input type="hidden" name="seats" value={inviteContext.seats} /> : null}
+        <input type="hidden" name="step" value={stepValue} />
+      </>
+    );
+  }
+
   return (
     <div className="omni-panel">
       <div style={{ marginBottom: "1.25rem" }}>
@@ -267,15 +366,35 @@ export function RegisterForm({
             )}
           </ul>
           <div className="actions" style={{ marginTop: "1.5rem" }}>
-            <button type="button" className="btn-primary" onClick={goNext}>
+            {/* Plain Link/href so Continue works even if React never hydrates. */}
+            <Link href={continueFromContextHref} className="btn-primary">
               Continue
-            </button>
+            </Link>
           </div>
         </div>
       )}
 
       {step === "language" && (
-        <div style={{ marginTop: "1.25rem" }}>
+        <form
+          method="get"
+          action="/register"
+          style={{ marginTop: "1.25rem" }}
+          onSubmit={(e) => {
+            // Prefer client navigation when hydrated; GET still works without JS.
+            e.preventDefault();
+            goNext();
+          }}
+        >
+          {/* lang comes from radios below — do not emit a hidden lang. */}
+          {inviteContext?.invite ? <input type="hidden" name="invite" value={inviteContext.invite} /> : null}
+          {inviteContext?.group ? <input type="hidden" name="group" value={inviteContext.group} /> : null}
+          {inviteContext?.diff ? <input type="hidden" name="diff" value={inviteContext.diff} /> : null}
+          {inviteContext?.co ? <input type="hidden" name="co" value={inviteContext.co} /> : null}
+          {inviteContext?.cohort ? (
+            <input type="hidden" name="cohort" value={inviteContext.cohort} />
+          ) : null}
+          {inviteContext?.seats ? <input type="hidden" name="seats" value={inviteContext.seats} /> : null}
+          <input type="hidden" name="step" value="email" />
           <span className="form-label" id="locale-label">
             {content.register.localeLabel}
           </span>
@@ -292,7 +411,7 @@ export function RegisterForm({
               >
                 <input
                   type="radio"
-                  name="preferredLocale"
+                  name="lang"
                   value={opt.code}
                   checked={preferredLocale === opt.code}
                   onChange={() => setPreferredLocale(opt.code)}
@@ -303,24 +422,40 @@ export function RegisterForm({
           </div>
           <p className="locale-choice-hint">{content.register.localeHint}</p>
           <div className="actions" style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem" }}>
-            <button type="button" className="btn-secondary" onClick={goBack}>
+            <Link href={backFromLanguageHref} className="btn-secondary">
               Back
-            </button>
-            <button type="button" className="btn-primary" onClick={goNext}>
+            </Link>
+            <button type="submit" className="btn-primary">
               Continue
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {step === "email" && (
-        <div style={{ marginTop: "1.25rem" }}>
+        <form
+          method="get"
+          action="/register"
+          style={{ marginTop: "1.25rem" }}
+          onSubmit={(e) => {
+            setTouched(true);
+            if (!emailValid) {
+              e.preventDefault();
+              return;
+            }
+            // Prefer client nav when hydrated; GET works without JS.
+            e.preventDefault();
+            goNext();
+          }}
+        >
+          <InviteHiddenFields stepValue="password" includeLang />
           <div className="form-group">
             <label className="form-label" htmlFor="email">
               {content.emailLabel}
             </label>
             <input
               id="email"
+              name="email"
               type="email"
               className={`form-input${touched && !emailValid && email ? " invalid" : ""}`}
               placeholder={content.emailPlaceholder}
@@ -328,27 +463,21 @@ export function RegisterForm({
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               autoFocus
+              required
             />
             <p className={`error-text${touched && email && !emailValid ? " show" : ""}`}>
               {content.emailError}
             </p>
           </div>
           <div className="actions" style={{ display: "flex", gap: "0.75rem" }}>
-            <button type="button" className="btn-secondary" onClick={goBack}>
+            <Link href={backFromEmailHref} className="btn-secondary">
               Back
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => {
-                setTouched(true);
-                if (emailValid) goNext();
-              }}
-            >
+            </Link>
+            <button type="submit" className="btn-primary">
               Continue
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {step === "password" && (
@@ -389,9 +518,16 @@ export function RegisterForm({
           </div>
           {error && <p className="error-text show">{error}</p>}
           <div className="actions" style={{ display: "flex", gap: "0.75rem" }}>
-            <button type="button" className="btn-secondary" onClick={goBack} disabled={loading}>
+            <Link
+              href={backFromPasswordHref}
+              className={`btn-secondary${loading ? " is-disabled" : ""}`}
+              aria-disabled={loading}
+              onClick={(e) => {
+                if (loading) e.preventDefault();
+              }}
+            >
               Back
-            </button>
+            </Link>
             <button type="button" className="btn-primary" disabled={loading} onClick={() => void handleSubmit()}>
               {content.submitRegister}
             </button>

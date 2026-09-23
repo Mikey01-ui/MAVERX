@@ -153,11 +153,18 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
+  // Never run auth on /_next — WebSocket HMR upgrades fail through NextAuth middleware
+  // (ERR_INVALID_HTTP_RESPONSE / 502), which can leave SSR HTML without client handlers.
+  if (request.nextUrl.pathname.startsWith("/_next")) {
+    return NextResponse.next();
+  }
+
   return authMiddleware(request, {} as never);
 }
 
 export const config = {
-  // Proxy app routes AND /_next/* to homelab so HTML and JS chunks stay in sync.
+  // When HOMELAB_TUNNEL_URL is set, proxy app routes AND /_next/* so HTML/JS stay in sync.
+  // Locally, the handler above short-circuits /_next before auth (HMR websockets).
   // Only favicon + /media stay on Vercel; bare "/" is excluded (.+ requires a path segment).
   matcher: ["/((?!favicon.ico|media/).+)"],
 };

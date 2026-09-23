@@ -1,6 +1,10 @@
 import { AmbientShell } from "@/components/layout/AmbientShell";
 import { StatusBar } from "@/components/layout/StatusBar";
-import { RegisterForm } from "@/components/auth/RegisterForm";
+import {
+  RegisterForm,
+  parseRegisterStep,
+  resolveRegisterStep,
+} from "@/components/auth/RegisterForm";
 import { getLoginContent } from "@/lib/content";
 import { isAnyLocale, localeFromDashboardLang, previewInvite } from "@/lib/invites";
 import { redirect } from "next/navigation";
@@ -45,6 +49,13 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     initialLocale: playable as "en" | "nl",
   };
 
+  const requestedStep = parseRegisterStep(pick("step"));
+  const initialStep = resolveRegisterStep(
+    requestedStep,
+    !!initialPreview?.localeIsAny,
+  );
+  const initialEmail = pick("email")?.trim() ?? "";
+
   return (
     <AmbientShell theme="theme-v2">
       <StatusBar left={content.statusLeft} right={content.statusRight} />
@@ -54,6 +65,8 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
           inviteContext={inviteContext}
           initialPreview={initialPreview}
           initialPreviewError={previewError}
+          initialStep={initialStep}
+          initialEmail={initialEmail}
         />
       </main>
     </AmbientShell>

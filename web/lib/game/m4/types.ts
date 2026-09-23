@@ -1,3 +1,5 @@
+import type { M4DetBalance } from "@/lib/game/difficulty";
+
 export type ChatTone = "bm-d" | "bm-ok" | "bm-err" | "bm-h";
 
 export type OnboardingStep = {
@@ -51,6 +53,7 @@ export type M4GameState = {
   timerSec: number;
   messages: ChatMessage[];
   stepBanner: string;
+  balance: M4DetBalance;
 };
 
 export type M4GameAction =

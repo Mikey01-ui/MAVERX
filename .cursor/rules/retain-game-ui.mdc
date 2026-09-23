@@ -1,0 +1,13 @@
+---
+description: Keep game visual language for all UI work and previews
+alwaysApply: true
+---
+
+# Retain game UI
+
+When changing or previewing any in-game UI (missions, debrief, chrome, CTAs, overlays):
+
+- Reuse the real components and CSS (`MissionDebriefScreen`, mission `*-game.css`, shared tokens/fonts). Do not invent alternate chrome for demos.
+- Local previews must render the actual game markup/styles (e.g. `/test-*` pages that mount real mission components). Never ship throwaway mock HTML with different fonts, colors, or button styles.
+- Copy/routing fixes still go through existing screens — only change the copy or behavior, not the visual system.
+- If Next cannot boot yet, open the source file or wait for local/dev deploy; do not substitute a restyled mock as the review surface.

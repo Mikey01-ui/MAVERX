@@ -30,6 +30,7 @@ type HubClientProps = {
   access: Record<string, { playable: boolean; continueUrl?: string; label: string }>;
   continueMission: ContinueMission | null;
   showReportLink: boolean;
+  showDashboardLink?: boolean;
 };
 
 function resumeUrl(mission: ContinueMission): string {
@@ -46,6 +47,7 @@ export function HubClient({
   access,
   continueMission,
   showReportLink,
+  showDashboardLink = false,
 }: HubClientProps) {
   const router = useRouter();
   const [restarting, setRestarting] = useState(false);
@@ -121,6 +123,13 @@ export function HubClient({
             </button>
           </div>
           <p className="hub-choice-hint">{content.restartHint}</p>
+          {showDashboardLink && (
+            <div className="hub-report-link">
+              <Link href="/dashboard" className="btn-secondary hub-choice-btn">
+                Group language →
+              </Link>
+            </div>
+          )}
           {showReportLink && (
             <div className="hub-report-link">
               <Link href="/finale" className="btn-secondary hub-choice-btn">
@@ -133,6 +142,11 @@ export function HubClient({
       ) : (
         <>
         <div className="hub-top-actions">
+          {showDashboardLink && (
+            <Link href="/dashboard" className="btn-secondary">
+              Group language →
+            </Link>
+          )}
           <button
             type="button"
             className="btn-secondary"

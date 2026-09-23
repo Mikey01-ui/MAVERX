@@ -138,20 +138,13 @@ body.m4-tutorial-active .bg-grid { display:none; }
 .m4-game .bm-sender {
   font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:.5px; margin-bottom:6px; padding-left:4px;
 }
-.m4-game .bm-bubble {
-  align-self:flex-start; display:block; width:100%; max-width:min(420px,100%); padding:10px 12px;
-  border-radius:14px 14px 14px 3px; line-height:1.55; font-family:'DM Sans',sans-serif;
-  font-size:clamp(11px,1.15vw,14px); overflow-wrap:break-word; animation:m4BubbleIn 220ms ease forwards; opacity:0;
-}
+/* Bubble chrome lives in mission-channel.css (full-width left-accent). */
+.m4-game .bm-bubble { animation:m4BubbleIn 220ms ease forwards; opacity:0; }
 @keyframes m4BubbleIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .m4-game .bm-ts {
   align-self:flex-end; font-size:10px; color:rgba(0,196,28,0.72); margin-top:4px; font-family:'DM Sans',sans-serif;
 }
 .m4-game .bm-ts::after { content:' ✓'; }
-.m4-game .bm-bubble.bm-d { background:rgba(43,32,52,.92); color:var(--text-w); border:1px solid rgba(0,196,28,.10); }
-.m4-game .bm-bubble.bm-ok { background:rgba(0,196,28,.08); color:#cfead2; border-left:2px solid rgba(0,196,28,.55); }
-.m4-game .bm-bubble.bm-err { background:rgba(211,25,114,.08); color:#efb5cf; border-left:2px solid rgba(211,25,114,.35); }
-.m4-game .bm-bubble.bm-h { background:rgba(143,68,232,.12); color:#dbc7f6; border-left:2px solid rgba(143,68,232,.40); }
 .m4-game .broker-footer {
   flex-shrink:0; padding:0 0 max(8px,env(safe-area-inset-bottom,0));
   border-top:1px solid rgba(0,196,28,.22); background:var(--panel-bg);

@@ -1,36 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import "./gloss-tip.css";
 
 /**
- * Viewport-clamped floating tooltip for glossary terms, ported from the
- * legacy missions' `.gloss` / `.gloss-tip` implementation. Render <Gloss>
- * inside a mission wrapper that carries the mission scope class so the
- * `.gloss` styling applies; the tip itself is attached to document.body.
+ * Viewport-clamped floating glossary tip. Portaled to document.body —
+ * chrome lives in gloss-tip.css (`.gloss-tip`), not under the mission root.
  */
 let tipEl: HTMLDivElement | null = null;
-let tipScope = "";
 
-function ensureTip(scopeClass: string) {
-  if (!tipEl) {
+function ensureTip() {
+  if (!tipEl || !tipEl.isConnected) {
     tipEl = document.createElement("div");
+    tipEl.className = "gloss-tip";
     document.body.appendChild(tipEl);
-  }
-  if (tipScope !== scopeClass) {
-    // Scope class makes the mission CSS (`.m2-mission .gloss-tip`) apply.
-    tipEl.className = `${scopeClass} gloss-tip`;
-    tipScope = scopeClass;
   }
   return tipEl;
 }
 
-export function Gloss({ scopeClass, text, children }: { scopeClass: string; text: string; children: ReactNode }) {
+export function Gloss({
+  scopeClass: _scopeClass,
+  text,
+  children,
+}: {
+  /** Kept for call-site compatibility; tip chrome is global `.gloss-tip`. */
+  scopeClass: string;
+  text: string;
+  children: ReactNode;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
 
   const show = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const t = ensureTip(scopeClass);
+    const t = ensureTip();
     t.textContent = text;
     t.classList.add("show");
     const r = el.getBoundingClientRect();
@@ -43,10 +46,12 @@ export function Gloss({ scopeClass, text, children }: { scopeClass: string; text
     if (top < margin) top = r.bottom + 10;
     t.style.left = `${left}px`;
     t.style.top = `${top}px`;
-  }, [scopeClass, text]);
+  }, [text]);
 
   const hide = useCallback(() => {
-    tipEl?.classList.remove("show");
+    if (!tipEl) return;
+    tipEl.classList.remove("show");
+    tipEl.textContent = "";
   }, []);
 
   useEffect(() => {

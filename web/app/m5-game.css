@@ -179,9 +179,8 @@
 .m5-game .bm-sep { display:flex; align-items:center; gap:10px; margin:8px 0 14px; }
 .m5-game .bm-sep-pill { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--text-d); border:1px solid rgba(0,196,28,.18); border-radius:10px; padding:2px 10px; background:rgba(0,196,28,.04); }
 .m5-game .bm-group { display:flex; flex-direction:column; margin-bottom:clamp(8px,1.5vh,14px); }
-.m5-game .bm-sender { font-family:var(--font-body); font-size:11px; letter-spacing:.5px; color:var(--purple-light); margin-bottom:5px; padding-left:4px; }
-.m5-game .bm-bubble { font-size:13px; line-height:1.55; padding:10px 14px; border-radius:14px 14px 14px 3px; background:rgba(43,32,52,.92); color:var(--grey-light); border:1px solid rgba(0,196,28,.10); }
-.m5-game .bm-bubble.bm-h { background:rgba(143,68,232,.12); color:#dbc7f6; border-left:2px solid rgba(143,68,232,.40); }
+.m5-game .bm-sender { font-family:var(--font-body); font-size:11px; letter-spacing:.5px; margin-bottom:5px; padding-left:4px; }
+/* Bubble chrome lives in mission-channel.css (full-width left-accent). */
 .m5-game .bk-sep { opacity:0.55; margin:0 1px; }
 .m5-game .vote-badge { font-family:var(--font-mono); font-size:0.55rem; letter-spacing:0.22em; color:var(--green-stable); margin-bottom:10px; }
 .m5-game #voss-input::placeholder { color:rgba(0,196,28,.58); opacity:1; }

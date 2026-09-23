@@ -31,6 +31,10 @@
     "title": "Register operative",
     "confirmLabel": "Confirm access code",
     "confirmError": "Passwords do not match.",
-    "successRedirect": "Profile created — signing you in…"
+    "successRedirect": "Profile created — signing you in…",
+    "localeLabel": "Preferred language",
+    "localeHint": "Used until your group sets a language. Group language wins for missions.",
+    "localeEn": "English",
+    "localeNl": "Nederlands"
   }
 }

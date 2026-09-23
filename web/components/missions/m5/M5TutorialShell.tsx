@@ -23,6 +23,7 @@ import {
   getDetectionClass,
   getDetectionIcon,
 } from "@/lib/game/m3/detectionMeter";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 export type M5TutorialShellHandle = {
   root: HTMLDivElement | null;
@@ -434,7 +435,7 @@ export const M5TutorialShell = forwardRef<M5TutorialShellHandle>(function M5Tuto
                   <div className="bm-sep-pill">TODAY</div>
                 </div>
                 {INTRO_CHAT.map((msg) => (
-                  <div key={msg.text.slice(0, 24)} className="bm-group">
+                  <div key={msg.text.slice(0, 24)} className={`bm-group ${chatFromClass(msg.sender)}`}>
                     <div className="bm-sender">{msg.sender.toUpperCase()}</div>
                     <div className={`bm-bubble ${msg.tone}`}>{msg.text}</div>
                   </div>

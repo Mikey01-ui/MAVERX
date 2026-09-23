@@ -11,6 +11,8 @@ export type MargusM1GsSnapshot = {
   errors: number;
   hintsUsed: number;
   reconnected: boolean;
+  /** Soft meter resets used (Easy can allow more than one). */
+  reconnectsUsed: number;
   hackDone: boolean;
   warned: Record<number, boolean>;
   foldersOpened: string[];
@@ -80,6 +82,7 @@ export function createDefaultGsSnapshot(): MargusM1GsSnapshot {
     errors: 0,
     hintsUsed: 0,
     reconnected: false,
+    reconnectsUsed: 0,
     hackDone: false,
     warned: { 30: false, 60: false, 80: false },
     foldersOpened: [],
@@ -95,10 +98,22 @@ export function createDefaultGsSnapshot(): MargusM1GsSnapshot {
 
 export function hydrateMargusM1Play(raw: Record<string, unknown> | null | undefined): MargusM1PlaySnapshot | null {
   if (!raw || raw.version !== MARGUS_M1_SESSION_VERSION || raw.phase !== "play") return null;
-  const gsRaw = (raw.gs as Partial<MargusM1GsSnapshot> | undefined) ?? {};
+  const gsRaw = (raw.gs as Partial<MargusM1GsSnapshot> & { reconnected?: boolean } | undefined) ?? {};
+  const reconnectsUsed =
+    typeof gsRaw.reconnectsUsed === "number"
+      ? gsRaw.reconnectsUsed
+      : gsRaw.reconnected
+        ? 1
+        : 0;
   return {
     ...(raw as MargusM1PlaySnapshot),
-    gs: { ...createDefaultGsSnapshot(), ...gsRaw, foldersOpened: gsRaw.foldersOpened ?? [] },
+    gs: {
+      ...createDefaultGsSnapshot(),
+      ...gsRaw,
+      foldersOpened: gsRaw.foldersOpened ?? [],
+      reconnectsUsed,
+      reconnected: reconnectsUsed > 0,
+    },
   };
 }
 

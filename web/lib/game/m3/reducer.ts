@@ -1,13 +1,11 @@
 import {
   CHANNEL_LABELS,
   DATASETS,
-  DETECTION,
-  HINT_COOLDOWN_SEC,
   hintForDataset,
-  SIGNOFF_DETECTION_MAX,
   routeDetectionPenalty,
   wrongExplain,
 } from "@/lib/game/m3/data";
+import { getDifficultyProfile, getM3DetBalance, type M3DetBalance } from "@/lib/game/difficulty";
 import { restoreGameState } from "@/lib/game/sessionPersist";
 import type { Channel, ChatMessage, ChatSender, ChatTone, M3GameAction, M3GameState, M3WrongAttempt } from "@/lib/game/m3/types";
 
@@ -67,21 +65,32 @@ export function serializeM3State(state: M3GameState): Record<string, unknown> {
   return { version: 2, ...state };
 }
 
-export function hydrateM3State(raw: Record<string, unknown> | null | undefined): M3GameState | null {
-  const restored = restoreGameState(raw, 2, createInitialM3State, ["failed"]);
+function ensureM3Balance(raw: unknown, difficulty?: string | null): M3DetBalance {
+  if (raw && typeof raw === "object" && typeof (raw as M3DetBalance).signoffMax === "number") {
+    return raw as M3DetBalance;
+  }
+  return getM3DetBalance(getDifficultyProfile(difficulty));
+}
+
+export function hydrateM3State(
+  raw: Record<string, unknown> | null | undefined,
+  difficulty?: string | null,
+): M3GameState | null {
+  const restored = restoreGameState(raw, 2, () => createInitialM3State(difficulty), ["failed"]);
   if (!restored) return null;
   const withLog =
     Array.isArray(restored.wrongAttemptLog) ? restored : { ...restored, wrongAttemptLog: [] as M3GameState["wrongAttemptLog"] };
-  if (typeof withLog.hintCooldownUntil === "number" && withLog.hintCooldownUntil <= Date.now()) {
-    return { ...withLog, hintCooldown: false, hintCooldownUntil: null };
+  const withBalance = { ...withLog, balance: ensureM3Balance(withLog.balance ?? raw?.balance, difficulty) };
+  if (typeof withBalance.hintCooldownUntil === "number" && withBalance.hintCooldownUntil <= Date.now()) {
+    return { ...withBalance, hintCooldown: false, hintCooldownUntil: null };
   }
-  if (typeof withLog.hintCooldownUntil === "number") {
-    return { ...withLog, hintCooldown: true };
+  if (typeof withBalance.hintCooldownUntil === "number") {
+    return { ...withBalance, hintCooldown: true };
   }
-  return withLog;
+  return withBalance;
 }
 
-export function createInitialM3State(): M3GameState {
+export function createInitialM3State(difficulty?: string | null): M3GameState {
   return {
     phase: "hack",
     hackLine: 0,
@@ -102,6 +111,7 @@ export function createInitialM3State(): M3GameState {
     messages: [],
     stepBanner: "Establishing secure connection…",
     vaultOpen: false,
+    balance: getM3DetBalance(getDifficultyProfile(difficulty)),
   };
 }
 
@@ -112,7 +122,7 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
     case "TICK": {
       if (state.phase !== "play" || state.gameOver) return state;
       let next = { ...state, timerSec: state.timerSec + 1 };
-      next = addDetection(next, DETECTION.passivePerSec);
+      next = addDetection(next, state.balance.passivePerSec);
       return next;
     }
     case "HACK_ADVANCE":
@@ -153,7 +163,7 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
       if (!id || state.assigned[id] || !state.hackDone || state.gameOver) return state;
       const ds = DATASETS.find((d) => d.id === id);
       if (!ds) return state;
-      const { amount, catastrophic } = routeDetectionPenalty(ds.correct, action.channel);
+      const { amount, catastrophic } = routeDetectionPenalty(ds.correct, action.channel, state.balance);
       const isCorrect = action.channel === ds.correct;
       let next: M3GameState = { ...state };
       if (isCorrect) {
@@ -193,10 +203,10 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
         ...state,
         hintsUsed: state.hintsUsed + 1,
         hintCooldown: true,
-        hintCooldownUntil: Date.now() + HINT_COOLDOWN_SEC * 1000,
+        hintCooldownUntil: Date.now() + state.balance.hintCooldownSec * 1000,
         messages: pushChat(state, "Voss", `Hint: ${hintForDataset(ds)}`, "bm-d"),
       };
-      return addDetection(next, DETECTION.hint);
+      return addDetection(next, state.balance.hint);
     }
     case "HINT_COOLDOWN_CLEAR":
       return { ...state, hintCooldown: false, hintCooldownUntil: null };
@@ -204,7 +214,7 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
       if (Object.keys(state.assigned).length < 10 || state.signOffStarted || state.gameOver || state.detection >= 100) {
         return state;
       }
-      const signoffOk = state.detection <= SIGNOFF_DETECTION_MAX && state.catastrophic === 0;
+      const signoffOk = state.detection <= state.balance.signoffMax && state.catastrophic === 0;
       return {
         ...state,
         signOffStarted: true,
@@ -214,7 +224,7 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
           "Nova",
           signoffOk
             ? "Distribution map reviewed. I sign off — proceed to Mission 4."
-            : "Detection is too high. Nova withheld sign-off — review your routing choices.",
+            : "Sign-off withheld — detection or a public-wall vault dump made this map indefensible. You still advance; treat this as an ethics miss, not a hard fail.",
           signoffOk ? "bm-win" : "bm-err",
         ),
       };
@@ -222,7 +232,7 @@ export function m3Reducer(state: M3GameState, action: M3GameAction): M3GameState
     case "SIGNOFF_DONE":
       return { ...state, phase: "debrief" };
     case "RESET_MISSION":
-      return createInitialM3State();
+      return { ...createInitialM3State(), balance: state.balance };
     case "ADD_CHAT":
       return { ...state, messages: pushChat(state, action.sender, action.text, action.tone ?? "bm-d") };
     default:

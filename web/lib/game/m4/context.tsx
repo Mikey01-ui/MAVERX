@@ -2,15 +2,12 @@
 
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { HACK_LINES, INTRO_CHAT, SUBMIT_CHAT } from "@/lib/game/m4/data";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 import { useGameSessionPersist } from "@/lib/game/sessionPersist";
 import { createInitialM4State, hydrateM4State, m4Reducer, serializeM4State } from "@/lib/game/m4/reducer";
 import type { M4GameAction, M4GameState } from "@/lib/game/m4/types";
 
 const M4GameContext = createContext<{ state: M4GameState; dispatch: (action: M4GameAction) => void } | null>(null);
-
-function initM4State(saved: Record<string, unknown> | null | undefined) {
-  return hydrateM4State(saved) ?? createInitialM4State();
-}
 
 export function M4GameProvider({
   children,
@@ -19,7 +16,13 @@ export function M4GameProvider({
   children: ReactNode;
   savedState?: Record<string, unknown> | null;
 }) {
-  const [state, dispatch] = useReducer(m4Reducer, savedState, initM4State);
+  const difficulty = useDifficulty();
+  const [state, dispatch] = useReducer(
+    m4Reducer,
+    { savedState, difficultyId: difficulty.id },
+    ({ savedState: saved, difficultyId }) =>
+      hydrateM4State(saved, difficultyId) ?? createInitialM4State(difficultyId),
+  );
 
   useGameSessionPersist({
     missionId: "m4",

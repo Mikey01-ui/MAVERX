@@ -7,15 +7,77 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Globally registered language packs (en/nl built-in; dashboard can add more).
+model LocalePack {
+  code      String   @id
+  label     String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+/// Cohort / class. Group.locale is the source of truth for mission language.
+model Group {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  /// Active game locale (must be in availableLocales and an enabled LocalePack).
+  locale           String   @default("en")
+  /// Locales this group may switch between (subset of LocalePack codes).
+  availableLocales String[] @default(["en", "nl"])
+  inviteCode       String?  @unique
+  company          String?
+  difficulty       String   @default("standard")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  members          User[]
+  invites          Invite[]
+}
+
+/// Dashboard invite links (individual px_* or group gx_*).
+model Invite {
+  id           String    @id @default(cuid())
+  token        String    @unique
+  /// individual | group
+  type         String
+  groupId      String?
+  group        Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  email        String?
+  /// BCP-47 style code (en, nl, …)
+  locale       String    @default("en")
+  difficulty   String    @default("standard")
+  company      String?
+  cohortLabel  String?
+  seats        Int?
+  /// active | used | expired | revoked
+  status       String    @default("active")
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  usedAt       DateTime?
+  usedByUserId String?
+
+  @@index([status])
+  @@index([groupId])
+}
+
 model User {
-  id                String         @id @default(cuid())
-  email             String         @unique
-  passwordHash      String
-  role              String         @default("player")
-  emailReportOptIn  Boolean        @default(false)
-  reportEmail       String?
-  createdAt         DateTime       @default(now())
-  progress          UserProgress[]
+  id               String         @id @default(cuid())
+  email            String         @unique
+  passwordHash     String
+  role             String         @default("player")
+  /// Fallback when user has no group; group.locale wins for missions.
+  preferredLocale  String         @default("en")
+  groupId          String?
+  group            Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  /// member | owner
+  groupRole        String         @default("member")
+  difficulty       String         @default("standard")
+  company          String?
+  emailReportOptIn Boolean        @default(false)
+  reportEmail      String?
+  createdAt        DateTime       @default(now())
+  progress         UserProgress[]
+
+  @@index([groupId])
 }
 
 model UserProgress {

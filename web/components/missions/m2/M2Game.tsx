@@ -23,6 +23,7 @@ import { M2GameProvider, useM2Game } from "@/lib/game/m2/context";
 import { getDetectionClass, getDetectionLabel } from "@/lib/game/m2/reducer";
 import { useM2MissionAudio } from "@/lib/audio/useM2MissionAudio";
 import { DET_INFO } from "@/components/missions/margus-m1/gameData";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 import {
   getDetectionBarClass,
   getDetectionIcon,
@@ -261,9 +262,9 @@ function MissionChannel({ messages }: { messages: ChatMessage[] }) {
       {shown.map((m, i) => {
         const showSender = i === 0 || shown[i - 1].sender !== m.sender;
         return (
-          <div key={m.id} className="bm-group">
+          <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
             {showSender && (
-              <div className="bm-sender" style={{ color: SENDER_COLORS[m.sender] ?? "#7fa8cc" }}>
+              <div className="bm-sender">
                 {m.sender.toUpperCase()}
               </div>
             )}
@@ -275,8 +276,10 @@ function MissionChannel({ messages }: { messages: ChatMessage[] }) {
       {next && (
         <div className="bm-typing-wrap">
           {nextShowsSender && (
-            <div className="bm-sender" style={{ color: SENDER_COLORS[next.sender] ?? "#7fa8cc" }}>
-              {next.sender.toUpperCase()}
+            <div className={`bm-group ${chatFromClass(next.sender)}`} style={{ marginBottom: 0 }}>
+              <div className="bm-sender">
+                {next.sender.toUpperCase()}
+              </div>
             </div>
           )}
           <div className="bm-typing">

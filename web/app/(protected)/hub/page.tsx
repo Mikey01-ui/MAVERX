@@ -32,8 +32,12 @@ export default async function HubPage() {
     getUserProgress(userId),
   ]);
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, groupId: true, groupRole: true },
+  });
   const isAdmin = isAdminRole(user?.role);
+  const showDashboardLink = isAdmin || user?.groupRole === "owner" || !!user?.groupId;
   const progressMap = new Map(progress.map((p) => [p.missionId, p]));
   const accessMap = resolveMissionAccess(missions, progressMap, { isAdmin });
   const access = Object.fromEntries(accessMap.entries());
@@ -62,6 +66,7 @@ export default async function HubPage() {
         access={access}
         continueMission={continueMission}
         showReportLink={showReportLink}
+        showDashboardLink={showDashboardLink}
       />
     </AmbientShell>
   );

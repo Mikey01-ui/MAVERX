@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { SIGNOFF_DETECTION_MAX } from "@/lib/game/m3/data";
 import type { M3GameState } from "@/lib/game/m3/types";
 import { useOptionalGameAudio } from "@/lib/audio/GameAudioProvider";
 
@@ -41,7 +40,7 @@ export function useM3MissionAudio(state: M3GameState) {
     }
 
     if (p.phase !== "signoff" && state.phase === "signoff") {
-      const ok = state.detection <= SIGNOFF_DETECTION_MAX && state.catastrophic === 0;
+      const ok = state.detection <= state.balance.signoffMax && state.catastrophic === 0;
       audio.playSfx(ok ? "signoffOk" : "signoffDeny");
     }
 

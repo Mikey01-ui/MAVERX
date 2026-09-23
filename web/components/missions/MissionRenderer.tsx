@@ -11,6 +11,7 @@ type MissionRendererProps = {
   resume: boolean;
   savedState?: Record<string, unknown> | null;
   debriefPreview?: boolean;
+  difficulty?: string | null;
 };
 
 export function MissionRenderer(props: MissionRendererProps) {

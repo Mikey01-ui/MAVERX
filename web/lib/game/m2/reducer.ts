@@ -1,12 +1,12 @@
 import {
   DECOY_MSG,
-  DETECTION,
   DISPUTES,
   DISPUTE_ORDER,
   FILES,
   TOKEN_LEADS,
   VERIFY,
 } from "@/lib/game/m2/data";
+import { getDifficultyProfile, getM2DetBalance, type M2DetBalance } from "@/lib/game/difficulty";
 import { restoreGameState } from "@/lib/game/sessionPersist";
 import type {
   ChatMessage,
@@ -45,7 +45,7 @@ function initLeadMaps() {
   return { leadStatus, leadStatusText };
 }
 
-export function createInitialM2State(): M2GameState {
+export function createInitialM2State(difficulty?: string | null): M2GameState {
   const { leadStatus, leadStatusText } = initLeadMaps();
   return {
     phase: "hack",
@@ -79,6 +79,7 @@ export function createInitialM2State(): M2GameState {
     wrongShake: null,
     everOpened: [],
     verifyFeedback: null,
+    balance: getM2DetBalance(getDifficultyProfile(difficulty)),
   };
 }
 
@@ -215,7 +216,7 @@ export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState
         return m2Reducer(next, { type: "OPEN_VERIFY", disputeId: action.disputeId });
       }
       return {
-        ...addDetection({ ...state, wrongRulings: state.wrongRulings + 1, score: Math.max(0, state.score - 200), wrongShake: action.chosenIdx }, DETECTION.wrongRuling),
+        ...addDetection({ ...state, wrongRulings: state.wrongRulings + 1, score: Math.max(0, state.score - 200), wrongShake: action.chosenIdx }, state.balance.wrongRuling),
         messages: pushChat(state, "Atlas", d.wrong, "bm-err"),
       };
     }
@@ -248,7 +249,7 @@ export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState
         return {
           ...addDetection(
             { ...state, verifyErrors: state.verifyErrors + errors, score: Math.max(0, state.score - errors * 75), vpSelections: {}, verifyFeedback: feedback },
-            errors * DETECTION.verifyFailPer
+            errors * state.balance.verifyFailPer
           ),
           messages: pushChat(
             state,
@@ -291,7 +292,7 @@ export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState
       const file = FILES[d.fileKey];
       const bumped = { ...state, hintsUsed: state.hintsUsed + 1, score: Math.max(0, state.score - 100), hintCooldown: true };
       return {
-        ...addDetection(bumped, DETECTION.hint),
+        ...addDetection(bumped, state.balance.hint),
         messages: pushChat(bumped, "Atlas", `[HINT] ${file.hint}`, "bm-h"),
       };
     }
@@ -306,9 +307,9 @@ export function m2Reducer(state: M2GameState, action: M2GameAction): M2GameState
       return { ...state, wrongShake: null };
     case "PASSIVE_DETECTION":
       if (state.phase !== "play" || !state.hackDone || state.gameOver) return state;
-      return addDetection(state, DETECTION.passivePerTick);
+      return addDetection(state, state.balance.passivePerTick);
     case "RESET_MISSION":
-      return createInitialM2State();
+      return { ...createInitialM2State(), balance: state.balance };
     default:
       return state;
   }
@@ -318,13 +319,24 @@ export function serializeM2State(state: M2GameState): Record<string, unknown> {
   return { version: 2, ...state };
 }
 
-export function hydrateM2State(raw: Record<string, unknown> | null | undefined): M2GameState | null {
-  const restored = restoreGameState(raw, 2, createInitialM2State, ["failed"]);
+function ensureM2Balance(raw: unknown, difficulty?: string | null): M2DetBalance {
+  if (raw && typeof raw === "object" && typeof (raw as M2DetBalance).wrongRuling === "number") {
+    return raw as M2DetBalance;
+  }
+  return getM2DetBalance(getDifficultyProfile(difficulty));
+}
+
+export function hydrateM2State(
+  raw: Record<string, unknown> | null | undefined,
+  difficulty?: string | null,
+): M2GameState | null {
+  const restored = restoreGameState(raw, 2, () => createInitialM2State(difficulty), ["failed"]);
   if (!restored) return null;
   const gameOver = Boolean(raw?.gameOver) || restored.phase === "failed";
   return {
     ...restored,
     gameOver,
     phase: gameOver ? "failed" : restored.phase,
+    balance: ensureM2Balance(restored.balance ?? raw?.balance, difficulty),
   };
 }

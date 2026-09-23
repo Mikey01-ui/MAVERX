@@ -207,8 +207,13 @@ export function correctStepForFile(fileId: string) {
   return STEPS.find((s) => s.okFile === fileId)?.id ?? null;
 }
 
-export function wrongHandoffDetection(fileId: string) {
-  return ["schools", "health", "cust_dump", "risk_full"].includes(fileId) ? 14 : 10;
+export function wrongHandoffDetection(
+  fileId: string,
+  bal?: { wrongDrop: number; wrongDropSensitive: number },
+) {
+  const sensitive = ["schools", "health", "cust_dump", "risk_full"].includes(fileId);
+  if (!bal) return sensitive ? 14 : 10;
+  return sensitive ? bal.wrongDropSensitive : bal.wrongDrop;
 }
 
 export function wrongStepMessage(fileId: string, wrongStepId: string) {

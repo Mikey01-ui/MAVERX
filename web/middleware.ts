@@ -114,7 +114,8 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
     pathname.startsWith("/hub") ||
     pathname.startsWith("/mission") ||
     pathname.startsWith("/intro") ||
-    pathname.startsWith("/finale");
+    pathname.startsWith("/finale") ||
+    pathname.startsWith("/dashboard");
 
   if (isProtected && !isLoggedIn) {
     const login = new URL("/login", req.nextUrl);

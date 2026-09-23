@@ -2,15 +2,12 @@
 
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { CREW_QUESTIONS, HACK_LINES, INTRO_CHAT } from "@/lib/game/m5/data";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 import { useGameSessionPersist } from "@/lib/game/sessionPersist";
 import { createInitialM5State, hydrateM5State, m5Reducer, serializeM5State } from "@/lib/game/m5/reducer";
 import type { CrewId, M5GameAction, M5GameState } from "@/lib/game/m5/types";
 
 const M5GameContext = createContext<{ state: M5GameState; dispatch: (action: M5GameAction) => void } | null>(null);
-
-function initM5State(saved: Record<string, unknown> | null | undefined) {
-  return hydrateM5State(saved) ?? createInitialM5State();
-}
 
 export function M5GameProvider({
   children,
@@ -19,7 +16,13 @@ export function M5GameProvider({
   children: ReactNode;
   savedState?: Record<string, unknown> | null;
 }) {
-  const [state, dispatch] = useReducer(m5Reducer, savedState, initM5State);
+  const difficulty = useDifficulty();
+  const [state, dispatch] = useReducer(
+    m5Reducer,
+    { savedState, difficultyId: difficulty.id },
+    ({ savedState: saved, difficultyId }) =>
+      hydrateM5State(saved, difficultyId) ?? createInitialM5State(difficultyId),
+  );
 
   useGameSessionPersist({
     missionId: "m5",
@@ -55,7 +58,16 @@ export function M5GameProvider({
     if (state.phase !== "briefing" || !state.activeCrew) return;
     const q = CREW_QUESTIONS[state.activeCrew];
     const names: Record<CrewId, string> = { zex: "Zex", atlas: "Atlas", nova: "Nova", kade: "Kade" };
-    const t = setTimeout(() => dispatch({ type: "ADD_CHAT", sender: names[state.activeCrew!], text: q.text.replace(/^"|"$/g, ""), tone: "bm-d" }), 400);
+    const t = setTimeout(
+      () =>
+        dispatch({
+          type: "ADD_CHAT",
+          sender: names[state.activeCrew!],
+          text: q.text.replace(/^"|"$/g, ""),
+          tone: "bm-d",
+        }),
+      400,
+    );
     return () => clearTimeout(t);
   }, [state.phase, state.activeCrew]);
 

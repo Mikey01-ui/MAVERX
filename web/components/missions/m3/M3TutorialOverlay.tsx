@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { runM3TutorialDemo, type M3TutorialDemoApi } from "@/lib/game/m3/tutorialDemo";
-import { M3_TUTORIAL_STEPS } from "@/lib/game/m3/tutorialSteps";
+import { getM3TutorialSteps } from "@/lib/game/m3/tutorialSteps";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 
 type SpotlightRect = {
   left: number;
@@ -78,6 +79,8 @@ function scheduleAfterLayout(fn: () => void): () => void {
 }
 
 export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: M3TutorialOverlayProps) {
+  const difficulty = useDifficulty();
+  const steps = getM3TutorialSteps(difficulty.m3SignoffMax);
   const [stepIx, setStepIx] = useState(0);
   const [demoDone, setDemoDone] = useState(false);
   const [footerPos, setFooterPos] = useState<{ left: number; top: number } | null>(null);
@@ -104,7 +107,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
   stepIxRef.current = stepIx;
   demoDoneRef.current = demoDone;
 
-  const step = M3_TUTORIAL_STEPS[stepIx];
+  const step = steps[stepIx];
   const isDemo = !!step?.demo;
 
   const hideShades = useCallback(() => {
@@ -156,7 +159,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
 
   const applySpotlight = useCallback(
     (options?: { scroll?: boolean }) => {
-      const currentStep = M3_TUTORIAL_STEPS[stepIxRef.current];
+      const currentStep = steps[stepIxRef.current];
       if (!currentStep || currentStep.demo) {
         hideShades();
         const full = fullDimRef.current;
@@ -260,7 +263,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
     const cancelMeasure = scheduleAfterLayout(() => {
       if (cancelled) return;
       applySpotlight({ scroll: true });
-      const currentStep = M3_TUTORIAL_STEPS[stepIx];
+      const currentStep = steps[stepIx];
       if (!currentStep?.selector || !shellRoot) return;
       const el = shellRoot.querySelector(currentStep.selector);
       if (!el || measureTarget(el, currentStep.pad)) return;
@@ -282,7 +285,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
   }, [scheduleReflow]);
 
   useEffect(() => {
-    const demoStepIx = M3_TUTORIAL_STEPS.length - 1;
+    const demoStepIx = steps.length - 1;
     if (stepIx !== demoStepIx || !shellRoot) return;
 
     let cancelled = false;
@@ -344,7 +347,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
       return;
     }
     const next = stepIx + 1;
-    if (next >= M3_TUTORIAL_STEPS.length) {
+    if (next >= steps.length) {
       finish();
       return;
     }
@@ -388,7 +391,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
 
   const onDragEnd = () => setDragging(false);
 
-  const nextLabel = isDemo && !demoDone ? "Skip demo" : stepIx >= M3_TUTORIAL_STEPS.length - 1 ? "Start mission" : "Next";
+  const nextLabel = isDemo && !demoDone ? "Skip demo" : stepIx >= steps.length - 1 ? "Start mission" : "Next";
 
   const bodyHtml =
     isDemo && demoDone
@@ -433,7 +436,7 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
             <span className="m3-tut-kicker">Briefing overlay</span>
             <div id="m3-tut-meta" className="m3-tut-meta">
               <span id="m3-tut-counter">
-                Step {stepIx + 1} / {M3_TUTORIAL_STEPS.length}
+                Step {stepIx + 1} / {steps.length}
               </span>
               <span id="m3-tut-phase">
                 {step?.phase === "demo" ? "DEMO" : step?.phase === "tour" ? "ROUTING" : "TOUR"}

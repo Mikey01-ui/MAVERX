@@ -317,16 +317,12 @@ button.lead{border:none;font:inherit;color:inherit}
   font-size:11px;padding:3px 14px;border-radius:12px;border:1px solid rgba(0,196,28,.18)}
 /* Sender name label */
 .bm-sender{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.5px;
-  color:var(--purple-light);margin-bottom:6px;padding-left:4px}
+  margin-bottom:6px;padding-left:4px}
 /* Bubble group — stacked: full-width bubble, timestamp under (avoids narrow-column squeeze) */
 .bm-group{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:clamp(10px,1.8vh,18px);flex-shrink:0;
   min-width:0}
-/* Bubble */
-.bm-bubble{align-self:flex-start;display:block;width:100%;max-width:90%;min-width:0;box-sizing:border-box;
-  padding:clamp(12px,1.4vh,18px) clamp(14px,1.4vw,22px);border-radius:14px 14px 14px 3px;line-height:1.65;
-  font-family:'DM Sans',sans-serif;font-size:clamp(13px,1.3vw,18px);
-  overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;
-  animation:bubbleIn 220ms ease forwards;opacity:0}
+/* Bubble chrome lives in mission-channel.css (full-width left-accent). */
+.bm-bubble{animation:bubbleIn 220ms ease forwards;opacity:0}
 @keyframes bubbleIn{
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:translateY(0)}}
@@ -334,12 +330,6 @@ button.lead{border:none;font:inherit;color:inherit}
 .bm-ts{align-self:flex-end;font-size:10px;color:rgba(0,196,28,0.72);margin-top:4px;text-align:right;
   padding:0 6px 0 0;font-family:'DM Sans',sans-serif;white-space:nowrap;max-width:100%}
 .bm-ts::after{content:' ✓'}
-/* Bubble colours — unified backgrounds, subtle tint differentiation */
-.bm-bubble.bm-d  {background:rgba(43,32,52,.92);color:var(--text-w);border:1px solid rgba(0,196,28,.10)}
-.bm-bubble.bm-ok {background:rgba(0,196,28,.08);color:#cfead2;border-left:2px solid rgba(0,196,28,.55)}
-.bm-bubble.bm-err{background:rgba(211,25,114,.08);color:#efb5cf;border-left:2px solid rgba(211,25,114,.35)}
-.bm-bubble.bm-win{background:rgba(0,255,65,.07);color:#d6f4dd;border-left:2px solid rgba(0,255,65,.38)}
-.bm-bubble.bm-h  {background:rgba(143,68,232,.12);color:#dbc7f6;border-left:2px solid rgba(143,68,232,.40)}
 /* Typing indicator */
 .bm-typing-wrap{margin-bottom:16px;flex-shrink:0}
 .bm-typing{background:rgba(43,32,52,.92);padding:clamp(12px,1.4vh,18px) clamp(14px,1.4vw,22px);border-radius:14px 14px 14px 3px;

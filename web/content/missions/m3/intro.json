@@ -59,7 +59,7 @@
       "tag": "MIRROR EXPOSURE",
       "paragraphs": [
         "Detection starts at <strong>0%</strong>. Wrong channels, vault-to-public dumps, hints, and time on the mirror all raise it. The meter <strong>does not heal</strong>. At <strong>100%</strong> the feed drops and the mission fails.",
-        "Nova still holds the ethics lock: she signs only when every file is routed <strong>and</strong> detection stays at or below <strong>55%</strong> with <strong>no catastrophic</strong> public-wall leaks of vault-only material. Move clean: <strong>audience first, harm second, headlines last.</strong>"
+        "Nova still holds the ethics lock: she signs only when every file is routed <strong>and</strong> detection stays at or below your cohort's <strong>sign-off ceiling</strong> with <strong>no catastrophic</strong> public-wall leaks of vault-only material. A withheld sign-off still advances the campaign — it means the ethics map was not clean. Move clean: <strong>audience first, harm second, headlines last.</strong>"
       ],
       "pills": [
         { "text": "Wrong channel · +detection", "variant": "high" },
@@ -67,7 +67,7 @@
         { "text": "Passive drift over time · meter rises", "variant": "low" }
       ],
       "hint": "<strong>Stuck?</strong> Click the lightbulb at the bottom-left of the Mission Channel to pull a channel hint from the crew.",
-      "hintPills": ["Hint requested · +8% detection", "Cooldown · 25s"]
+      "hintPills": ["Hint requested · raises detection", "Cooldown · short pause"]
     },
     "breachLabel": "Begin Mission",
     "breachReadyLabel": "// Ready to breach?"

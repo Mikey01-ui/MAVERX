@@ -8,7 +8,8 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
-import { DETECTION, DISPUTES, HACK_LINES, INTRO_CHAT } from "@/lib/game/m2/data";
+import { DISPUTES, HACK_LINES, INTRO_CHAT } from "@/lib/game/m2/data";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 import { useGameSessionPersist } from "@/lib/game/sessionPersist";
 import { createInitialM2State, hydrateM2State, m2Reducer, serializeM2State } from "@/lib/game/m2/reducer";
 import type { DisputeId, M2GameAction, M2GameState } from "@/lib/game/m2/types";
@@ -20,10 +21,6 @@ type M2GameContextValue = {
 
 const M2GameContext = createContext<M2GameContextValue | null>(null);
 
-function initM2State(saved: Record<string, unknown> | null | undefined) {
-  return hydrateM2State(saved) ?? createInitialM2State();
-}
-
 export function M2GameProvider({
   children,
   savedState,
@@ -31,7 +28,13 @@ export function M2GameProvider({
   children: ReactNode;
   savedState?: Record<string, unknown> | null;
 }) {
-  const [state, dispatch] = useReducer(m2Reducer, savedState, initM2State);
+  const difficulty = useDifficulty();
+  const [state, dispatch] = useReducer(
+    m2Reducer,
+    { savedState, difficultyId: difficulty.id },
+    ({ savedState: saved, difficultyId }) =>
+      hydrateM2State(saved, difficultyId) ?? createInitialM2State(difficultyId),
+  );
 
   useGameSessionPersist({
     missionId: "m2",
@@ -62,21 +65,21 @@ export function M2GameProvider({
   useEffect(() => {
     if (state.phase !== "play" || !state.hackDone || state.gameOver) return;
     const tick = setInterval(() => dispatch({ type: "TICK" }), 1000);
-    const passive = setInterval(() => dispatch({ type: "PASSIVE_DETECTION" }), DETECTION.passiveIntervalMs);
+    const passive = setInterval(
+      () => dispatch({ type: "PASSIVE_DETECTION" }),
+      state.balance.passiveIntervalMs,
+    );
     return () => {
       clearInterval(tick);
       clearInterval(passive);
     };
-  }, [state.phase, state.hackDone]);
-
-  // Synth → debrief transition is driven by M2SynthOverlay when its
-  // SVG animation completes (matches the original's ~6.3s sequence).
+  }, [state.phase, state.hackDone, state.gameOver, state.balance.passiveIntervalMs]);
 
   useEffect(() => {
     if (!state.hintCooldown) return;
-    const t = setTimeout(() => dispatch({ type: "HINT_COOLDOWN_CLEAR" }), DETECTION.hintCooldownMs);
+    const t = setTimeout(() => dispatch({ type: "HINT_COOLDOWN_CLEAR" }), state.balance.hintCooldownMs);
     return () => clearTimeout(t);
-  }, [state.hintCooldown]);
+  }, [state.hintCooldown, state.balance.hintCooldownMs]);
 
   useEffect(() => {
     if (state.wrongShake == null) return;
@@ -84,14 +87,13 @@ export function M2GameProvider({
     return () => clearTimeout(t);
   }, [state.wrongShake]);
 
-  // Auto-load next dispute after token secured
   useEffect(() => {
     if (state.tokens.length === 0 || state.tokens.length >= 4) return;
     const next = DISPUTES.find((d) => !state.verifyResults[d.id]);
     if (!next) return;
     const t = setTimeout(() => dispatch({ type: "LOAD_DISPUTE", id: next.id as DisputeId }), 1800);
     return () => clearTimeout(t);
-  }, [state.tokens.length]);
+  }, [state.tokens.length, state.verifyResults]);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 

@@ -1,7 +1,5 @@
 import {
-  DETECTION,
   FILES,
-  HINT_COOLDOWN_SEC,
   STEPS,
   correctStepForFile,
   hintForStep,
@@ -12,6 +10,7 @@ import {
   wrongHandoffDetection,
   wrongStepMessage,
 } from "@/lib/game/m4/data";
+import { getDifficultyProfile, getM4DetBalance, type M4DetBalance } from "@/lib/game/difficulty";
 import { restoreGameState } from "@/lib/game/sessionPersist";
 import type { ChatMessage, M4GameAction, M4GameState, M4WrongAttempt } from "@/lib/game/m4/types";
 
@@ -63,7 +62,7 @@ function addDetection(state: M4GameState, amount: number): M4GameState {
   return { ...state, detection: next, detectionWarned: warned, messages };
 }
 
-export function createInitialM4State(): M4GameState {
+export function createInitialM4State(difficulty?: string | null): M4GameState {
   return {
     phase: "hack",
     hackLine: 0,
@@ -83,6 +82,7 @@ export function createInitialM4State(): M4GameState {
     timerSec: 0,
     messages: [],
     stepBanner: "Case-flow reconstruction — link each leak file to the correct onboarding gate.",
+    balance: getM4DetBalance(getDifficultyProfile(difficulty)),
   };
 }
 
@@ -104,7 +104,7 @@ export function m4Reducer(state: M4GameState, action: M4GameAction): M4GameState
     case "TICK": {
       if (state.phase !== "play" || state.gameOver) return state;
       let next = { ...state, timerSec: state.timerSec + 1 };
-      next = addDetection(next, DETECTION.passivePerSec);
+      next = addDetection(next, state.balance.passivePerSec);
       return next;
     }
     case "HACK_ADVANCE":
@@ -135,7 +135,7 @@ export function m4Reducer(state: M4GameState, action: M4GameAction): M4GameState
       const correct = correctStepForFile(action.fileId);
       const step = STEPS[stepIdx];
       if (!correct || correct !== targetStepId) {
-        const hit = wrongHandoffDetection(action.fileId);
+        const hit = wrongHandoffDetection(action.fileId, state.balance);
         const file = FILES.find((f) => f.id === action.fileId);
         const wrongStep = STEPS.find((s) => s.id === targetStepId);
         const correctStep = STEPS.find((s) => s.id === correct);
@@ -188,16 +188,16 @@ export function m4Reducer(state: M4GameState, action: M4GameAction): M4GameState
         ...state,
         hintsUsed: state.hintsUsed + 1,
         hintCooldown: true,
-        hintCooldownUntil: Date.now() + HINT_COOLDOWN_SEC * 1000,
+        hintCooldownUntil: Date.now() + state.balance.hintCooldownSec * 1000,
         messages: pushChat(
           state,
           "Nova",
-          `${hintForStep(state.selectedStepId)} <em>(+${DETECTION.hint}% detection)</em>`,
+          `${hintForStep(state.selectedStepId)} <em>(+${state.balance.hint}% detection)</em>`,
           "bm-d"
         ),
         stepBanner: step ? `${step.title} — hint logged; match headers to Expects.` : state.stepBanner,
       };
-      return addDetection(next, DETECTION.hint);
+      return addDetection(next, state.balance.hint);
     }
     case "HINT_COOLDOWN_CLEAR":
       return { ...state, hintCooldown: false, hintCooldownUntil: null };
@@ -221,7 +221,7 @@ export function m4Reducer(state: M4GameState, action: M4GameAction): M4GameState
     case "SHOW_DEBRIEF":
       return { ...state, phase: "debrief" };
     case "RESET_MISSION":
-      return createInitialM4State();
+      return { ...createInitialM4State(), balance: state.balance };
     case "ADD_CHAT":
       return { ...state, messages: pushChat(state, action.sender, action.text, action.tone ?? "bm-d") };
     default:
@@ -233,21 +233,33 @@ export function serializeM4State(state: M4GameState): Record<string, unknown> {
   return { version: 2, ...state };
 }
 
-export function hydrateM4State(raw: Record<string, unknown> | null | undefined): M4GameState | null {
+function ensureM4Balance(raw: unknown, difficulty?: string | null): M4DetBalance {
+  if (raw && typeof raw === "object" && typeof (raw as M4DetBalance).wrongDrop === "number") {
+    return raw as M4DetBalance;
+  }
+  return getM4DetBalance(getDifficultyProfile(difficulty));
+}
+
+export function hydrateM4State(
+  raw: Record<string, unknown> | null | undefined,
+  difficulty?: string | null,
+): M4GameState | null {
   if (!raw) return null;
   if (raw.version === 1 || typeof raw.confidence === "number") {
     const migrated = migrateV1State(raw);
+    migrated.balance = ensureM4Balance(migrated.balance, difficulty);
     if (migrated.phase === "debrief") return migrated;
     return migrated;
   }
-  const restored = restoreGameState(raw, 2, createInitialM4State, ["failed"]);
+  const restored = restoreGameState(raw, 2, () => createInitialM4State(difficulty), ["failed"]);
   if (!restored) return null;
   const withLog = Array.isArray(restored.wrongAttemptLog) ? restored : { ...restored, wrongAttemptLog: [] as M4GameState["wrongAttemptLog"] };
-  if (typeof withLog.hintCooldownUntil === "number" && withLog.hintCooldownUntil <= Date.now()) {
-    return { ...withLog, hintCooldown: false, hintCooldownUntil: null };
+  const withBalance = { ...withLog, balance: ensureM4Balance(withLog.balance ?? raw?.balance, difficulty) };
+  if (typeof withBalance.hintCooldownUntil === "number" && withBalance.hintCooldownUntil <= Date.now()) {
+    return { ...withBalance, hintCooldown: false, hintCooldownUntil: null };
   }
-  if (typeof withLog.hintCooldownUntil === "number") {
-    return { ...withLog, hintCooldown: true };
+  if (typeof withBalance.hintCooldownUntil === "number") {
+    return { ...withBalance, hintCooldown: true };
   }
-  return withLog;
+  return withBalance;
 }

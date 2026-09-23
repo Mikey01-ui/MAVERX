@@ -19,6 +19,7 @@ import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
 import { M5TutorialPhase } from "@/components/missions/m5/M5TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
+import { DifficultyProvider } from "@/lib/game/DifficultyContext";
 
 const M1MargusMission = dynamic(
   () => import("@/components/missions/m1/M1MargusMission").then((m) => m.M1MargusMission),
@@ -40,6 +41,7 @@ type MissionExperienceProps = {
   resume: boolean;
   savedState?: Record<string, unknown> | null;
   debriefPreview?: boolean;
+  difficulty?: string | null;
 };
 
 function formatClock(now: Date) {
@@ -259,13 +261,14 @@ export function MissionExperience(props: MissionExperienceProps) {
     props.missionId === "m4" ||
     props.missionId === "m5";
 
-  if (!hasAudio || !audioConfig) {
-    return <MissionExperienceInner {...props} />;
-  }
-
-  return (
-    <GameAudioProvider config={audioConfig}>
+  const inner =
+    !hasAudio || !audioConfig ? (
       <MissionExperienceInner {...props} />
-    </GameAudioProvider>
-  );
+    ) : (
+      <GameAudioProvider config={audioConfig}>
+        <MissionExperienceInner {...props} />
+      </GameAudioProvider>
+    );
+
+  return <DifficultyProvider difficulty={props.difficulty}>{inner}</DifficultyProvider>;
 }

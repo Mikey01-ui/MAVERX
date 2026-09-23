@@ -17,6 +17,8 @@ import "./m5-game.css";
 import "./m5-tutorial.css";
 import "./finale.css";
 import "@/components/admin/playtest-mission-nav.css";
+import "@/components/missions/shared/mission-channel.css";
+import "@/components/missions/shared/gloss-tip.css";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],

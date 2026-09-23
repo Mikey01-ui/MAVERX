@@ -34,15 +34,7 @@ import {
 } from "@/lib/game/m3/detectionMeter";
 import { useM5MissionAudio } from "@/lib/audio/useM5MissionAudio";
 import type { ChatMessage, CrewId } from "@/lib/game/m5/types";
-
-const M5_SENDER_COLORS: Record<string, string> = {
-  Echo: "var(--purple-light)",
-  Voss: "var(--purple-light)",
-  Zex: "var(--orange)",
-  Atlas: "var(--green-stable)",
-  Nova: "var(--pink)",
-  Kade: "var(--purple-light)",
-};
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 function M5MissionChannel({ messages }: { messages: ChatMessage[] }) {
   const [revealed, setRevealed] = useState(0);
@@ -72,9 +64,9 @@ function M5MissionChannel({ messages }: { messages: ChatMessage[] }) {
       {shown.map((m, i) => {
         const showSender = i === 0 || shown[i - 1].sender !== m.sender;
         return (
-          <div key={m.id} className="bm-group">
+          <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
             {showSender && (
-              <div className="bm-sender" style={{ color: M5_SENDER_COLORS[m.sender] ?? "#7fa8cc" }}>
+              <div className="bm-sender">
                 {m.sender.toUpperCase()}
               </div>
             )}
@@ -86,8 +78,10 @@ function M5MissionChannel({ messages }: { messages: ChatMessage[] }) {
       {next && (
         <div className="bm-typing-wrap">
           {nextShowsSender && (
-            <div className="bm-sender" style={{ color: M5_SENDER_COLORS[next.sender] ?? "#7fa8cc" }}>
-              {next.sender.toUpperCase()}
+            <div className={`bm-group ${chatFromClass(next.sender)}`} style={{ marginBottom: 0 }}>
+              <div className="bm-sender">
+                {next.sender.toUpperCase()}
+              </div>
             </div>
           )}
           <div className="bm-typing">

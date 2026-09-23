@@ -1,11 +1,7 @@
 import { FILES as M4_FILES, STEPS as M4_STEPS } from "@/lib/game/m4/data";
-import {
-  DATASETS as M3_DATASETS,
-  DETECTION,
-  SIGNOFF_DETECTION_MAX,
-} from "@/lib/game/m3/data";
+import { DATASETS as M3_DATASETS } from "@/lib/game/m3/data";
 import { getDetectionClass } from "@/lib/game/m3/detectionMeter";
-import { ECHO_FRAME, ECHO_VIZ, CREW_ORDER, M5_REQUIRED_COMMITS } from "@/lib/game/m5/data";
+import { ECHO_FRAME, ECHO_VIZ, CREW_ORDER } from "@/lib/game/m5/data";
 import type { M2GameState } from "@/lib/game/m2/types";
 import type { Channel, M3GameState, M3WrongAttempt } from "@/lib/game/m3/types";
 import type { M4GameState, M4WrongAttempt } from "@/lib/game/m4/types";
@@ -85,7 +81,7 @@ function m3BreakdownRows(state: M3GameState, correctN: number, detection: number
     { label: "Hints used", value: String(state.hintsUsed) },
   ];
   if (state.hintsUsed > 0) {
-    rows.push({ label: "Detection from hints", value: `+${state.hintsUsed * DETECTION.hint}%` });
+    rows.push({ label: "Detection from hints", value: `+${state.hintsUsed * state.balance.hint}%` });
   }
   if (state.catastrophic > 0) {
     rows.push({ label: "Public-wall breaches", value: String(state.catastrophic), valueClass: "det-red" });
@@ -171,7 +167,7 @@ export function buildM3Debrief(state: M3GameState): MissionDebriefConfig {
   const detection = Math.round(state.detection);
   const detCls = getDetectionClass(detection);
   const detectionMaxed = detection >= 100 || state.phase === "failed";
-  const success = !detectionMaxed && correctN === 10 && state.catastrophic === 0 && detection <= SIGNOFF_DETECTION_MAX;
+  const success = !detectionMaxed && correctN === 10 && state.catastrophic === 0 && detection <= state.balance.signoffMax;
   const breakdownRows = m3BreakdownRows(state, correctN, detection, detCls);
 
   if (detectionMaxed) {
@@ -355,7 +351,8 @@ export function buildM4Debrief(state: M4GameState): MissionDebriefConfig {
 }
 
 export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
-  const ships = state.ships ?? state.commits >= M5_REQUIRED_COMMITS;
+  const need = state.balance.requiredCommits;
+  const ships = state.ships ?? state.commits >= need;
   const detectionMaxed = state.detection >= 100 || state.phase === "failed";
   let wrongF = 0;
   let wrongV = 0;
@@ -411,7 +408,7 @@ export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
     title: ships ? "OMNI Exposed · Debrief" : "ROOM DID NOT COMMIT",
     metrics: [
       { value: formatTimer(state.timerSec), label: "TIME" },
-      { value: `${state.commits}/4`, label: "COMMITS" },
+      { value: `${state.commits}/${need}`, label: "COMMITS" },
       { value: String(state.score), label: "SCORE" },
       { value: `${det}%`, label: "DETECTION", valueClass: detCls },
     ],
@@ -424,11 +421,19 @@ export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
         value: state.crewState[c].status === "committed" ? "COMMITTED" : "SCEPTICAL",
         valueClass: state.crewState[c].status === "committed" ? "det-green" : "det-red",
       })),
-      { label: "Crew commits", value: `${state.commits} / 4`, valueClass: detCls, total: true },
+      { label: "Crew commits", value: `${state.commits} / ${need} required`, valueClass: detCls, total: true },
     ],
-    rating: ships ? "Operation shipped. The room committed. That is the only metric that matters." : "Mission failed. Not enough specialists committed — review framing and crew challenges.",
+    rating: ships
+      ? "Operation shipped. Enough of the room committed. That is the metric that matters."
+      : `Mission failed. You needed ${need} of 4 specialists committed — review framing and crew challenges.`,
     tradecraft: [
-      { html: ships ? "Four operations. Four objections answered. The crew committed and the hack ships." : "The dossier was real — the room did not commit. You needed all four specialists." },
+      {
+        html: ships
+          ? need >= 4
+            ? "Four operations. Four objections answered. The crew committed and the hack ships."
+            : `Four operations. ${state.commits} of 4 specialists committed (need ${need} on this difficulty) — the hack ships.`
+          : `The dossier was real — the room did not commit. You needed ${need} of 4 specialists.`,
+      },
     ],
     learningRows: CREW_ORDER.map((c) => ({
       who: LEARNING[c].who,

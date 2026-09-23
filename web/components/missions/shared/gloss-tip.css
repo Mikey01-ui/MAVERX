@@ -1,0 +1,32 @@
+/* Shared glossary tooltip — tip is portaled to body (not under mission root). */
+.gloss-tip {
+  position: fixed;
+  max-width: 260px;
+  background: rgba(20, 12, 28, 0.98);
+  border: 1px solid rgba(247, 148, 33, 0.5);
+  color: rgba(203, 196, 218, 0.92);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  letter-spacing: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 2px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.15s,
+    visibility 0.15s;
+  z-index: 9999;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  white-space: normal;
+  text-transform: none;
+  text-align: left;
+}
+
+.gloss-tip.show {
+  opacity: 1;
+  visibility: visible;
+}

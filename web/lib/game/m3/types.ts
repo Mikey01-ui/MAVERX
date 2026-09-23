@@ -1,3 +1,5 @@
+import type { M3DetBalance } from "@/lib/game/difficulty";
+
 export type Channel = "public" | "official" | "vault";
 export type ChatTone = "bm-d" | "bm-ok" | "bm-err" | "bm-h" | "bm-win";
 export type ChatSender = "Voss" | "Zex" | "Nova";
@@ -52,6 +54,7 @@ export type M3GameState = {
   messages: ChatMessage[];
   stepBanner: string;
   vaultOpen: boolean;
+  balance: M3DetBalance;
 };
 
 export type M3GameAction =

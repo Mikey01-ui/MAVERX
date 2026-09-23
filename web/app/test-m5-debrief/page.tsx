@@ -12,10 +12,10 @@ const PREVIEW_SUCCESS: M5GameState = {
   frameChoices: {},
   framingLocked: true,
   crewState: {
-    zex: { status: "committed", retried: false, selected: 0 },
-    atlas: { status: "committed", retried: false, selected: 2 },
-    nova: { status: "committed", retried: false, selected: 0 },
-    kade: { status: "committed", retried: false, selected: 0 },
+    zex: { status: "committed", retriesUsed: 0, selected: 0 },
+    atlas: { status: "committed", retriesUsed: 0, selected: 2 },
+    nova: { status: "committed", retriesUsed: 0, selected: 0 },
+    kade: { status: "committed", retriesUsed: 0, selected: 0 },
   },
   activeCrew: null,
   commits: 4,
@@ -27,6 +27,14 @@ const PREVIEW_SUCCESS: M5GameState = {
   ships: true,
   gameOver: false,
   failReason: null,
+  balance: {
+    difficultyId: "standard",
+    requiredCommits: 4,
+    crewMaxRetries: 1,
+    framingWrongFrame: 8,
+    framingWrongViz: 5,
+    crewMiss: 10,
+  },
 };
 
 export default function TestM5DebriefPage() {

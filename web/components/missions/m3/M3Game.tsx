@@ -6,7 +6,7 @@ import { M1HackOverlay } from "@/components/missions/m1/M1HackOverlay";
 import { M3Inspector } from "@/components/missions/m3/M3Inspector";
 import { M3VaultDoor } from "@/components/missions/m3/M3VaultDoor";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
-import { CHANNEL_LABELS, DATASETS, DETECTION, HACK_LINES, SIGNOFF_DETECTION_MAX } from "@/lib/game/m3/data";
+import { CHANNEL_LABELS, DATASETS, HACK_LINES } from "@/lib/game/m3/data";
 import { buildM3Debrief } from "@/lib/game/debriefBuilders";
 import { m3ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { persistMissionReport } from "@/lib/finale/persistMissionReport";
@@ -15,6 +15,7 @@ import { M3Header } from "@/components/missions/m3/M3DetectionHeader";
 import { useM3MissionAudio } from "@/lib/audio/useM3MissionAudio";
 import { M3GameProvider, useM3Game } from "@/lib/game/m3/context";
 import type { Channel } from "@/lib/game/m3/types";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 function M3RoutingPanel() {
   const { state, dispatch } = useM3Game();
@@ -133,7 +134,7 @@ function M3RoutingPanel() {
                 <div className="bm-sep-pill">Staging</div>
               </div>
               {state.messages.map((m) => (
-                <div key={m.id} className="bm-group">
+                <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
                   <div className="bm-sender">{m.sender.toUpperCase()}</div>
                   <div className={`bm-bubble ${m.tone}`} dangerouslySetInnerHTML={{ __html: m.text }} />
                   <div className="bm-ts">{m.ts}</div>
@@ -147,7 +148,8 @@ function M3RoutingPanel() {
                     <i className="fas fa-lightbulb" aria-hidden />
                   </button>
                   <div className="hint-tooltip">
-                    Hint · +{DETECTION.hint}% detection · {state.hintCooldown ? "cooldown…" : "25s cooldown"}
+                    Hint · +{state.balance.hint}% detection ·{" "}
+                    {state.hintCooldown ? "cooldown…" : `${state.balance.hintCooldownSec}s cooldown`}
                   </div>
                 </div>
                 <input type="text" id="broker-input" placeholder="Operation Channel — listen only" disabled readOnly />
@@ -269,7 +271,7 @@ function M3GameInner() {
           <pre id="signoff-term">{`NOVA SIGN-OFF PROTOCOL
 DETECTION: ${detection}%
 ROUTED: ${routed}/10
-${detection <= SIGNOFF_DETECTION_MAX && state.catastrophic === 0 ? "STATUS: APPROVED" : "STATUS: WITHHELD"}`}</pre>
+${detection <= state.balance.signoffMax && state.catastrophic === 0 ? "STATUS: APPROVED" : "STATUS: WITHHELD"}`}</pre>
         </div>
       )}
 

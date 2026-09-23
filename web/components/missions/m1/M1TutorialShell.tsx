@@ -430,13 +430,13 @@ export const M1TutorialShell = forwardRef<M1TutorialShellHandle>(function M1Tuto
               </div>
               <div id="voss-body">
                 <div className="bm-sep"><div className="bm-sep-pill">Today</div></div>
-                <div className="bm-group">
-                  <div className="bm-sender s-voss">VOSS</div>
+                <div className="bm-group from-voss">
+                  <div className="bm-sender">VOSS</div>
                   <div className="bm-bubble bm-d">Zex won&apos;t commit without a confirmed footprint. Everything we find goes on the board.</div>
                   <div className="bm-ts">{chatTs}</div>
                 </div>
-                <div className="bm-group">
-                  <div className="bm-sender s-zex">ZEX</div>
+                <div className="bm-group from-zex">
+                  <div className="bm-sender">ZEX</div>
                   <div className="bm-bubble bm-h">I&apos;ll be on the channel. Not committing to anything until I see real evidence.</div>
                   <div className="bm-ts">{chatTs}</div>
                 </div>

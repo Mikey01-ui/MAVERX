@@ -5,6 +5,7 @@ import { MissionRenderer } from "@/components/missions/MissionRenderer";
 import { VideoBlock } from "@/components/media/VideoBlock";
 import { getHubContent, getMissionCatalog, getMissionIntro, getMissionMedia, getMissionMeta } from "@/lib/content";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { getMissionProgress, hasResumableSession, upsertProgress } from "@/lib/progress";
 
 type PageProps = {
@@ -23,12 +24,14 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
   const meta = await getMissionMeta(missionId);
   if (!meta) notFound();
 
-  const [hubContent, media, intro, existing] = await Promise.all([
+  const [hubContent, media, intro, existing, userRow] = await Promise.all([
     getHubContent(),
     getMissionMedia(missionId),
     getMissionIntro(missionId),
     getMissionProgress(userId, missionId),
+    prisma.user.findUnique({ where: { id: userId }, select: { difficulty: true } }),
   ]);
+  const difficulty = userRow?.difficulty ?? "standard";
 
   if (!replay && !isDebriefPreview && hasResumableSession(existing) && !isResume) {
     redirect(`/mission/${missionId}?resume=1`);
@@ -86,6 +89,7 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
         resume={isResume}
         savedState={isResume && existing?.status === "in_progress" ? existing.stateJson : null}
         debriefPreview={isDebriefPreview}
+        difficulty={difficulty}
       />
     );
   }

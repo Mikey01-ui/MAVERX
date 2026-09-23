@@ -53,15 +53,33 @@ export const DEBRIEF = {
 export function routeDetectionPenalty(
   correct: Channel,
   choice: Channel,
+  bal?: {
+    catastrophicRoute: number;
+    wrongRoute: number;
+    officialPublic: number;
+    vaultOfficial: number;
+    publicVault: number;
+    publicOfficial: number;
+    officialVault: number;
+  },
 ): { amount: number; catastrophic: boolean } {
+  const b = bal ?? {
+    catastrophicRoute: DETECTION.catastrophicRoute,
+    wrongRoute: DETECTION.wrongRoute,
+    officialPublic: 30,
+    vaultOfficial: 18,
+    publicVault: 12,
+    publicOfficial: 10,
+    officialVault: 10,
+  };
   if (choice === correct) return { amount: 0, catastrophic: false };
-  if (correct === "vault" && choice === "public") return { amount: DETECTION.catastrophicRoute, catastrophic: true };
-  if (correct === "official" && choice === "public") return { amount: 30, catastrophic: false };
-  if (correct === "vault" && choice === "official") return { amount: 18, catastrophic: false };
-  if (correct === "public" && choice === "vault") return { amount: 12, catastrophic: false };
-  if (correct === "public" && choice === "official") return { amount: 10, catastrophic: false };
-  if (correct === "official" && choice === "vault") return { amount: 10, catastrophic: false };
-  return { amount: DETECTION.wrongRoute, catastrophic: false };
+  if (correct === "vault" && choice === "public") return { amount: b.catastrophicRoute, catastrophic: true };
+  if (correct === "official" && choice === "public") return { amount: b.officialPublic, catastrophic: false };
+  if (correct === "vault" && choice === "official") return { amount: b.vaultOfficial, catastrophic: false };
+  if (correct === "public" && choice === "vault") return { amount: b.publicVault, catastrophic: false };
+  if (correct === "public" && choice === "official") return { amount: b.publicOfficial, catastrophic: false };
+  if (correct === "official" && choice === "vault") return { amount: b.officialVault, catastrophic: false };
+  return { amount: b.wrongRoute, catastrophic: false };
 }
 
 export function wrongExplain(ds: Dataset, choice: Channel): string {

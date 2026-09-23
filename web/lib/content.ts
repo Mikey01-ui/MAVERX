@@ -34,6 +34,10 @@ const loginSchema = z.object({
     confirmLabel: z.string(),
     confirmError: z.string(),
     successRedirect: z.string(),
+    localeLabel: z.string(),
+    localeHint: z.string(),
+    localeEn: z.string(),
+    localeNl: z.string(),
   }),
 });
 

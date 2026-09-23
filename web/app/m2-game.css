@@ -112,8 +112,7 @@
 /* === GLOSSARY CHIPS === */
 .m2-mission .gloss{ cursor:help; color:var(--orange); border-bottom:1px dashed rgba(247,148,33,0.55); position:relative; font-weight:500; transition:color 0.15s,border-color 0.15s; }
 .m2-mission .gloss:hover{ color:var(--orange-light); border-bottom-color:rgba(247,148,33,0.9); }
-.m2-mission .gloss-tip{ position:fixed; max-width:260px; background:rgba(20,12,28,0.98); border:1px solid rgba(247,148,33,0.5); color:var(--grey-light); font-family:var(--font-body); font-size:0.72rem; font-weight:400; font-style:normal; line-height:1.5; letter-spacing:0; padding:0.55rem 0.7rem; border-radius:2px; opacity:0; visibility:hidden; pointer-events:none; transition:opacity 0.15s,visibility 0.15s; z-index:9999; box-shadow:0 6px 22px rgba(0,0,0,0.55); white-space:normal; text-transform:none; text-align:left; }
-.m2-mission .gloss-tip.show{ opacity:1; visibility:visible; }
+/* Tip chrome lives in gloss-tip.css (portaled to body) */
 
 /* === ACK GATE === */
 .m2-mission .ack-gate{ display:flex; align-items:center; gap:0.55rem; cursor:pointer; user-select:none; font-family:var(--font-mono); font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--grey-text); transition:color 0.18s; margin-bottom:0.8vh; }
@@ -252,7 +251,7 @@
   background:linear-gradient(135deg,var(--white) 60%,var(--purple-light) 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-.m2-mission .content{ width:min(100%,1000px); max-width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; gap:2.2vh; flex:1 1 auto; justify-content:flex-start; overflow:hidden; }
+.m2-mission .content{ width:min(100%,1000px); max-width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; gap:2.2vh; flex:1 1 auto; justify-content:flex-start; overflow-x:hidden; overflow-y:auto; }
 .m2-mission #page1 .content{ width:min(100%,1600px); justify-content:flex-start; gap:1.2vh; }
 .m2-mission #page2 .content{ width:min(100%,1240px); gap:1vh; }
 .m2-mission #page2 .button-section{ margin-top:1vh; }
@@ -582,20 +581,13 @@
 .m2-mission #voss-body::-webkit-scrollbar-thumb{ background:var(--border); border-radius:2px; }
 .m2-mission .bm-sep{ display:flex; justify-content:center; margin:4px 0 12px; flex-shrink:0; }
 .m2-mission .bm-sep-pill{ background:rgba(43,32,52,.92); color:var(--green-stable); font-family:var(--font-body); font-size:11px; padding:3px 14px; border-radius:12px; border:1px solid rgba(0,196,28,.18); }
-.m2-mission .bm-sender{ font-family:var(--font-body); font-size:11px; letter-spacing:.5px; color:var(--purple-light); margin-bottom:5px; padding-left:4px; }
+.m2-mission .bm-sender{ font-family:var(--font-body); font-size:11px; letter-spacing:.5px; margin-bottom:5px; padding-left:4px; }
 .m2-mission .bm-group{ display:flex; flex-direction:column; align-items:stretch; gap:0; margin-bottom:clamp(8px,1.5vh,14px); flex-shrink:0; min-width:0; }
-.m2-mission .bm-bubble{ align-self:flex-start; display:block; width:100%; max-width:92%; min-width:0; box-sizing:border-box;
-  padding:clamp(10px,1.2vh,14px) clamp(12px,1.3vw,18px); border-radius:14px 14px 14px 3px; line-height:1.65;
-  font-family:var(--font-body); font-size:clamp(13px,1.25vw,16px); overflow-wrap:break-word;
-  animation:bubbleIn 220ms ease forwards; opacity:0; }
+/* Bubble chrome lives in mission-channel.css (full-width left-accent). */
+.m2-mission .bm-bubble{ animation:bubbleIn 220ms ease forwards; opacity:0; }
 @keyframes bubbleIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .m2-mission .bm-ts{ align-self:flex-end; font-size:10px; color:rgba(0,196,28,.72); margin-top:3px; text-align:right; padding:0 5px 0 0; font-family:var(--font-body); white-space:nowrap; }
 .m2-mission .bm-ts::after{ content:' ✓'; }
-.m2-mission .bm-bubble.bm-d{ background:rgba(43,32,52,.92); color:var(--text-b); border:1px solid rgba(0,196,28,.10); }
-.m2-mission .bm-bubble.bm-ok{ background:rgba(0,196,28,.08); color:#cfead2; border-left:2px solid rgba(0,196,28,.55); }
-.m2-mission .bm-bubble.bm-err{ background:rgba(211,25,114,.08); color:#efb5cf; border-left:2px solid rgba(211,25,114,.35); }
-.m2-mission .bm-bubble.bm-win{ background:rgba(0,255,65,.07); color:#d6f4dd; border-left:2px solid rgba(0,255,65,.38); }
-.m2-mission .bm-bubble.bm-h{ background:rgba(143,68,232,.12); color:#dbc7f6; border-left:2px solid rgba(143,68,232,.40); }
 .m2-mission .bm-typing-wrap{ margin-bottom:12px; flex-shrink:0; }
 .m2-mission .bm-typing{ background:rgba(43,32,52,.92); padding:12px 16px; border-radius:14px 14px 14px 3px;
   display:inline-flex; gap:5px; align-items:center; border:1px solid rgba(0,196,28,.10); }

@@ -9,6 +9,9 @@ import {
   getDetectionClass,
   getDetectionIcon,
 } from "@/lib/game/m3/detectionMeter";
+import { chatFromClass } from "@/lib/game/chatFromClass";
+import { getM1DetBalance } from "@/lib/game/difficulty";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 import {
   hydrateMargusM1Play,
   serializeMargusM1Play,
@@ -56,7 +59,6 @@ interface ChatMsg { id: number; sender: Sender; cls: string; html: string; ts: s
 interface Toast { id: number; text: string }
 type LeadVisual = "n-dimmed" | "n-start" | "n-idle" | "n-mission" | "n-active" | "n-next" | "n-locked";
 
-const PASSIVE_RATE = 100 / 1500;
 const M1_CAUSE =
   "Detection rises when you open the wrong files, fail a verification, or lean on hints, and slowly over time on the mirror. At 100% the operation fails.";
 const now2 = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
@@ -108,6 +110,8 @@ export function MargusM1Game({
   onComplete: (stats: GameStats) => void;
   savedState?: Record<string, unknown> | null;
 }) {
+  const difficulty = useDifficulty();
+  const bal = useMemo(() => getM1DetBalance(difficulty), [difficulty]);
   const playSaved = useMemo(() => hydrateMargusM1Play(savedState), [savedState]);
   // ── visible state ──
   const [det, setDet] = useState(playSaved?.det ?? 0);
@@ -175,7 +179,7 @@ export function MargusM1Game({
   // ── refs (logic bookkeeping) ──
   const gs = useRef({
     decoyDetection: 0, clickDetection: 0, verifyDetection: 0, hintDetection: 0, passiveDetection: 0,
-    errors: 0, hintsUsed: 0, reconnected: false, hackDone: false,
+    errors: 0, hintsUsed: 0, reconnected: false, reconnectsUsed: 0, hackDone: false,
     warned: { 30: false, 60: false, 80: false } as Record<number, boolean>,
     foldersOpened: new Set<string>(), personalNotesSeen: false, sysMetricsSeen: false,
     msgId: 0, toastId: 0, zTop: 100, gameOver: false, synthStarted: false,
@@ -250,7 +254,8 @@ export function MargusM1Game({
         passiveDetection: gs.current.passiveDetection,
         errors: gs.current.errors,
         hintsUsed: gs.current.hintsUsed,
-        reconnected: gs.current.reconnected,
+        reconnected: gs.current.reconnectsUsed > 0,
+        reconnectsUsed: gs.current.reconnectsUsed,
         hackDone: gs.current.hackDone,
         warned: { ...gs.current.warned },
         foldersOpened: [...gs.current.foldersOpened],
@@ -373,9 +378,9 @@ export function MargusM1Game({
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimerSec((s) => s + 1);
-      addDet(parseFloat(PASSIVE_RATE.toFixed(4)), "passive");
+      addDet(parseFloat(bal.passivePerSec.toFixed(4)), "passive");
     }, 1000);
-  }, [addDet]);
+  }, [addDet, bal.passivePerSec]);
 
   // ─── HACK SEQUENCE + REVEAL (run once) ───
   useEffect(() => {
@@ -412,7 +417,7 @@ export function MargusM1Game({
   }, [det]);
 
   const triggerMaxDetection = useCallback(() => {
-    if (gs.current.reconnected) {
+    if (gs.current.reconnectsUsed >= bal.maxReconnects) {
       gs.current.gameOver = true;
       if (timerRef.current) clearInterval(timerRef.current);
       setGameOver(true);
@@ -433,13 +438,20 @@ export function MargusM1Game({
     setTimeout(() => { setBreachRecon("[ VOSS ] CONNECTION RE-ESTABLISHED. We got lucky. Do not make me do that again."); setBreachAlert("FEED RESTORED"); }, 6000);
     setTimeout(() => {
       setGlitching(false); setBreachOn(false);
-      setDet(0); gs.current.reconnected = true;
+      setDet(0);
+      gs.current.reconnectsUsed += 1;
+      gs.current.reconnected = true;
       gs.current.warned = { 30: false, 60: false, 80: false };
       setBreachAlert("CONNECTION COMPROMISED"); setBreachGlitch(""); setBreachRecon("");
       startTimer();
-      setTimeout(() => voss("We are back in. That was pure luck and it will not happen again. If detection hits 100% a second time the connection is gone for good. Move carefully.", "bm-err"), 400);
+      const remaining = bal.maxReconnects - gs.current.reconnectsUsed;
+      const warn =
+        remaining <= 0
+          ? "We are back in. That was pure luck and it will not happen again. If detection hits 100% again the connection is gone for good. Move carefully."
+          : `We are back in. You have ${remaining} reconnect${remaining === 1 ? "" : "s"} left if this happens again. Stay precise.`;
+      setTimeout(() => voss(warn, "bm-err"), 400);
     }, 7800);
-  }, [startTimer, voss]);
+  }, [startTimer, voss, bal.maxReconnects]);
 
   // ─── WINDOW MANAGEMENT ───
   const bringFront = useCallback((id: string) => { gs.current.zTop += 1; setZOrder((z) => [...z.filter((x) => x !== id), id]); }, []);
@@ -553,28 +565,28 @@ export function MargusM1Game({
 
   // ─── DECOY / WRONG / RED-HERRING HANDLERS ───
   const handleDecoy = useCallback((msg?: string) => {
-    gs.current.errors++; addDet(3, "decoy");
+    gs.current.errors++; addDet(bal.decoyClick, "decoy");
     voss(msg || pick(DECOY_MSGS), "bm-err");
     setTimeout(() => voss(pick(DECOY_DETECTION_MSGS), "bm-err"), 800);
-  }, [addDet, voss]);
+  }, [addDet, voss, bal.decoyClick]);
   const handleUnopenable = useCallback((filename: string, msg: string) => {
-    gs.current.errors++; addDet(6, "decoy"); setDialog(filename);
+    gs.current.errors++; addDet(bal.decoy, "decoy"); setDialog(filename);
     setTimeout(() => voss(msg, "bm-err"), 400);
-  }, [addDet, voss]);
+  }, [addDet, voss, bal.decoy]);
   const wrongClick = useCallback(() => {
-    gs.current.errors++; addDet(8, "click");
+    gs.current.errors++; addDet(bal.wrongClick, "click");
     voss(wrongDataPointMsg(), "bm-err");
     setTimeout(() => voss(pick(WRONG_CLICK_DETECTION_MSGS), "bm-err"), 800);
-  }, [addDet, voss]);
+  }, [addDet, voss, bal.wrongClick]);
   const redHerring = useCallback((kind: "compute" | "funding" | "personnel") => {
-    gs.current.errors++; addDet(6, "decoy");
+    gs.current.errors++; addDet(bal.decoy, "decoy");
     const msgs = {
       compute: ["That file has the right structure, but these are normal baseline metrics. The anomaly is elsewhere.", "Clean data here. No redacted codes, no unusual patterns. Look in a different report.", "That's a legit report, but the readings are normal across the board. The anomaly isn't hiding there."],
       funding: ["Those expense lines all have proper department codes and sign-offs. Nothing unallocated here, check the budget files.", "Clean ledger. Every cost centre has an owner and the amounts balance. That isn't the anomaly.", "That's standard expense data, all within authorised ranges. Keep looking in the budget allocation."],
       personnel: ["Those are absence logs. Sick days and leave records, not project hours. The overtime data is in a different file.", "Clean absence records. Nothing anomalous in those patterns. Check the September overtime file.", "Leave records, not project hours. No redacted codes in there. Keep looking."],
     } as const;
     voss(pick(msgs[kind] as unknown as string[]), "bm-err");
-  }, [addDet, voss]);
+  }, [addDet, voss, bal.decoy]);
 
   // ─── FILE OPEN ROUTER ───
   const SPECIAL: Record<string, () => void> = {
@@ -650,7 +662,7 @@ export function MargusM1Game({
     if (allOk) {
       setTimeout(() => { setVerifyOpen(false); lockLead(verifyLead); setVerifyLead(null); }, 380);
     } else {
-      gs.current.errors++; addDet(10, "verify");
+      gs.current.errors++; addDet(bal.verifyFail, "verify");
       voss("Verification doesn't match the data. Try again.", "bm-err");
       setTimeout(() => voss(pick(WRONG_VERIFY_MSGS), "bm-err"), 800);
     }
@@ -690,10 +702,10 @@ export function MargusM1Game({
     if (hintCd > 0) return;
     if (!activeLead) { voss("Select a target on the board first.", "bm-err"); return; }
     if (locked.includes(activeLead)) { voss("That one's already confirmed. Pick another target."); return; }
-    gs.current.hintsUsed++; addDet(8, "hint");
+    gs.current.hintsUsed++; addDet(bal.hint, "hint");
     voss("Pulling the intel. This raises our exposure, use it carefully.");
     setTimeout(() => voss(LEADS[activeLead].hint, "bm-h"), 1600);
-    setHintCd(30);
+    setHintCd(Math.max(1, Math.round(bal.hintCooldownMs / 1000)));
   };
   useEffect(() => {
     if (hintCd <= 0) return;
@@ -1070,7 +1082,7 @@ export function MargusM1Game({
               <div id="voss-body" ref={bodyRef}>
                 <div className="bm-sep"><div className="bm-sep-pill">Today</div></div>
                 {messages.map((m) => (
-                  <div key={m.id} className="bm-group">
+                    <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
                     <div className={`bm-sender ${m.sender === "VOSS" ? "s-voss" : "s-zex"}`}>{m.sender}</div>
                     <div className={`bm-bubble ${m.cls}`} dangerouslySetInnerHTML={{ __html: m.html }} />
                     <div className="bm-ts">{m.ts}</div>

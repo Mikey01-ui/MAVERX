@@ -8,13 +8,14 @@ import { M4FlowCanvas } from "@/components/missions/m4/M4FlowCanvas";
 import { M4StepPop } from "@/components/missions/m4/M4StepPop";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
 import { M4DetectionHeader } from "@/components/missions/m4/M4DetectionHeader";
-import { DETECTION, FILES, HACK_LINES, HINT_COOLDOWN_SEC, STEPS, getDatasetCandidatesForStep, isStepSatisfied } from "@/lib/game/m4/data";
+import { FILES, HACK_LINES, STEPS, getDatasetCandidatesForStep, isStepSatisfied } from "@/lib/game/m4/data";
 import { buildM4Debrief } from "@/lib/game/debriefBuilders";
 import { m4ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { persistMissionReport } from "@/lib/finale/persistMissionReport";
 import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import { useM4MissionAudio } from "@/lib/audio/useM4MissionAudio";
 import { M4GameProvider, useM4Game } from "@/lib/game/m4/context";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 const FINALIZE_STAGES = [
   "Validating eight-gate spine…",
@@ -239,7 +240,7 @@ function M4GameInner() {
                       <div className="bm-sep-pill">Onboarding</div>
                     </div>
                     {state.messages.map((m) => (
-                      <div key={m.id} className="bm-group">
+                      <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
                         <div className="bm-sender">{m.sender.toUpperCase()}</div>
                         <div className={`bm-bubble ${m.tone}`} dangerouslySetInnerHTML={{ __html: m.text }} />
                         <div className="bm-ts">{m.ts}</div>
@@ -261,7 +262,7 @@ function M4GameInner() {
                         <div className="hint-tooltip">
                           {state.submitted
                             ? "Map locked — packaging debrief"
-                            : `Hint · +${DETECTION.hint}% detection · ${state.hintCooldown ? "cooldown…" : `${HINT_COOLDOWN_SEC}s cooldown`}`}
+                            : `Hint · +${state.balance.hint}% detection · ${state.hintCooldown ? "cooldown…" : `${state.balance.hintCooldownSec}s cooldown`}`}
                         </div>
                       </div>
                       <input

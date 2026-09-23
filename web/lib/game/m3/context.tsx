@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
-import { HACK_LINES, HINT_COOLDOWN_SEC, INTRO_CHAT } from "@/lib/game/m3/data";
+import { HACK_LINES, INTRO_CHAT } from "@/lib/game/m3/data";
+import { useDifficulty } from "@/lib/game/DifficultyContext";
 import { useGameSessionPersist } from "@/lib/game/sessionPersist";
 import { createInitialM3State, hydrateM3State, m3Reducer, serializeM3State } from "@/lib/game/m3/reducer";
 import type { M3GameAction, M3GameState } from "@/lib/game/m3/types";
@@ -10,10 +11,6 @@ type M3GameContextValue = { state: M3GameState; dispatch: (action: M3GameAction)
 
 const M3GameContext = createContext<M3GameContextValue | null>(null);
 
-function initM3State(saved: Record<string, unknown> | null | undefined) {
-  return hydrateM3State(saved) ?? createInitialM3State();
-}
-
 export function M3GameProvider({
   children,
   savedState,
@@ -21,7 +18,13 @@ export function M3GameProvider({
   children: ReactNode;
   savedState?: Record<string, unknown> | null;
 }) {
-  const [state, dispatch] = useReducer(m3Reducer, savedState, initM3State);
+  const difficulty = useDifficulty();
+  const [state, dispatch] = useReducer(
+    m3Reducer,
+    { savedState, difficultyId: difficulty.id },
+    ({ savedState: saved, difficultyId }) =>
+      hydrateM3State(saved, difficultyId) ?? createInitialM3State(difficultyId),
+  );
 
   const persistEnabled = state.phase !== "failed";
 

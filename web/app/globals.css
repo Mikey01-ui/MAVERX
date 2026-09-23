@@ -395,6 +395,42 @@ a {
   margin-bottom: 1rem;
 }
 
+.locale-choice {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.locale-choice-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(0, 196, 28, 0.18);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.locale-choice-option.is-selected {
+  border-color: var(--cta);
+  background: rgba(247, 148, 33, 0.1);
+}
+
+.locale-choice-option input {
+  accent-color: var(--cta);
+}
+
+.locale-choice-hint {
+  margin-top: 0.45rem;
+  color: var(--text-mute);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .btn-primary {
   width: 100%;
   padding: 0.85rem 1.2rem;

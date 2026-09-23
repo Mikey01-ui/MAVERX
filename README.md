@@ -21,6 +21,20 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Language / groups / dashboard link
+
+- **Group.locale** drives mission language (source of truth).
+- **User.preferredLocale** is chosen at register; used only until the user is in a group.
+- Built-in packs: `en`, `nl`. Admins can register more via `/dashboard` or `POST /api/locales`.
+- **Admin dashboard** (separate repo `maverxdashboard`): create individual/group invites that open
+  `{OMNI_PUBLIC_URL}/register?group=gx_…` or `?invite=px_…` with `lang` / `diff` / `co`.
+- APIs: `GET/POST /api/invites`, `PATCH /api/invites/:id`, `GET/POST /api/locales`, `GET/PATCH /api/group`, `GET /api/me/locale`.
+- Auth for dashboard → game: `X-Dashboard-Key: $DASHBOARD_API_KEY` (or admin session cookie).
+- Env (game): `DASHBOARD_API_KEY`, `DASHBOARD_ORIGINS`, `OMNI_PUBLIC_URL`.
+- Env (dashboard Vite): `VITE_OMNI_API_URL`, `VITE_OMNI_GAME_URL`, `VITE_DASHBOARD_API_KEY`.
+
+Dutch **content packs** are not shipped yet — this is invite + locale plumbing.
+
 ## Test accounts
 
 | Role | Email | Password |

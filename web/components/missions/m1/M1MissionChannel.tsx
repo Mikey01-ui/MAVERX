@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { CHANNEL_ROSTER } from "@/lib/game/m1/data";
 import type { ChatMessage } from "@/lib/game/m1/types";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 type Props = {
   messages: ChatMessage[];
@@ -51,7 +52,7 @@ export function M1MissionChannel({ messages, typing, hintCooldown, activeLead, o
         {messages.map((m, i) => {
           const showSender = i === 0 || messages[i - 1].sender !== m.sender;
           return (
-            <div key={m.id} className="bm-group">
+            <div key={m.id} className={`bm-group ${chatFromClass(m.sender)}`}>
               {showSender && <div className="bm-sender">{m.sender.toUpperCase()}</div>}
               <div className={`bm-bubble ${m.tone}`}>{m.text}</div>
               <div className="bm-ts">{m.ts}</div>

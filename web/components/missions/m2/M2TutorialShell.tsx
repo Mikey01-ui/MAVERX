@@ -741,8 +741,8 @@ export const M2TutorialShell = forwardRef<M2TutorialShellHandle>(function M2Tuto
                 <div className="bm-sep">
                   <div className="bm-sep-pill">TODAY</div>
                 </div>
-                <div className="bm-group">
-                  <div className="bm-sender" style={{ color: "#00c41c" }}>
+                <div className="bm-group from-atlas">
+                  <div className="bm-sender">
                     ATLAS
                   </div>
                   <div className="bm-bubble bm-d show">

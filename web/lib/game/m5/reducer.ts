@@ -1,6 +1,7 @@
-import { CREW_ORDER, CREW_QUESTIONS, ECHO_FRAME, ECHO_VIZ, M5_REQUIRED_COMMITS } from "@/lib/game/m5/data";
+import { CREW_ORDER, CREW_QUESTIONS, ECHO_FRAME, ECHO_VIZ } from "@/lib/game/m5/data";
+import { getDifficultyProfile, getM5DetBalance, type M5DetBalance } from "@/lib/game/difficulty";
 import { restoreGameState } from "@/lib/game/sessionPersist";
-import type { ChatMessage, CrewId, M5GameAction, M5GameState } from "@/lib/game/m5/types";
+import type { ChatMessage, CrewId, CrewState, M5GameAction, M5GameState } from "@/lib/game/m5/types";
 
 function nowTs() {
   const n = new Date();
@@ -30,14 +31,14 @@ function addDetection(state: M5GameState, amount: number): M5GameState {
 
 function initialCrewState(): M5GameState["crewState"] {
   return {
-    zex: { status: "pending", retried: false, selected: null },
-    atlas: { status: "pending", retried: false, selected: null },
-    nova: { status: "pending", retried: false, selected: null },
-    kade: { status: "pending", retried: false, selected: null },
+    zex: { status: "pending", retriesUsed: 0, selected: null },
+    atlas: { status: "pending", retriesUsed: 0, selected: null },
+    nova: { status: "pending", retriesUsed: 0, selected: null },
+    kade: { status: "pending", retriesUsed: 0, selected: null },
   };
 }
 
-export function createInitialM5State(): M5GameState {
+export function createInitialM5State(difficulty?: string | null): M5GameState {
   return {
     phase: "hack",
     hackLine: 0,
@@ -55,6 +56,7 @@ export function createInitialM5State(): M5GameState {
     ships: null,
     gameOver: false,
     failReason: null,
+    balance: getM5DetBalance(getDifficultyProfile(difficulty)),
   };
 }
 
@@ -65,10 +67,13 @@ function finishBriefing(
   messages: ChatMessage[],
   score: number,
 ): M5GameState {
-  const ships = commits >= M5_REQUIRED_COMMITS;
+  const need = state.balance.requiredCommits;
+  const ships = commits >= need;
   const vossLine = ships
-    ? "Four people who don't agree on anything just agreed on you. That's not nothing. Move."
-    : "You built something real across four operations. The room didn't commit — but the work was real.";
+    ? commits >= 4
+      ? "Four people who don't agree on anything just agreed on you. That's not nothing. Move."
+      : `${commits} of 4 specialists committed — enough for this run. Move.`
+    : `You built something real across four operations. You needed ${need} commits — the room didn't get there.`;
   const withVoss = [
     ...messages,
     { id: `m5-${Date.now()}-vote`, sender: "Voss", text: vossLine, tone: "bm-win" as const, ts: nowTs() },
@@ -136,7 +141,8 @@ export function m5Reducer(state: M5GameState, action: M5GameAction): M5GameState
         if (c.frame !== ECHO_FRAME[i].correct) wrongF++;
         if (c.viz !== ECHO_VIZ[i].correct) wrongV++;
       }
-      const detAdd = wrongF * 8 + wrongV * 5;
+      const detAdd =
+        wrongF * state.balance.framingWrongFrame + wrongV * state.balance.framingWrongViz;
       const scoreAdd = wrongF === 0 && wrongV === 0 ? 200 : Math.max(0, 200 - (wrongF + wrongV) * 50);
       let messages = pushChat(state, "Echo", "Cards framed. The room is yours now.", "bm-h");
       messages = [...messages, { id: `m5-${Date.now()}-v`, sender: "Voss", text: "Crew is ready. Walk them through it.", tone: "bm-d" as const, ts: nowTs() }];
@@ -178,13 +184,21 @@ export function m5Reducer(state: M5GameState, action: M5GameAction): M5GameState
         }
         return finishBriefing(state, commits, crewState, messages, state.score + 200);
       }
-      if (!crew.retried) {
-        const withDet = addDetection(state, 10);
+      if (crew.retriesUsed < state.balance.crewMaxRetries) {
+        const withDet = addDetection(state, state.balance.crewMiss);
         if (withDet.gameOver) return withDet;
         return {
           ...withDet,
           score: Math.max(0, state.score - 100),
-          crewState: { ...state.crewState, [action.crewId]: { ...crew, retried: true, selected: null, status: "asking" } },
+          crewState: {
+            ...state.crewState,
+            [action.crewId]: {
+              ...crew,
+              retriesUsed: crew.retriesUsed + 1,
+              selected: null,
+              status: "asking",
+            },
+          },
           messages: pushChat(withDet, names[action.crewId], q.sceptical.replace(/^[A-Z]+:\s/, ""), "bm-err"),
         };
       }
@@ -212,7 +226,7 @@ export function m5Reducer(state: M5GameState, action: M5GameAction): M5GameState
       if (!state.ships) return state;
       return { ...state, phase: "debrief" };
     case "RESET_MISSION":
-      return createInitialM5State();
+      return { ...createInitialM5State(), balance: state.balance };
     case "ADD_CHAT":
       return { ...state, messages: pushChat(state, action.sender, action.text, action.tone ?? "bm-d") };
     default:
@@ -230,8 +244,34 @@ export function serializeM5State(state: M5GameState): Record<string, unknown> {
   return { version: 1, ...state };
 }
 
-export function hydrateM5State(raw: Record<string, unknown> | null | undefined): M5GameState | null {
-  const restored = restoreGameState(raw, 1, createInitialM5State, ["failed"]);
+function ensureM5Balance(raw: unknown, difficulty?: string | null): M5DetBalance {
+  if (raw && typeof raw === "object" && typeof (raw as M5DetBalance).requiredCommits === "number") {
+    return raw as M5DetBalance;
+  }
+  return getM5DetBalance(getDifficultyProfile(difficulty));
+}
+
+function migrateCrewState(raw: M5GameState["crewState"] | Record<string, unknown>): M5GameState["crewState"] {
+  const out = initialCrewState();
+  (["zex", "atlas", "nova", "kade"] as CrewId[]).forEach((id) => {
+    const c = raw?.[id] as (CrewState & { retried?: boolean }) | undefined;
+    if (!c) return;
+    const retriesUsed =
+      typeof c.retriesUsed === "number" ? c.retriesUsed : c.retried ? 1 : 0;
+    out[id] = {
+      status: c.status ?? "pending",
+      retriesUsed,
+      selected: c.selected ?? null,
+    };
+  });
+  return out;
+}
+
+export function hydrateM5State(
+  raw: Record<string, unknown> | null | undefined,
+  difficulty?: string | null,
+): M5GameState | null {
+  const restored = restoreGameState(raw, 1, () => createInitialM5State(difficulty), ["failed"]);
   if (!restored) return null;
   const gameOver = Boolean(raw?.gameOver) || restored.phase === "failed";
   const failReason =
@@ -247,5 +287,7 @@ export function hydrateM5State(raw: Record<string, unknown> | null | undefined):
     gameOver,
     failReason,
     phase: gameOver ? "failed" : restored.phase,
+    crewState: migrateCrewState(restored.crewState),
+    balance: ensureM5Balance(restored.balance ?? raw?.balance, difficulty),
   };
 }

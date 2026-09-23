@@ -8,6 +8,7 @@ import { M4_DETECTION_INFO } from "@/lib/game/m4/detectionMeter";
 import type { M4TutorialDemoApi } from "@/lib/game/m4/tutorialDemo";
 import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
 import { getDetectionBarClass, getDetectionClass, getDetectionIcon } from "@/lib/game/m3/detectionMeter";
+import { chatFromClass } from "@/lib/game/chatFromClass";
 
 const TUT_DETECTION = 0;
 const TUT_BAND = "DARK" as const;
@@ -243,12 +244,12 @@ export const M4TutorialShell = forwardRef<M4TutorialShellHandle>(function M4Tuto
                   <div className="bm-sep-pill">Process map queue · live</div>
                 </div>
                 {INTRO_CHAT.map((m) => (
-                  <div key={m.sender} className="bm-group">
+                  <div key={m.sender} className={`bm-group ${chatFromClass(m.sender)}`}>
                     <div className="bm-sender">{m.sender.toUpperCase()}</div>
                     <div className={`bm-bubble ${m.tone}`} dangerouslySetInnerHTML={{ __html: m.text }} />
                   </div>
                 ))}
-                <div className="bm-group">
+                <div className="bm-group from-nova">
                   <div className="bm-sender">NOVA</div>
                   <div className="bm-bubble bm-d">
                     Mis-link the spine and analysts will read &apos;random dump&apos; — we need a believable{" "}

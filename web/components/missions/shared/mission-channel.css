@@ -1,0 +1,260 @@
+/* Shared Operation Channel — Margus/M1 left-accent bubbles for every mission. */
+
+:root {
+  --chat-voss: #1ec9b0;
+  --chat-zex: #e94fce;
+  --chat-nova: #8f44e8;
+  --chat-atlas: #f79421;
+  --chat-kade: #56d6ff;
+  --chat-system: #00c41c;
+}
+
+#broker-body .bm-group,
+#voss-body .bm-group,
+.m1-game .bm-group,
+.m2-mission .bm-group,
+.m3-game .bm-group,
+.m4-game .bm-group,
+.m5-game .bm-group,
+.margus-m1-game-root .bm-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: clamp(10px, 1.8vh, 18px);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+#broker-body .bm-sender,
+#voss-body .bm-sender,
+.m1-game .bm-sender,
+.m2-mission .bm-sender,
+.m3-game .bm-sender,
+.m4-game .bm-sender,
+.m5-game .bm-sender,
+.margus-m1-game-root .bm-sender {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--chat-accent, var(--chat-nova));
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+#broker-body .bm-bubble,
+#voss-body .bm-bubble,
+.m1-game .bm-bubble,
+.m2-mission .bm-bubble,
+.m3-game .bm-bubble,
+.m4-game .bm-bubble,
+.m5-game .bm-bubble,
+.margus-m1-game-root .bm-bubble {
+  align-self: stretch !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: clamp(12px, 1.4vh, 18px) clamp(14px, 1.4vw, 22px) !important;
+  border-radius: 14px 14px 14px 3px !important;
+  line-height: 1.65;
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.3vw, 18px);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  background: rgba(22, 42, 44, 0.9);
+  color: var(--text-w, #faf7f2);
+  border: 1px solid rgba(30, 201, 176, 0.14) !important;
+  border-left: 3px solid var(--chat-accent, var(--chat-voss)) !important;
+  animation: missionBubbleIn 220ms ease forwards;
+  opacity: 0;
+}
+
+#broker-body .bm-bubble.show,
+#voss-body .bm-bubble.show,
+.m1-game .bm-bubble.show,
+.m2-mission .bm-bubble.show,
+.m3-game .bm-bubble.show,
+.m4-game .bm-bubble.show,
+.m5-game .bm-bubble.show,
+.margus-m1-game-root .bm-bubble.show {
+  opacity: 1;
+}
+
+#broker-body .bm-ts,
+#voss-body .bm-ts,
+.m1-game .bm-ts,
+.m2-mission .bm-ts,
+.m3-game .bm-ts,
+.m4-game .bm-ts,
+.m5-game .bm-ts,
+.margus-m1-game-root .bm-ts {
+  align-self: flex-end;
+  font-size: 10px;
+  color: rgba(0, 196, 28, 0.72);
+  margin-top: 4px;
+  text-align: right;
+  padding: 0 6px 0 0;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+#broker-body .bm-ts::after,
+#voss-body .bm-ts::after,
+.m1-game .bm-ts::after,
+.m2-mission .bm-ts::after,
+.m3-game .bm-ts::after,
+.m4-game .bm-ts::after,
+.m5-game .bm-ts::after,
+.margus-m1-game-root .bm-ts::after {
+  content: " ✓";
+}
+
+/* Sender accent tokens */
+.bm-group.from-voss { --chat-accent: var(--chat-voss); }
+.bm-group.from-zex { --chat-accent: var(--chat-zex); }
+.bm-group.from-nova { --chat-accent: var(--chat-nova); }
+.bm-group.from-atlas { --chat-accent: var(--chat-atlas); }
+.bm-group.from-kade { --chat-accent: var(--chat-kade); }
+.bm-group.from-system { --chat-accent: var(--chat-system); }
+
+/* Tone + speaker skins → same left-bar treatment (beat .bm-d / .bm-h / .bm-nova etc.) */
+#broker-body .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-voss .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(22, 42, 44, 0.9) !important;
+  border-color: rgba(30, 201, 176, 0.14) !important;
+  border-left: 3px solid var(--chat-voss) !important;
+  color: var(--text-w, #faf7f2) !important;
+}
+
+#broker-body .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-zex .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(52, 24, 50, 0.9) !important;
+  border-color: rgba(233, 79, 206, 0.16) !important;
+  border-left: 3px solid var(--chat-zex) !important;
+  color: #f3d6ee !important;
+}
+
+#broker-body .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-nova .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(40, 24, 58, 0.92) !important;
+  border-color: rgba(143, 68, 232, 0.22) !important;
+  border-left: 3px solid var(--chat-nova) !important;
+  color: #e8dff5 !important;
+}
+
+#broker-body .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-atlas .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(48, 32, 20, 0.92) !important;
+  border-color: rgba(247, 148, 33, 0.22) !important;
+  border-left: 3px solid var(--chat-atlas) !important;
+  color: #f5e6d0 !important;
+}
+
+#broker-body .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-kade .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(20, 36, 48, 0.92) !important;
+  border-color: rgba(86, 214, 255, 0.2) !important;
+  border-left: 3px solid var(--chat-kade) !important;
+  color: #d6eef8 !important;
+}
+
+#broker-body .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+#voss-body .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m1-game .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m2-mission .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m3-game .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m4-game .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.m5-game .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win),
+.margus-m1-game-root .bm-group.from-system .bm-bubble:not(.bm-ok):not(.bm-err):not(.bm-win) {
+  background: rgba(18, 40, 24, 0.92) !important;
+  border-color: rgba(0, 196, 28, 0.22) !important;
+  border-left: 3px solid var(--chat-system) !important;
+  color: #d6f4dd !important;
+}
+
+#broker-body .bm-bubble.bm-ok,
+#voss-body .bm-bubble.bm-ok,
+.m1-game .bm-bubble.bm-ok,
+.m2-mission .bm-bubble.bm-ok,
+.m3-game .bm-bubble.bm-ok,
+.m4-game .bm-bubble.bm-ok,
+.m5-game .bm-bubble.bm-ok,
+.margus-m1-game-root .bm-bubble.bm-ok {
+  background: rgba(0, 196, 28, 0.08) !important;
+  color: #cfead2 !important;
+  border: 1px solid rgba(0, 196, 28, 0.2) !important;
+  border-left: 3px solid rgba(0, 196, 28, 0.65) !important;
+}
+
+#broker-body .bm-bubble.bm-err,
+#voss-body .bm-bubble.bm-err,
+.m1-game .bm-bubble.bm-err,
+.m2-mission .bm-bubble.bm-err,
+.m3-game .bm-bubble.bm-err,
+.m4-game .bm-bubble.bm-err,
+.m5-game .bm-bubble.bm-err,
+.margus-m1-game-root .bm-bubble.bm-err {
+  background: rgba(211, 25, 114, 0.08) !important;
+  color: #efb5cf !important;
+  border: 1px solid rgba(211, 25, 114, 0.2) !important;
+  border-left: 3px solid rgba(211, 25, 114, 0.55) !important;
+}
+
+#broker-body .bm-bubble.bm-win,
+#voss-body .bm-bubble.bm-win,
+.m1-game .bm-bubble.bm-win,
+.m2-mission .bm-bubble.bm-win,
+.m3-game .bm-bubble.bm-win,
+.m4-game .bm-bubble.bm-win,
+.m5-game .bm-bubble.bm-win,
+.margus-m1-game-root .bm-bubble.bm-win {
+  background: rgba(0, 255, 65, 0.07) !important;
+  color: #d6f4dd !important;
+  border: 1px solid rgba(0, 255, 65, 0.2) !important;
+  border-left: 3px solid rgba(0, 255, 65, 0.5) !important;
+}
+
+@keyframes missionBubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

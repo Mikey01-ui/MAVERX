@@ -1,3 +1,5 @@
+import type { M5DetBalance } from "@/lib/game/difficulty";
+
 export type ChatTone = "bm-d" | "bm-ok" | "bm-err" | "bm-h" | "bm-win";
 export type FrameKey = "risk" | "opportunity" | "neutral";
 export type CrewId = "zex" | "atlas" | "nova" | "kade";
@@ -8,7 +10,8 @@ export type CardChoice = { frame?: FrameKey; viz?: string };
 
 export type CrewState = {
   status: CrewStatus;
-  retried: boolean;
+  /** Wrong answers used against the difficulty retry budget. */
+  retriesUsed: number;
   selected: number | null;
 };
 
@@ -31,6 +34,7 @@ export type M5GameState = {
   ships: boolean | null;
   gameOver: boolean;
   failReason: "detection" | "vote" | null;
+  balance: M5DetBalance;
 };
 
 export type M5GameAction =

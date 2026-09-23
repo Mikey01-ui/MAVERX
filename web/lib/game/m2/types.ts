@@ -1,3 +1,5 @@
+import type { M2DetBalance } from "@/lib/game/difficulty";
+
 export type DisputeId = 1 | 2 | 3 | 4;
 export type TokenId = "finance" | "it" | "operations" | "compliance";
 export type ChatTone = "bm-d" | "bm-ok" | "bm-err" | "bm-win" | "bm-h";
@@ -104,6 +106,8 @@ export type M2GameState = {
   everOpened: string[];
   /** post-confirm chip feedback; null when not showing */
   verifyFeedback: VerifyFeedback | null;
+  /** Detection dials from difficulty profile (stamped at session start). */
+  balance: M2DetBalance;
 };
 
 export type M2GameAction =

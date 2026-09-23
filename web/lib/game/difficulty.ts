@@ -1,6 +1,10 @@
-import { difficultyNormalize } from "@/lib/invites";
-
 export type DifficultyId = "easy" | "standard" | "hard";
+
+function difficultyNormalize(raw: string | null | undefined): string {
+  const d = (raw ?? "standard").trim().toLowerCase();
+  if (d === "easy" || d === "standard" || d === "hard") return d;
+  return "standard";
+}
 
 export type DifficultyProfile = {
   id: DifficultyId;

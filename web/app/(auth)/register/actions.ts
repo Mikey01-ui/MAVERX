@@ -135,16 +135,10 @@ export async function completeRegistration(formData: FormData) {
     console.error("register notify email failed", err);
   }
 
-  try {
-    await signIn("credentials", {
-      email,
-      password: parsed.data.password,
-      redirect: false,
-    });
-  } catch (err) {
-    console.error("register auto sign-in failed", err);
-    redirect("/login?registered=1");
-  }
-
-  redirect("/intro");
+  // Auth.js signIn throws a redirect — let it send the browser to /intro with the session cookie.
+  await signIn("credentials", {
+    email,
+    password: parsed.data.password,
+    redirectTo: "/intro",
+  });
 }

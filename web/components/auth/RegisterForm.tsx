@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { LoginContent } from "@/lib/content";
 import {
@@ -10,8 +9,6 @@ import {
   type RegisterStep,
 } from "@/lib/register-steps";
 import { completeRegistration } from "@/app/(auth)/register/actions";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type PreferredLocale = "en" | "nl";
 
@@ -62,7 +59,6 @@ export function RegisterForm({
   /** From ?regError= — server-action failure echoed back without JS. */
   initialRegError?: string | null;
 }) {
-  const router = useRouter();
   const token = (inviteContext?.invite || inviteContext?.group || "").trim();
 
   const [preview, setPreview] = useState<InvitePreview | null>(initialPreview);
@@ -82,15 +78,12 @@ export function RegisterForm({
   const [email, setEmail] = useState(
     () => initialEmail || initialPreview?.emailHint || "",
   );
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [preferredLocale, setPreferredLocale] = useState<PreferredLocale>(() => {
     if (!initialPreview?.localeIsAny && initialPreview?.locale === "nl") return "nl";
     if (inviteContext?.lang === "nl") return "nl";
     if (inviteContext?.lang === "en") return "en";
     return inviteContext?.initialLocale === "nl" ? "nl" : "en";
   });
-  const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(initialRegError);
 
   // Keep client step in sync when the server re-renders with a new ?step=.
@@ -146,10 +139,6 @@ export function RegisterForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- email seed only on first resolve
   }, [token, inviteContext?.group, initialPreview, initialPreviewError]);
 
-  const emailValid = EMAIL_RE.test(email.trim());
-  const passwordValid = password.length >= 8;
-  const confirmValid = password === confirm && confirm.length > 0;
-
   const steps = useMemo(() => {
     const list: RegisterStep[] = ["context"];
     if (preview?.localeIsAny) list.push("language");
@@ -161,16 +150,6 @@ export function RegisterForm({
 
   function stepHref(target: RegisterStep, extras?: { email?: string; lang?: string | null }) {
     return buildRegisterHref(inviteContext, target, extras);
-  }
-
-  function goNext() {
-    setError(null);
-    setTouched(false);
-    const next = steps[stepIndex + 1];
-    if (next) {
-      setStep(next);
-      router.push(stepHref(next, { email: email.trim() || undefined, lang: preferredLocale }));
-    }
   }
 
   if (previewLoading) {
@@ -294,25 +273,16 @@ export function RegisterForm({
             )}
           </ul>
           <div className="actions" style={{ marginTop: "1.5rem" }}>
-            {/* Plain Link/href so Continue works even if React never hydrates. */}
-            <Link href={continueFromContextHref} className="btn-primary">
+            {/* Plain anchor so Continue works even if React never hydrates / soft-nav fails. */}
+            <a href={continueFromContextHref} className="btn-primary">
               Continue
-            </Link>
+            </a>
           </div>
         </div>
       )}
 
       {step === "language" && (
-        <form
-          method="get"
-          action="/register"
-          style={{ marginTop: "1.25rem" }}
-          onSubmit={(e) => {
-            // Prefer client navigation when hydrated; GET still works without JS.
-            e.preventDefault();
-            goNext();
-          }}
-        >
+        <form method="get" action="/register" style={{ marginTop: "1.25rem" }}>
           {/* lang comes from radios below — do not emit a hidden lang. */}
           {inviteContext?.invite ? <input type="hidden" name="invite" value={inviteContext.invite} /> : null}
           {inviteContext?.group ? <input type="hidden" name="group" value={inviteContext.group} /> : null}
@@ -341,7 +311,7 @@ export function RegisterForm({
                   type="radio"
                   name="lang"
                   value={opt.code}
-                  checked={preferredLocale === opt.code}
+                  defaultChecked={preferredLocale === opt.code}
                   onChange={() => setPreferredLocale(opt.code)}
                 />
                 {opt.label}
@@ -350,9 +320,9 @@ export function RegisterForm({
           </div>
           <p className="locale-choice-hint">{content.register.localeHint}</p>
           <div className="actions" style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem" }}>
-            <Link href={backFromLanguageHref} className="btn-secondary">
+            <a href={backFromLanguageHref} className="btn-secondary">
               Back
-            </Link>
+            </a>
             <button type="submit" className="btn-primary">
               Continue
             </button>
@@ -361,21 +331,7 @@ export function RegisterForm({
       )}
 
       {step === "email" && (
-        <form
-          method="get"
-          action="/register"
-          style={{ marginTop: "1.25rem" }}
-          onSubmit={(e) => {
-            setTouched(true);
-            if (!emailValid) {
-              e.preventDefault();
-              return;
-            }
-            // Prefer client nav when hydrated; GET works without JS.
-            e.preventDefault();
-            goNext();
-          }}
-        >
+        <form method="get" action="/register" style={{ marginTop: "1.25rem" }}>
           <InviteHiddenFields stepValue="password" includeLang />
           <div className="form-group">
             <label className="form-label" htmlFor="email">
@@ -385,22 +341,19 @@ export function RegisterForm({
               id="email"
               name="email"
               type="email"
-              className={`form-input${touched && !emailValid && email ? " invalid" : ""}`}
+              className="form-input"
               placeholder={content.emailPlaceholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              defaultValue={email}
               autoComplete="email"
               autoFocus
               required
             />
-            <p className={`error-text${touched && email && !emailValid ? " show" : ""}`}>
-              {content.emailError}
-            </p>
+            <p className="error-text">{content.emailError}</p>
           </div>
           <div className="actions" style={{ display: "flex", gap: "0.75rem" }}>
-            <Link href={backFromEmailHref} className="btn-secondary">
+            <a href={backFromEmailHref} className="btn-secondary">
               Back
-            </Link>
+            </a>
             <button type="submit" className="btn-primary">
               Continue
             </button>
@@ -411,7 +364,7 @@ export function RegisterForm({
       {step === "password" && (
         <form action={completeRegistration} style={{ marginTop: "1.25rem" }}>
           <InviteHiddenFields stepValue="password" includeLang />
-          <input type="hidden" name="email" value={email.trim()} />
+          <input type="hidden" name="email" value={email.trim().toLowerCase()} />
           <input type="hidden" name="preferredLocale" value={preferredLocale} />
           <div className="form-group">
             <label className="form-label" htmlFor="password">
@@ -423,16 +376,12 @@ export function RegisterForm({
               type="password"
               className="form-input"
               placeholder={content.passwordPlaceholder}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               autoFocus
               required
               minLength={8}
             />
-            <p className={`error-text${touched && password && !passwordValid ? " show" : ""}`}>
-              {content.passwordError}
-            </p>
+            <p className="error-text">{content.passwordError}</p>
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="confirm">
@@ -443,21 +392,17 @@ export function RegisterForm({
               name="confirm"
               type="password"
               className="form-input"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
               required
               minLength={8}
             />
-            <p className={`error-text${touched && confirm && !confirmValid ? " show" : ""}`}>
-              {content.register.confirmError}
-            </p>
+            <p className="error-text">{content.register.confirmError}</p>
           </div>
           {error && <p className="error-text show">{error}</p>}
           <div className="actions" style={{ display: "flex", gap: "0.75rem" }}>
-            <Link href={backFromPasswordHref} className="btn-secondary">
+            <a href={backFromPasswordHref} className="btn-secondary">
               Back
-            </Link>
+            </a>
             <button type="submit" className="btn-primary">
               {content.submitRegister}
             </button>

@@ -124,13 +124,15 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
-    // Invite / group register links must always reach the form — do not bounce an
-    // existing session (e.g. admin) into /intro → Start Mission.
+    // Invite / group register links must not bounce an existing session
+    // (e.g. admin) into /intro → Start Mission. Clear the session first.
     if (pathname === "/register") {
       const invite = req.nextUrl.searchParams.get("invite");
       const group = req.nextUrl.searchParams.get("group");
       if (invite || group) {
-        return NextResponse.next();
+        const clear = new URL("/register/clear", req.nextUrl);
+        clear.searchParams.set("next", `${pathname}${req.nextUrl.search}`);
+        return NextResponse.redirect(clear);
       }
     }
     return NextResponse.redirect(new URL("/intro", req.nextUrl));

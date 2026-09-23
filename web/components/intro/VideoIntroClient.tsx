@@ -1,10 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { VideoIntroContent } from "@/lib/content";
 import { MissionChrome } from "@/components/missions/MissionChrome";
-import { IntroBriefModal } from "@/components/intro/IntroBriefModal";
 
 type VideoIntroClientProps = {
   content: VideoIntroContent;
@@ -15,12 +14,8 @@ function formatClock(now: Date) {
 }
 
 export function VideoIntroClient({ content }: VideoIntroClientProps) {
-  const router = useRouter();
   const [clock, setClock] = useState("--:--:--");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [starting, setStarting] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     const tick = () => setClock(formatClock(new Date()));
@@ -28,32 +23,6 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Time-gated charge on the start button (matches M1 brief/confirm sweep)
-  useEffect(() => {
-    const t = setTimeout(() => setArmed(true), 3000);
-    return () => clearTimeout(t);
-  }, []);
-
-  async function handleStartMission() {
-    setStarting(true);
-    try {
-      await fetch("/api/progress", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          missionId: "m1",
-          status: "in_progress",
-          checkpoint: "brief",
-        }),
-      });
-      router.push("/mission/m1");
-      router.refresh();
-    } finally {
-      setStarting(false);
-    }
-  }
 
   const hasVideo = Boolean(content.video.src);
 
@@ -102,33 +71,43 @@ export function VideoIntroClient({ content }: VideoIntroClientProps) {
         </div>
 
         <div className="vi-action-strip">
-          <button type="button" className="vi-brief-btn" onClick={() => setModalOpen(true)}>
-            {content.readIntroButton}
-          </button>
+          <details className="vi-brief-details">
+            <summary className="vi-brief-btn">{content.readIntroButton}</summary>
+            <div className="vi-brief-fallback">
+              <p className="vi-brief-fallback-eyebrow">{content.modal.eyebrow}</p>
+              <h2 className="vi-brief-fallback-title">{content.modal.title}</h2>
+              {content.modal.paragraphs.map((p, i) => (
+                <p key={i} className="vi-brief-fallback-p">
+                  {p}
+                </p>
+              ))}
+              <p className="vi-brief-fallback-footer">{content.modal.footer}</p>
+            </div>
+          </details>
         </div>
 
         <div className="vi-start-section">
           <div className="vi-start-label">{content.startLabel}</div>
-          <button
-            type="button"
-            className={`vi-btn-start btn-sweep ${!armed ? "is-locked" : ""}`}
-            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
-            onClick={handleStartMission}
-            disabled={starting || !armed}
+          {/* Real <a> navigation — works when React never hydrates */}
+          <Link
+            href="/mission/m1"
+            className="vi-btn-start btn-sweep"
+            style={
+              {
+                "--sweep-ms": "3000ms",
+                textDecoration: "none",
+                display: "inline-flex",
+                justifyContent: "center",
+              } as React.CSSProperties
+            }
           >
             <div className="vi-btn-start-inner">
               <span>{content.startButton}</span>
               <span>→</span>
             </div>
-          </button>
+          </Link>
         </div>
       </main>
-
-      <IntroBriefModal
-        modal={content.modal}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </MissionChrome>
   );
 }

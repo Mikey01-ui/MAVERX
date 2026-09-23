@@ -5,8 +5,9 @@ body.m2-tutorial-active {
   background: var(--void, #1e0f1a);
   font-family: var(--font-body);
   color: var(--text-w, #faf7f2);
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
 }
 
 body.m2-tutorial-active::before {
@@ -37,6 +38,9 @@ body.m2-tutorial-active::before {
   position: fixed;
   inset: 0;
   z-index: 100;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background: var(--void, #1e0f1a);
   pointer-events: auto;
 }

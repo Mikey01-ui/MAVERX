@@ -16,6 +16,13 @@ import {
   type M2TutorialDemoApi,
 } from "@/lib/game/m2/tutorialDemo";
 import { DET_INFO } from "@/components/missions/margus-m1/gameData";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
+import {
+  getDetectionBand,
+  getDetectionBarClass,
+  getDetectionClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
 
 const M2_DET_CAUSE =
   "Detection rises when you rule incorrectly, fail verification, request hints, or idle too long. At 100% MegaCorp closes the connection.";
@@ -358,53 +365,25 @@ export const M2TutorialShell = forwardRef<M2TutorialShellHandle>(function M2Tuto
 
   const winVisible = (id: string) => openWindows.includes(id);
 
-  const detState = detection < 30 ? "DARK" : detection < 60 ? "SCANNING" : detection < 80 ? "ALERT" : "CRITICAL";
-  const detWrapCls = detection < 30 ? "det-green" : detection < 60 ? "det-amber" : "det-red";
-  const detBarCls = detection < 30 ? "det-bar-green" : detection < 60 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = detection < 30 ? "fa-shield-alt" : detection < 60 ? "fa-eye" : detection < 80 ? "fa-exclamation-triangle" : "fa-skull";
+  const band = getDetectionBand(detection);
+  const detInfo = DET_INFO[band];
 
   return (
     <div id="m2-tutorial-root" ref={rootRef} className="m2-mission m2-tutorial-shell" aria-hidden="false">
       <div id="gp-root" className="active">
         <div id="game">
-        <div id="hdr">
-          <div className="hdr-left">
-            <i className="fas fa-terminal" /> MASTERMIND TERMINAL · OPERATION OMNI
-          </div>
-          <div className="hdr-center">MISSION 02 OF 05 / FORGING THE MASTER KEY</div>
-          <div className="hdr-right">
-            <span id="det-cluster">
-              <span id="det-display" className={detWrapCls}>
-                <span id="det-icon">
-                  <i className={`fas ${detIcon}`} aria-hidden />
-                </span>
-                <span id="det-pct">{detection}%</span>
-                <span className="det-bar-wrap">
-                  <span id="det-bar" className={detBarCls} style={{ width: `${detection}%` }} />
-                </span>
-                <span id="det-label" style={{ fontSize: "clamp(10px,1vw,12px)", letterSpacing: 2, opacity: 0.7 }}>
-                  {detState}
-                </span>
-              </span>
-              <span className="det-info-wrap" tabIndex={0}>
-                <i className="fas fa-circle-info det-info-i" aria-hidden />
-                <div className="det-info-pop" role="tooltip">
-                  <div className="dip-ttl" style={{ color: DET_INFO[detState].color }}>
-                    {detState}
-                  </div>
-                  <div className="dip-desc">{DET_INFO[detState].desc}</div>
-                  <div className="dip-cause">{M2_DET_CAUSE}</div>
-                </div>
-              </span>
-            </span>
-            <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-            <span id="mission-chrome">
-              <span id="timer">00:00</span>
-              <span className="live-dot" />
-              <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-            </span>
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 02 OF 05 / FORGING THE MASTER KEY"
+          detection={detection}
+          band={band}
+          detClass={getDetectionClass(detection)}
+          barClass={getDetectionBarClass(detection)}
+          icon={getDetectionIcon(detection)}
+          timer="00:00"
+          info={{ color: detInfo.color, desc: detInfo.desc, cause: M2_DET_CAUSE }}
+          showMeter
+          showAudio={false}
+        />
 
         <div id="step-banner">{stepBanner}</div>
 

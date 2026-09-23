@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AudioToggle } from "@/components/audio/AudioToggle";
 import { useM1MissionAudio } from "@/lib/audio/useM1MissionAudio";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
+import {
+  getDetectionBand,
+  getDetectionBarClass,
+  getDetectionClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
 import {
   hydrateMargusM1Play,
   serializeMargusM1Play,
@@ -51,6 +57,8 @@ interface Toast { id: number; text: string }
 type LeadVisual = "n-dimmed" | "n-start" | "n-idle" | "n-mission" | "n-active" | "n-next" | "n-locked";
 
 const PASSIVE_RATE = 100 / 1500;
+const M1_CAUSE =
+  "Detection rises when you open the wrong files, fail a verification, or lean on hints, and slowly over time on the mirror. At 100% the operation fails.";
 const now2 = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
 // Taskbar clock — live 12-hour "5:40 PM" format (ports tickClock from the HTML).
 const clock12 = () => { const n = new Date(); const h = n.getHours() % 12 || 12; return `${h}:${String(n.getMinutes()).padStart(2, "0")} ${n.getHours() >= 12 ? "PM" : "AM"}`; };
@@ -753,10 +761,8 @@ export function MargusM1Game({
   // ─── DERIVED ───
   const timer = `${String(Math.floor(timerSec / 60)).padStart(2, "0")}:${String(timerSec % 60).padStart(2, "0")}`;
   const dRound = Math.min(100, Math.round(det));
-  const detState = det < 30 ? "DARK" : det < 60 ? "SCANNING" : det < 80 ? "ALERT" : "CRITICAL";
-  const detWrapCls = det < 30 ? "det-green" : det < 60 ? "det-amber" : "det-red";
-  const detBarCls = det < 30 ? "det-bar-green" : det < 60 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = det < 30 ? "fa-shield-alt" : det < 60 ? "fa-eye" : det < 80 ? "fa-exclamation-triangle" : "fa-skull";
+  const detState = getDetectionBand(dRound);
+  const detInfo = DET_INFO[detState];
 
   const winShared = (id: string) => ({
     visible: openWins.includes(id),
@@ -790,33 +796,18 @@ export function MargusM1Game({
   return (
     <div className="margus-m1-game-root">
       <div id="game" style={{ display: "flex" }}>
-        {/* HEADER */}
-        <div id="hdr">
-          <div className="hdr-left"><i className="fas fa-terminal" /> MASTERMIND TERMINAL | OPERATION OMNI</div>
-          <div className="hdr-center">MISSION 01 OF 05 / IDENTIFYING THE FOOTPRINT</div>
-          <div className="hdr-right">
-            <span id="det-display" className={detWrapCls}>
-              <span id="det-icon"><i className={`fas ${detIcon}`} /></span>
-              <span id="det-pct">{dRound}%</span>
-              <span className="det-bar-wrap"><span id="det-bar" className={detBarCls} style={{ width: det + "%" }} /></span>
-              <span id="det-label" style={{ fontSize: "clamp(10px,1vw,12px)", letterSpacing: 2, opacity: 0.7 }}>{detState}</span>
-            </span>
-            <span className="det-info-wrap" tabIndex={0}>
-              <i className="fas fa-circle-info det-info-i" />
-              <div className="det-info-pop" role="tooltip">
-                <div className="dip-ttl" style={{ color: DET_INFO[detState].color }}>{detState}</div>
-                <div className="dip-desc">{DET_INFO[detState].desc}</div>
-                <div className="dip-cause">Detection rises when you open the wrong files, fail a verification, or lean on hints, and slowly over time on the mirror. At 100% the operation fails.</div>
-              </div>
-            </span>
-            <span style={{ color: "var(--border)", margin: "0 6px" }}>|</span>
-            <span id="timer">{timer}</span>
-            <span className="live-dot" />
-            <span style={{ letterSpacing: 1 }}>LIVE</span>
-            <span style={{ color: "var(--border)", margin: "0 6px" }}>|</span>
-            <AudioToggle compact />
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 01 OF 05 / IDENTIFYING THE FOOTPRINT"
+          detection={dRound}
+          band={detState}
+          detClass={getDetectionClass(dRound)}
+          barClass={getDetectionBarClass(dRound)}
+          icon={getDetectionIcon(dRound)}
+          timer={timer}
+          info={{ color: detInfo.color, desc: detInfo.desc, cause: M1_CAUSE }}
+          showMeter
+          showAudio
+        />
 
         <div id="step-banner">{stepBanner}</div>
 

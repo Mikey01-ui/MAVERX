@@ -7,7 +7,7 @@
     "eyebrow": "// Mission 03 — The Human Shield",
     "title": "Pre-Mission Brief",
     "params": [
-      { "label": "// Nova trust", "value": "100%" },
+      { "label": "// Detection start", "value": "0%" },
       { "label": "// Files staged", "value": "10" },
       { "label": "// Channels", "value": "3" },
       { "label": "// Queue owner", "value": "Marshall" },
@@ -18,13 +18,13 @@
       "If we ship raw employee lists to the press to watch MegaCorp bleed, we become the next headline — the activists who doxxed civilians. <strong>I will not sign a release package that confuses \"impact\" with \"exposure.\"</strong>",
       "We are not OMNI. We choose who we hurt.",
       "<strong>VOSS.</strong> Marshall staged ten files for disclosure. <strong>Same data — different audiences need different channels.</strong> Public Proof Wall for what is safe to show the world. Official filing for what regulators or counsel need under seal. And some material never leaves the vault.",
-      "Route each file. Nova signs when the <strong>distribution map</strong> matches our ethics — not when we've shown everything we stole."
+      "Route each file. Nova signs when the <strong>distribution map</strong> matches our ethics — and when <strong>routing detection</strong> stays low enough that the plan still looks deliberate, not reckless."
     ],
     "pullquote": "Audience first. Harm second. Headlines last.",
     "dossier": [
       { "label": "TARGET", "name": "MegaCorp", "role": "Global conglomerate · staged disclosure package · channel politics" },
       { "label": "HANDLER", "name": "Voss", "role": "Analyst · encrypted channel · mirror stability" },
-      { "label": "ETHICS LOCK", "name": "Nova", "role": "Distribution veto · minimum necessary disclosure · trust meter live" }
+      { "label": "ETHICS LOCK", "name": "Nova", "role": "Distribution veto · minimum necessary disclosure · detection meter live" }
     ],
     "encryptedChannel": "NOVA · VOSS — ENCRYPTED CHANNEL",
     "ghostContinue": true,
@@ -55,16 +55,16 @@
     ],
     "atlasNote": "Privacy and ethics are partly about <strong>minimum necessary disclosure</strong> — and <strong>who is entitled to see what</strong>.",
     "detection": {
-      "title": "THE NOVA TRUST METER",
-      "tag": "ETHICS LOCK",
+      "title": "ROUTING DETECTION METER",
+      "tag": "MIRROR EXPOSURE",
       "paragraphs": [
-        "Nova's trust starts <strong>high</strong>. Every sloppy route — treating the Public Wall like a dump, or leaking vault-only material — erodes it. If trust collapses, <strong>she will not sign off</strong> and the disclosure plan stalls.",
-        "The meter runs from <em>100% (ALIGNED)</em> down toward <em>0% (RECKLESS)</em>. If it bottoms out, assume the operation channel goes cold. Move clean: <strong>audience first, harm second, headlines last.</strong>"
+        "Detection starts at <strong>0%</strong>. Wrong channels, vault-to-public dumps, hints, and time on the mirror all raise it. The meter <strong>does not heal</strong>. At <strong>100%</strong> the feed drops and the mission fails.",
+        "Nova still holds the ethics lock: she signs only when every file is routed <strong>and</strong> detection stays at or below <strong>55%</strong> with <strong>no catastrophic</strong> public-wall leaks of vault-only material. Move clean: <strong>audience first, harm second, headlines last.</strong>"
       ],
       "pills": [
-        { "text": "Wrong channel / exposure · trust drops", "variant": "high" },
-        { "text": "Mis-routed sensitive file · spike", "variant": "mid" },
-        { "text": "Clean routing · stable", "variant": "low" }
+        { "text": "Wrong channel · +detection", "variant": "high" },
+        { "text": "Vault → public · catastrophic spike", "variant": "mid" },
+        { "text": "Passive drift over time · meter rises", "variant": "low" }
       ],
       "hint": "<strong>Stuck?</strong> Click the lightbulb at the bottom-left of the Mission Channel to pull a channel hint from the crew.",
       "hintPills": ["Hint requested · +8% detection", "Cooldown · 25s"]

@@ -32,18 +32,7 @@ export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
 
   return (
     <div className="margus-m1-brief">
-      {/* Ambient background effects */}
-      <div className="ambient-glow" />
-      <div className="bg-grid" />
-      <div className="scanlines" />
-
-      {/* Corner marks */}
-      <div className="corner corner--tl" />
-      <div className="corner corner--tr" />
-      <div className="corner corner--bl" />
-      <div className="corner corner--br" />
-
-      {/* Main content */}
+      {/* Ambient + status come from parent MissionChrome */}
       <div className="page active">
         <div className="page-eyebrow">Mission 01 · Identifying the Footprint</div>
         <div className="page-title">Pre-Mission Brief</div>

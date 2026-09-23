@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 const HINTS = [
   "Part 1 — Click the pulsing gate to inspect purpose, inputs, and bottleneck.",
   "Part 2 — Drag the matching dataset onto the gate. Purple ring = drop zone.",
-  "Demo complete — correct drop greens the arrow. Detection stays at 0% in the live mission until you mis-link.",
+  "Demo complete — correct drop greens the arrow. Live detection starts at 0%; wrong drops, hints, and time raise it.",
 ];
 
 type DemoPhase = 0 | 1 | 2 | 3;
@@ -107,12 +107,12 @@ export function M4ProtocolDemo() {
           </div>
         </div>
       </div>
-      <div className="r4-demo-coh">
-        <span className="r4-demo-coh-label">NOVA</span>
+      <div className="r4-demo-coh" aria-label="Handoff detection">
+        <span className="r4-demo-coh-label">DETECTION</span>
         <div className="r4-demo-coh-bar">
-          <div className="r4-demo-coh-fill" style={{ width: dropped && phase === 3 ? "100%" : "100%" }} />
+          <div className="r4-demo-coh-fill" style={{ width: "0%" }} />
         </div>
-        <span>100%</span>
+        <span>0%</span>
       </div>
     </div>
   );

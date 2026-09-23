@@ -34,7 +34,7 @@ export const M3_TUTORIAL_STEPS: M3TutorialStep[] = [
     pad: 8,
     phase: "tour",
     title: "Distribution map & Nova",
-    html: "<p>Routed files appear in the map. Wrong exposure erodes <strong>Nova's trust</strong> — if it collapses, she won't sign off.</p>",
+    html: "<p>Routed files appear in the map. Wrong exposure raises <strong>detection</strong>. Nova signs only if detection stays ≤55% with no catastrophic public-wall dumps — at 100% the mirror drops.</p>",
   },
   {
     selector: null,

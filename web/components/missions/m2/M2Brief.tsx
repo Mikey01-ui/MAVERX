@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Gloss } from "@/components/missions/shared/GlossTip";
-import { M2StatusBar, M2Ambient } from "@/components/missions/m2/M2IntroChrome";
 
 const G = (text: string, children: string) => (
   <Gloss scopeClass="m2-mission" text={text}>
@@ -10,7 +9,7 @@ const G = (text: string, children: string) => (
   </Gloss>
 );
 
-/** Intro page 1 — Pre-Mission Brief (round2_v14 #page1). */
+/** Intro page 1 — Pre-Mission Brief (round2_v14 #page1). Ambient/status from MissionChrome. */
 export function M2Brief({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
   const [unlocked, setUnlocked] = useState(false);
 
@@ -22,9 +21,6 @@ export function M2Brief({ onContinue, onSkip }: { onContinue: () => void; onSkip
 
   return (
     <div className="m2-mission">
-      <M2Ambient />
-      <M2StatusBar />
-
       <div className="page active" id="page1">
         <div className="page-eyebrow">{"// Mission 2 — Forging the Master Key"}</div>
         <div className="page-title">Pre-Mission Brief</div>

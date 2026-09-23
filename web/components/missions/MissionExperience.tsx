@@ -215,12 +215,28 @@ function MissionExperienceInner({
 
   if (missionId === "m2") {
     if (phase === "brief") {
-      return <M2Brief onContinue={goToProtocol} onSkip={goToGame} />;
+      return (
+        <MissionChrome
+          statusLeft={intro.statusLeft}
+          statusRight={intro.statusRight}
+          clock={clock}
+          showAudio
+          theme="theme-v2"
+        >
+          <M2Brief onContinue={goToProtocol} onSkip={goToGame} />
+        </MissionChrome>
+      );
     }
   }
 
   return (
-    <MissionChrome statusLeft={intro.statusLeft} statusRight={intro.statusRight} clock={clock} showAudio>
+    <MissionChrome
+      statusLeft={intro.statusLeft}
+      statusRight={intro.statusRight}
+      clock={clock}
+      showAudio
+      theme="theme-v2"
+    >
       {phase === "brief" && <BriefPhase brief={intro.brief} onContinue={goToProtocol} />}
       {phase === "protocol" && (
         <ProtocolPhase

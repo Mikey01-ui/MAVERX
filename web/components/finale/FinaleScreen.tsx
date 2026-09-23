@@ -75,7 +75,7 @@ export function FinaleScreen({ content, email, reportEmail, initialOptIn, scores
 
   return (
     <MissionChrome statusLeft={content.statusLeft} statusRight={content.statusRight}>
-      <div className="finale-page mission-page mission-page--premission">
+      <div className="finale-page mission-page">
         <div className="mission-page-eyebrow">{content.eyebrow}</div>
         <h1 className="mission-page-title">{content.title}</h1>
         {totalScore !== null && (

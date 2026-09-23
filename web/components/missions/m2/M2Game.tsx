@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { M1HackOverlay } from "@/components/missions/m1/M1HackOverlay";
 import { M2SynthOverlay } from "@/components/missions/m2/M2SynthOverlay";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
 import { useXpWindows } from "@/components/missions/m2/useXpWindows";
 import { buildM2Debrief } from "@/lib/game/debriefBuilders";
 import { m2ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
@@ -22,10 +23,14 @@ import { M2GameProvider, useM2Game } from "@/lib/game/m2/context";
 import { getDetectionClass, getDetectionLabel } from "@/lib/game/m2/reducer";
 import { useM2MissionAudio } from "@/lib/audio/useM2MissionAudio";
 import { DET_INFO } from "@/components/missions/margus-m1/gameData";
+import {
+  getDetectionBarClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
+import type { ChatMessage, DisputeId, FileRecord } from "@/lib/game/m2/types";
 
 const M2_DET_CAUSE =
   "Detection rises when you rule incorrectly, fail verification, request hints, or idle too long. At 100% MegaCorp closes the connection.";
-import type { ChatMessage, DisputeId, FileRecord } from "@/lib/game/m2/types";
 
 const SENDER_COLORS: Record<string, string> = {
   Atlas: "#00c41c",
@@ -336,8 +341,6 @@ function M2GameInner() {
   const detClass = getDetectionClass(det);
   const detLabel = getDetectionLabel(det);
   const detInfo = DET_INFO[detLabel] ?? DET_INFO.DARK;
-  const barClass = det < 30 ? "det-bar-green" : det < 60 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = det < 30 ? "fa-shield-alt" : det < 60 ? "fa-eye" : det < 80 ? "fa-exclamation-triangle" : "fa-skull";
 
   // Restore + focus windows the reducer opens (e.g. Inspector on file dblclick).
   useEffect(() => {
@@ -485,42 +488,18 @@ function M2GameInner() {
 
       <div id="gp-root" className={state.hackDone ? "active" : ""}>
         <div id="game">
-          <div id="hdr">
-            <div className="hdr-left">
-              <i className="fas fa-terminal" /> MASTERMIND TERMINAL · OPERATION OMNI
-            </div>
-            <div className="hdr-center">MISSION 02 OF 05 / FORGING THE MASTER KEY</div>
-            <div className="hdr-right">
-              <span id="det-cluster">
-                <span id="det-display" className={detClass}>
-                  <span id="det-icon">
-                    <i className={`fas ${detIcon}`} aria-hidden />
-                  </span>
-                  <span id="det-pct">{det}%</span>
-                  <span className="det-bar-wrap">
-                    <span id="det-bar" className={barClass} style={{ width: `${det}%` }} />
-                  </span>
-                  <span id="det-label" style={{ fontSize: "clamp(10px,1vw,12px)", letterSpacing: 2, opacity: 0.7 }}>
-                    {detLabel}
-                  </span>
-                </span>
-                <span className="det-info-wrap" tabIndex={0}>
-                  <i className="fas fa-circle-info det-info-i" aria-hidden />
-                  <div className="det-info-pop" role="tooltip">
-                    <div className="dip-ttl" style={{ color: detInfo.color }}>
-                      {detLabel}
-                    </div>
-                    <div className="dip-desc">{detInfo.desc}</div>
-                    <div className="dip-cause">{M2_DET_CAUSE}</div>
-                  </div>
-                </span>
-              </span>
-              <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-              <span id="timer">{timer}</span>
-              <span className="live-dot" />
-              <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-            </div>
-          </div>
+          <MissionGameHeader
+            missionLine="MISSION 02 OF 05 / FORGING THE MASTER KEY"
+            detection={det}
+            band={detLabel}
+            detClass={detClass}
+            barClass={getDetectionBarClass(det)}
+            icon={getDetectionIcon(det)}
+            timer={timer}
+            info={{ color: detInfo.color, desc: detInfo.desc, cause: M2_DET_CAUSE }}
+            showMeter
+            showAudio
+          />
 
           <div id="step-banner">{state.stepBanner}</div>
 

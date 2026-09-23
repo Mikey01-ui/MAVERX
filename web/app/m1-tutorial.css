@@ -5,8 +5,9 @@ body.m1-tutorial-active {
   background: var(--void, #1e0f1a);
   font-family: var(--font-body);
   color: var(--text-w, #faf7f2);
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
 }
 
 body.m1-tutorial-active::before {

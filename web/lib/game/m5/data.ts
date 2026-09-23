@@ -106,5 +106,6 @@ export const CREW_META: Record<CrewId, { name: string; domain: string; color: st
 export const DEBRIEF = {
   eyebrow: "// Mission 05 — Debrief",
   title: "The Final Brief — Operation Complete",
-  cta: "RETURN TO HUB →",
+  /** Kept in sync with buildM5Debrief — success path goes to /finale, not hub. */
+  cta: "OPERATION COMPLETE — CONTINUE TO OPERATION REPORT →",
 };

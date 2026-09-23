@@ -435,6 +435,7 @@ export function buildM5Debrief(state: M5GameState): MissionDebriefConfig {
       text: LEARNING[c].text,
       ok: state.crewState[c].status === "committed",
     })),
-    cta: ships ? "OPERATION COMPLETE — RETURN TO HUB →" : "RETRY MISSION →",
+    // Success continues to /finale (operation report), not the hub — keep CTA honest.
+    cta: ships ? "OPERATION COMPLETE — CONTINUE TO OPERATION REPORT →" : "RETRY MISSION →",
   };
 }

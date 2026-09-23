@@ -6,6 +6,7 @@ import { M1HackOverlay } from "@/components/missions/m1/M1HackOverlay";
 import { M5SynthOverlay } from "@/components/missions/m5/M5SynthOverlay";
 import { M5VoteOverlay } from "@/components/missions/m5/M5VoteOverlay";
 import { MissionDebriefScreen } from "@/components/missions/shared/MissionDebriefScreen";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
 import {
   CREW_META,
   CREW_ORDER,
@@ -25,6 +26,12 @@ import { persistMissionReport } from "@/lib/finale/persistMissionReport";
 import { usePersistFailedMissionReport } from "@/lib/finale/usePersistFailedMissionReport";
 import { M5GameProvider, useM5Game } from "@/lib/game/m5/context";
 import { getDetectionClass } from "@/lib/game/m5/reducer";
+import {
+  DETECTION_INFO,
+  getDetectionBand,
+  getDetectionBarClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
 import { useM5MissionAudio } from "@/lib/audio/useM5MissionAudio";
 import type { ChatMessage, CrewId } from "@/lib/game/m5/types";
 
@@ -154,28 +161,18 @@ function M5GameInner() {
       <div id="m5-game" className={state.hackDone ? "active" : ""}>
         {state.hackDone && state.phase !== "debrief" && (
           <>
-            <div id="hdr">
-              <div className="hdr-left">
-                <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL · OPERATION OMNI
-              </div>
-              <div className="hdr-center">MISSION 05 OF 05 / THE FINAL BRIEF</div>
-              <div className="hdr-right">
-                <span id="det-display" className={detClass}>
-                  <span id="det-icon">
-                    <i className="fas fa-shield-alt" aria-hidden />
-                  </span>
-                  <span id="det-pct">{state.detection}%</span>
-                  <span className="det-bar-wrap">
-                    <span id="det-bar" className={`det-bar-${detClass.replace("det-", "")}`} style={{ width: `${state.detection}%` }} />
-                  </span>
-                  <span style={{ fontSize: 10, letterSpacing: 1.5, opacity: 0.7 }}>DARK</span>
-                </span>
-                <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-                <span id="timer">{timer}</span>
-                <span className="live-dot" />
-                <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-              </div>
-            </div>
+            <MissionGameHeader
+              missionLine="MISSION 05 OF 05 / THE FINAL BRIEF"
+              detection={state.detection}
+              band={getDetectionBand(Math.round(state.detection))}
+              detClass={detClass}
+              barClass={getDetectionBarClass(Math.round(state.detection))}
+              icon={getDetectionIcon(Math.round(state.detection))}
+              timer={timer}
+              info={DETECTION_INFO[getDetectionBand(Math.round(state.detection))]}
+              showMeter
+              showAudio
+            />
 
             <div id="step-banner">{state.stepBanner}</div>
 

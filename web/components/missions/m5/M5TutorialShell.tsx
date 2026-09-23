@@ -16,6 +16,13 @@ import {
 } from "@/lib/game/m5/data";
 import type { M5TutorialDemoApi } from "@/lib/game/m5/tutorialDemo";
 import type { CrewId, FrameKey } from "@/lib/game/m5/types";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
+import {
+  DETECTION_INFO,
+  getDetectionBarClass,
+  getDetectionClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
 
 export type M5TutorialShellHandle = {
   root: HTMLDivElement | null;
@@ -208,28 +215,18 @@ export const M5TutorialShell = forwardRef<M5TutorialShellHandle>(function M5Tuto
   return (
     <div id="gp-root" ref={rootRef} className="m5-game m5-tutorial-shell" aria-hidden="false">
       <div id="game" className="active">
-        <div id="hdr">
-          <div className="hdr-left">
-            <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL · OPERATION OMNI
-          </div>
-          <div className="hdr-center">MISSION 05 OF 05 / THE FINAL BRIEF</div>
-          <div className="hdr-right">
-            <span id="det-display" className="det-green">
-              <span id="det-icon">
-                <i className="fas fa-shield-alt" aria-hidden />
-              </span>
-              <span id="det-pct">0%</span>
-              <span className="det-bar-wrap">
-                <span id="det-bar" className="det-bar-green" style={{ width: "0%" }} />
-              </span>
-              <span style={{ fontSize: 10, letterSpacing: 1.5, opacity: 0.7 }}>DARK</span>
-            </span>
-            <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-            <span id="timer">00:00</span>
-            <span className="live-dot" />
-            <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 05 OF 05 / THE FINAL BRIEF"
+          detection={0}
+          band="DARK"
+          detClass={getDetectionClass(0)}
+          barClass={getDetectionBarClass(0)}
+          icon={getDetectionIcon(0)}
+          timer="00:00"
+          info={DETECTION_INFO.DARK}
+          showMeter
+          showAudio={false}
+        />
 
         <div id="step-banner">{stepBanner}</div>
 

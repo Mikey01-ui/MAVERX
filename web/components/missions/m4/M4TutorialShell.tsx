@@ -4,7 +4,13 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { M4FlowCanvas } from "@/components/missions/m4/M4FlowCanvas";
 import { M4StepPop } from "@/components/missions/m4/M4StepPop";
 import { FILES, INTRO_CHAT, STEPS, getDatasetCandidatesForStep } from "@/lib/game/m4/data";
+import { M4_DETECTION_INFO } from "@/lib/game/m4/detectionMeter";
 import type { M4TutorialDemoApi } from "@/lib/game/m4/tutorialDemo";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
+import { getDetectionBarClass, getDetectionClass, getDetectionIcon } from "@/lib/game/m3/detectionMeter";
+
+const TUT_DETECTION = 0;
+const TUT_BAND = "DARK" as const;
 
 export type M4TutorialShellHandle = {
   root: HTMLDivElement | null;
@@ -107,28 +113,24 @@ export const M4TutorialShell = forwardRef<M4TutorialShellHandle>(function M4Tuto
     applyBaseline();
   }, [applyBaseline]);
 
+  const detInfo = M4_DETECTION_INFO[TUT_BAND];
+
   return (
     <div id="gp-root" ref={rootRef} className="m4-game" aria-hidden="false">
       <div id="m4-game" className="active">
-        <div id="hdr">
-          <div className="hdr-left">
-            <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL | OPERATION OMNI
-          </div>
-          <div className="hdr-center">MISSION 04 OF 05 / THE ONBOARDING</div>
-          <div className="hdr-right">
-            <span className="coh-wrap">
-              <span className="coh-label">NOVA</span>
-              <span className="coh-bar">
-                <span className="coh-fill conf-ok" style={{ width: "100%" }} />
-              </span>
-              <span>100%</span>
-            </span>
-            <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-            <span id="timer">00:00</span>
-            <span className="live-dot" />
-            <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 04 OF 05 / THE ONBOARDING"
+          detection={TUT_DETECTION}
+          band={TUT_BAND}
+          detClass={getDetectionClass(TUT_DETECTION)}
+          barClass={getDetectionBarClass(TUT_DETECTION)}
+          icon={getDetectionIcon(TUT_DETECTION)}
+          timer="00:00"
+          info={detInfo}
+          infoAriaLabel="Handoff detection info"
+          showMeter
+          showAudio={false}
+        />
 
         <div id="sort-banner">
           <strong>Case-flow reconstruction</strong> — MegaCorp&apos;s OMNI diagram is one regulated disclosure from open to

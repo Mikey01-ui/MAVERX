@@ -1,7 +1,7 @@
 body:has(#m4-game.active) .bg-grid,
 body.m4-tutorial-active .bg-grid { display:none; }
 
-.m4-game #m4-game { position:fixed; inset:0; z-index:100; display:none; flex-direction:column; background:#0b0f14; }
+.m4-game #m4-game { position:fixed; inset:0; z-index:100; display:none; flex-direction:column; background:#0b0f14; height:100dvh; max-height:100dvh; overflow:hidden; }
 .m4-game #m4-game.active { display:flex; }
 .m4-game #m4-game::before { content:none; }
 .m4-game #m4-game::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
@@ -10,9 +10,9 @@ body.m4-tutorial-active .bg-grid { display:none; }
     radial-gradient(ellipse 50% 60% at 70% 60%, rgba(0,196,28,0.08) 0%, transparent 70%); }
 .m4-game #hdr { min-height:54px; background:linear-gradient(180deg,rgba(34,24,41,.96) 0%,rgba(30,15,26,.94) 100%);
   border-bottom:1px solid rgba(0,196,28,.28); display:flex; align-items:center; padding:6px 18px; flex-shrink:0; z-index:30; position:relative; overflow:visible; }
-.m4-game .hdr-left { font-family:var(--font-display); font-size:clamp(11px,1.2vw,14px); color:var(--cyan); letter-spacing:1px; }
-.m4-game .hdr-center { flex:1; text-align:center; font-family:var(--font-display); font-size:clamp(11px,1.2vw,14px); color:var(--purple-light); letter-spacing:1.5px; }
-.m4-game .hdr-right { display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:clamp(11px,1.2vw,14px); color:var(--text); }
+.m4-game .hdr-left { font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:#56d6ff; letter-spacing:1.5px; white-space:nowrap; }
+.m4-game .hdr-center { flex:1; text-align:center; font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--purple-light); letter-spacing:2px; }
+.m4-game .hdr-right { display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:clamp(13px,1.3vw,16px); color:var(--text); }
 .m4-game .live-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green-matrix); box-shadow:0 0 6px var(--green-matrix); animation:liveP 1.5s ease-in-out infinite; }
 @keyframes liveP { 0%,100%{opacity:1} 50%{opacity:.35} }
 .m4-game .coh-wrap { display:flex; align-items:center; gap:8px; }

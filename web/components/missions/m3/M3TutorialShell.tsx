@@ -2,9 +2,10 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { DATASETS } from "@/lib/game/m3/data";
-import { DETECTION_INFO } from "@/lib/game/m3/detectionMeter";
+import { DETECTION_INFO, getDetectionBarClass, getDetectionClass, getDetectionIcon } from "@/lib/game/m3/detectionMeter";
 import type { M3TutorialDemoApi } from "@/lib/game/m3/tutorialDemo";
 import { m3TutDrillFileName, m3TutGetDocumentPreview } from "@/lib/game/m3/tutorialDrill";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
 
 const TUT_DETECTION = 0;
 const TUT_BAND = "DARK" as const;
@@ -117,42 +118,18 @@ export const M3TutorialShell = forwardRef<M3TutorialShellHandle>(function M3Tuto
   return (
     <div id="gp-root" ref={rootRef} className="m3-tutorial-shell" aria-hidden="false">
       <div id="game">
-        <div id="hdr">
-          <div className="hdr-left">
-            <i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL | OPERATION OMNI
-          </div>
-          <div className="hdr-center">MISSION 03 OF 05 / THE HUMAN SHIELD</div>
-          <div className="hdr-right">
-            <span id="det-cluster">
-              <span id="det-display" className="det-green">
-                <span id="det-icon">
-                  <i className="fas fa-shield-alt" aria-hidden />
-                </span>
-                <span id="det-pct">{TUT_DETECTION}%</span>
-                <span className="det-bar-wrap">
-                  <span id="det-bar" className="det-bar-green" style={{ width: `${TUT_DETECTION}%` }} />
-                </span>
-                <span id="det-label">{TUT_BAND}</span>
-              </span>
-              <span className="det-info-wrap" tabIndex={0} aria-label="Detection status info">
-                <i className="fas fa-circle-info det-info-i" aria-hidden />
-                <div className="det-info-pop" role="tooltip">
-                  <div className="dip-ttl" style={{ color: detInfo.color }}>
-                    {TUT_BAND}
-                  </div>
-                  <div className="dip-desc">{detInfo.desc}</div>
-                  <div className="dip-cause">{detInfo.cause}</div>
-                </div>
-              </span>
-            </span>
-            <span style={{ color: "rgba(0,196,28,.2)", margin: "0 4px" }}>|</span>
-            <span id="mission-chrome">
-              <span id="timer">00:00</span>
-              <span className="live-dot" />
-              <span style={{ letterSpacing: 1, fontSize: 10 }}>LIVE</span>
-            </span>
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 03 OF 05 / THE HUMAN SHIELD"
+          detection={TUT_DETECTION}
+          band={TUT_BAND}
+          detClass={getDetectionClass(TUT_DETECTION)}
+          barClass={getDetectionBarClass(TUT_DETECTION)}
+          icon={getDetectionIcon(TUT_DETECTION)}
+          timer="00:00"
+          info={detInfo}
+          showMeter
+          showAudio={false}
+        />
         <div id="step-banner">{banner}</div>
         <div id="main-row">
           <div id="desktop-panel">

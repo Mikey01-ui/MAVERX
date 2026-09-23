@@ -31,7 +31,16 @@
 }
 
 .m2-mission{ font-size: clamp(14px, 1.15vw, 20px); }
-.m2-mission, .m2-mission{ width:100%; min-height:100%; overflow:auto; font-family:var(--font-body); background:var(--void); color:var(--white); }
+.m2-mission, .m2-mission{ width:100%; max-width:100%; min-height:100%; overflow-x:hidden; overflow-y:auto; font-family:var(--font-body); background:var(--void); color:var(--white); }
+/* Intro under MissionChrome — same viewport lock as M1 brief (no scrollbar flash) */
+.mission-root .m2-mission{
+  background:transparent;
+  height:100vh;
+  max-height:100vh;
+  min-height:0;
+  overflow:hidden;
+  max-width:100%;
+}
 
 /* ── AMBIENT & BG ── */
 .m2-mission .ambient-glow{ position:fixed; inset:0; z-index:0; pointer-events:none;
@@ -43,7 +52,7 @@
   mix-blend-mode:multiply; }
 .m2-mission .bg-grid{ position:fixed; inset:0; z-index:0;
   background-image: linear-gradient(rgba(0,196,28,0.11) 1px,transparent 1px), linear-gradient(90deg,rgba(0,196,28,0.11) 1px,transparent 1px);
-  background-size:40px 40px; background-position:0 36px; }
+  background-size:40px 40px; background-position:0 0; }
 .m2-mission .corner{ position:fixed; z-index:2; width:40px; height:40px; pointer-events:none; }
 .m2-mission .corner--tl{ top:10px; left:10px; border-top:1px solid rgba(0,196,28,0.65); border-left:1px solid rgba(0,196,28,0.65); }
 .m2-mission .corner--tr{ top:10px; right:10px; border-top:1px solid rgba(0,196,28,0.65); border-right:1px solid rgba(0,196,28,0.65); }
@@ -66,7 +75,7 @@
 ═══════════════════════════════════════ */
 
 /* === MISSION PARAMETERS STRIP === */
-.m2-mission .mission-params{ display:grid; grid-template-columns:repeat(5,1fr); gap:0; border:1px solid rgba(247,148,33,0.55); background:rgba(38,22,12,0.97); margin-bottom:0.4vh; animation:fadeUp 0.5s 0.25s both; transition:border-color 0.2s ease,box-shadow 0.2s ease,transform 0.2s ease; }
+.m2-mission .mission-params{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border:1px solid rgba(247,148,33,0.55); background:rgba(38,22,12,0.97); margin-bottom:0.4vh; animation:fadeUp 0.5s 0.25s both; transition:border-color 0.2s ease,box-shadow 0.2s ease,transform 0.2s ease; min-width:0; max-width:100%; }
 .m2-mission .mission-params:hover{ border-color:rgba(247,148,33,0.9); box-shadow:0 0 36px rgba(247,148,33,0.15),0 0 56px rgba(247,148,33,0.12); transform:translateY(-1px); }
 .m2-mission .mp-cell{ padding:0.5rem 0.85rem; border-right:1px solid rgba(247,148,33,0.28); display:flex; flex-direction:column; gap:0.22rem; min-width:0; }
 .m2-mission .mp-cell:last-child{ border-right:none; }
@@ -231,7 +240,8 @@
 
 /* ── INTRO PAGES ── */
 .m2-mission .page{ position:relative; z-index:2; margin-top:36px; display:none; flex-direction:column;
-  align-items:center; padding:0.3vh 6vw 1.2vh; height:calc(100vh - 36px); overflow:hidden; }
+  align-items:center; padding:0.3vh min(6vw,48px) 1.2vh; height:calc(100vh - 36px); max-height:calc(100vh - 36px);
+  min-height:0; width:100%; max-width:100%; box-sizing:border-box; overflow:hidden; }
 .m2-mission .page.active{ display:flex; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
@@ -242,9 +252,9 @@
   background:linear-gradient(135deg,var(--white) 60%,var(--purple-light) 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-.m2-mission .content{ width:min(88vw,1000px); display:flex; flex-direction:column; gap:2.2vh; flex:1; justify-content:flex-start; overflow:hidden; }
-.m2-mission #page1 .content{ width:min(92vw,1600px); justify-content:flex-start; gap:1.2vh; }
-.m2-mission #page2 .content{ width:min(94vw,1240px); gap:1vh; }
+.m2-mission .content{ width:min(100%,1000px); max-width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; gap:2.2vh; flex:1 1 auto; justify-content:flex-start; overflow:hidden; }
+.m2-mission #page1 .content{ width:min(100%,1600px); justify-content:flex-start; gap:1.2vh; }
+.m2-mission #page2 .content{ width:min(100%,1240px); gap:1vh; }
 .m2-mission #page2 .button-section{ margin-top:1vh; }
 
 .m2-mission .section-label{ font-family:var(--font-mono); font-size:0.55rem; color:var(--purple-light);
@@ -333,7 +343,7 @@
 .m2-mission #hdr{ min-height:54px; background:linear-gradient(180deg,rgba(34,24,41,.96) 0%,rgba(30,15,26,.94) 100%);
   border-bottom:1px solid rgba(0,196,28,.28); display:flex; align-items:center;
   padding:6px 18px; flex-shrink:0; z-index:3; box-shadow:inset 0 1px 0 rgba(0,196,28,.08); }
-.m2-mission .hdr-left{ font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--cyan); letter-spacing:1.5px; white-space:nowrap; }
+.m2-mission .hdr-left{ font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:#56d6ff; letter-spacing:1.5px; white-space:nowrap; }
 .m2-mission .hdr-center{ flex:1; text-align:center; font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--purple-light); letter-spacing:2px; }
 .m2-mission .hdr-right{ display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:clamp(13px,1.3vw,16px); color:var(--text); white-space:nowrap; }
 .m2-mission #timer{ color:var(--text-b); }

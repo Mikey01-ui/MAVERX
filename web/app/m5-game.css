@@ -1,6 +1,6 @@
 .m5-game#gp-root { position:fixed; inset:0; }
 .m5-game #m5-game,
-.m5-game #game { position:fixed; inset:0; z-index:2; display:none; flex-direction:column; }
+.m5-game #game { position:fixed; inset:0; z-index:2; display:none; flex-direction:column; height:100dvh; max-height:100dvh; overflow:hidden; }
 .m5-game #game.active,
 .m5-game #m5-game.active { display:flex; }
 
@@ -36,7 +36,7 @@
 }
 .m5-game #hdr { min-height:54px; background:linear-gradient(180deg,rgba(34,24,41,.96) 0%,rgba(30,15,26,.94) 100%);
   border-bottom:1px solid rgba(0,196,28,.28); display:flex; align-items:center; padding:6px 18px; flex-shrink:0; z-index:3; position:relative; }
-.m5-game .hdr-left { font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--cyan); letter-spacing:1.5px; }
+.m5-game .hdr-left { font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:#56d6ff; letter-spacing:1.5px; white-space:nowrap; }
 .m5-game .hdr-center { flex:1; text-align:center; font-family:var(--font-display); font-size:clamp(12px,1.2vw,15px); color:var(--purple-light); letter-spacing:2px; }
 .m5-game .hdr-right { display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:clamp(13px,1.3vw,16px); color:var(--text); }
 .m5-game .live-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green-stable); animation:livePulse 1.5s ease-in-out infinite; }
@@ -44,7 +44,7 @@
 .m5-game #det-display.det-green { color:var(--green-stable); }
 .m5-game #det-display.det-amber { color:var(--orange); }
 .m5-game #det-display.det-red { color:var(--pink); }
-.m5-game .det-bar-wrap { width:clamp(44px,4.5vw,66px); height:5px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; border:1px solid rgba(255,255,255,.10); }
+.m5-game .det-bar-wrap { width:clamp(54px,5.3vw,78px); height:5px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; border:1px solid rgba(255,255,255,.10); }
 .m5-game #det-bar { display:block; height:100%; transition:width .5s ease; }
 .m5-game #det-bar.det-bar-green { background:var(--green-stable); }
 .m5-game #det-bar.det-bar-amber { background:var(--orange); }
@@ -155,8 +155,8 @@
 .m5-game .gloss { cursor:help; position:relative; border-bottom:1px dashed rgba(143,68,232,0.5); }
 .m5-game .gloss::after { content:attr(data-gloss); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:rgba(20,12,28,0.98); border:1px solid rgba(247,148,33,0.5); color:var(--grey-light); font-family:var(--font-body); font-size:0.72rem; font-weight:400; line-height:1.5; padding:0.55rem 0.7rem; width:240px; border-radius:2px; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s,visibility .15s; z-index:50; box-shadow:0 6px 22px rgba(0,0,0,0.55); white-space:normal; text-transform:none; text-align:left; }
 .m5-game .gloss:hover::after { opacity:1; visibility:visible; }
-.m5-game #det-display { display:inline-flex; align-items:center; gap:6px; }
-.m5-game #det-icon { font-size:11px; opacity:0.85; }
+.m5-game #det-display { display:inline-flex; align-items:center; gap:7px; }
+.m5-game #det-icon { font-size:inherit; opacity:0.85; }
 .m5-game #det-pct { min-width:2.2em; }
 .m5-game .crew-member-row { transition:border-color .3s,box-shadow .3s; margin-bottom:10px; }
 .m5-game .crew-member-row.active { box-shadow:0 0 24px rgba(143,68,232,.10); }

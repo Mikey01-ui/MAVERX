@@ -74,32 +74,7 @@ export function MargusM1Protocol({ onContinue }: MargusM1ProtocolProps) {
 
   return (
     <div className="margus-m1-protocol">
-      {/* Status Bar */}
-      <div className="status-bar">
-        <div className="status-left">
-          <span>
-            <span className="status-dot live" />
-            TERMINAL ACTIVE
-          </span>
-          <span>OP-OMNI / v2.4.1</span>
-        </div>
-        <div className="status-right">
-          <span>ENCRYPTED</span>
-        </div>
-      </div>
-
-      {/* Ambient effects */}
-      <div className="ambient-glow" />
-      <div className="bg-grid" />
-      <div className="scanlines" />
-
-      {/* Corner marks */}
-      <div className="corner corner--tl" />
-      <div className="corner corner--tr" />
-      <div className="corner corner--bl" />
-      <div className="corner corner--br" />
-
-      {/* Main content */}
+      {/* Ambient + status come from parent MissionChrome */}
       <div className="page active">
         <div className="page-eyebrow">Mission 01 · Identifying the Footprint</div>
         <div className="page-title">Mission Protocol</div>

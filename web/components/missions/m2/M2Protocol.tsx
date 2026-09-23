@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { M2Ambient, M2StatusBar } from "@/components/missions/m2/M2IntroChrome";
 import { Card01Preview, Card02Preview, Card03Preview } from "@/components/missions/m2/M2ProtocolPreviews";
 
 const CARDS = [
@@ -43,9 +42,7 @@ export function M2Protocol({ onBreach, onSkip }: { onBreach: () => void; onSkip:
 
   return (
     <div className="m2-mission">
-      <M2Ambient />
-      <M2StatusBar />
-
+      {/* Ambient + status come from parent MissionChrome when wired */}
       {page === 2 && (
         <div className="page active" id="page2">
           <div className="page-eyebrow">{"// Mission 2 — Forging the Master Key"}</div>

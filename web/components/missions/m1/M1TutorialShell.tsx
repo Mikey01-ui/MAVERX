@@ -3,7 +3,17 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { M1TutorialDemoApi } from "@/lib/game/m1/tutorialDemo";
 import { DET_INFO } from "@/components/missions/margus-m1/gameData";
+import { MissionGameHeader } from "@/components/missions/shared/MissionGameHeader";
+import {
+  getDetectionBand,
+  getDetectionBarClass,
+  getDetectionClass,
+  getDetectionIcon,
+} from "@/lib/game/m3/detectionMeter";
 import "@/components/missions/margus-m1/styles.css";
+
+const M1_TUT_CAUSE =
+  "Detection rises when you open the wrong files, fail a verification, or lean on hints, and slowly over time on the mirror. At 100% the operation fails.";
 
 export type M1TutorialShellHandle = {
   root: HTMLDivElement | null;
@@ -215,44 +225,24 @@ export const M1TutorialShell = forwardRef<M1TutorialShellHandle>(function M1Tuto
     return () => clearInterval(id);
   }, []);
 
-  const detState = detection < 30 ? "DARK" : detection < 60 ? "SCANNING" : detection < 80 ? "ALERT" : "CRITICAL";
-  const detWrapCls = detection < 30 ? "det-green" : detection < 60 ? "det-amber" : "det-red";
-  const detBarCls = detection < 30 ? "det-bar-green" : detection < 60 ? "det-bar-amber" : "det-bar-red";
-  const detIcon = detection < 30 ? "fa-shield-alt" : detection < 60 ? "fa-eye" : detection < 80 ? "fa-exclamation-triangle" : "fa-skull";
-  const dRound = Math.round(detection);
+  const band = getDetectionBand(detection);
+  const detInfo = DET_INFO[band];
 
   return (
     <div id="m1-tutorial-root" ref={rootRef} className="margus-m1-game-root m1-tutorial-shell" aria-hidden="false">
       <div id="game" style={{ display: "flex" }}>
-        {/* HEADER */}
-        <div id="hdr">
-          <div className="hdr-left"><i className="fas fa-terminal" aria-hidden /> MASTERMIND TERMINAL | OPERATION OMNI</div>
-          <div className="hdr-center">MISSION 01 OF 05 / IDENTIFYING THE FOOTPRINT</div>
-          <div className="hdr-right">
-            <span id="det-cluster">
-              <span id="det-display" className={detWrapCls}>
-                <span id="det-icon"><i className={`fas ${detIcon}`} aria-hidden /></span>
-                <span id="det-pct">{dRound}%</span>
-                <span className="det-bar-wrap"><span id="det-bar" className={detBarCls} style={{ width: `${detection}%` }} /></span>
-                <span id="det-label" style={{ fontSize: "clamp(10px,1vw,12px)", letterSpacing: 2, opacity: 0.7 }}>{detState}</span>
-              </span>
-              <span className="det-info-wrap" tabIndex={0}>
-                <i className="fas fa-circle-info det-info-i" aria-hidden />
-                <div className="det-info-pop" role="tooltip">
-                  <div className="dip-ttl" style={{ color: DET_INFO[detState].color }}>{detState}</div>
-                  <div className="dip-desc">{DET_INFO[detState].desc}</div>
-                  <div className="dip-cause">Detection rises when you open the wrong files, fail a verification, or lean on hints, and slowly over time on the mirror. At 100% the operation fails.</div>
-                </div>
-              </span>
-            </span>
-            <span style={{ color: "var(--border)", margin: "0 6px" }}>|</span>
-            <span id="mission-chrome">
-              <span id="timer">00:00</span>
-              <span className="live-dot" />
-              <span style={{ letterSpacing: 1 }}>LIVE</span>
-            </span>
-          </div>
-        </div>
+        <MissionGameHeader
+          missionLine="MISSION 01 OF 05 / IDENTIFYING THE FOOTPRINT"
+          detection={detection}
+          band={band}
+          detClass={getDetectionClass(detection)}
+          barClass={getDetectionBarClass(detection)}
+          icon={getDetectionIcon(detection)}
+          timer="00:00"
+          info={{ color: detInfo.color, desc: detInfo.desc, cause: M1_TUT_CAUSE }}
+          showMeter
+          showAudio={false}
+        />
 
         <div id="step-banner">{stepBanner}</div>
 

@@ -14,7 +14,20 @@
 .mission-root {
   position: relative;
   min-height: 100vh;
-  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* Single-screen mission briefs must not flash a page scrollbar while fonts settle */
+.mission-root:has(.margus-m1-brief),
+.mission-root:has(.margus-m1-protocol),
+.mission-root:has(.m2-mission),
+.mission-root:has(.mission-page--premission):not(:has(.finale-page)),
+.mission-root:has(.mission-page--protocol) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .mission-page {
@@ -24,13 +37,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.3vh 6vw 1.2vh;
+  padding: 0.3vh min(6vw, 48px) 1.2vh;
   min-height: calc(100vh - 36px);
 }
 
 .mission-page--protocol {
   overflow: hidden;
   height: calc(100vh - 36px);
+  max-height: calc(100vh - 36px);
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .mission-page-eyebrow {
@@ -57,7 +73,9 @@
 }
 
 .mission-content {
-  width: min(92vw, 1600px);
+  width: min(100%, 1600px);
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1.2vh;
@@ -66,9 +84,11 @@
 
 .mission-page--premission {
   height: calc(100vh - 36px);
+  max-height: calc(100vh - 36px);
   min-height: 0;
+  box-sizing: border-box;
   overflow: hidden;
-  padding: 0.3vh 6vw 1.2vh;
+  padding: 0.3vh min(6vw, 48px) 1.2vh;
 }
 
 .mission-page--premission .mission-content {
@@ -207,7 +227,9 @@
 }
 
 .mission-params--five {
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 1020px) {
@@ -351,7 +373,13 @@
 }
 
 .mission-content--protocol {
-  width: min(94vw, 1700px);
+  width: 100%;
+  max-width: min(100%, 1700px);
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .mission-detection-section {

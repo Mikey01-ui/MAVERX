@@ -15,3 +15,6 @@ web/.vercel/
 web/*.tsbuildinfo
 web/app/generated/prisma/
 maverxdashboard/
+
+# Local clones of sister dashboards
+nheion/

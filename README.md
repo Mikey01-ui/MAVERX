@@ -28,13 +28,13 @@ Open [http://localhost:3000](http://localhost:3000).
 - Difficulty on the invite stamps `User.difficulty` (Easy / Standard / Hard).
 - **Group.locale** drives mission language when grouped; otherwise `User.preferredLocale`.
 - Built-in packs: `en`, `nl`. Admins can register more via `/dashboard` or `POST /api/locales`.
-- **Admin dashboard** (`maverxdashboard`): individual invites (v1), Accounts roster, Settings `notifyEmail`.
+- **Admin dashboard** (`https://github.com/Mikey01-ui/nheion`): Maverx Invites / Accounts / Stats / Companies UI wired to game admin APIs.
 - APIs: `GET/POST /api/invites`, `GET /api/invites/preview`, `PATCH /api/invites/:id`,
   `GET/PATCH /api/admin/settings`, `GET /api/admin/players`, `POST /api/admin/players/:id/reset`,
   `GET/POST /api/locales`, `GET/PATCH /api/group`, `GET /api/me/locale`.
 - Auth for dashboard → game: `X-Dashboard-Key: $DASHBOARD_API_KEY` (or admin session cookie).
 - Env (game): `DASHBOARD_API_KEY`, `DASHBOARD_ORIGINS`, `OMNI_PUBLIC_URL`, plus SMTP vars for register notify mail.
-- Env (dashboard Vite): `VITE_OMNI_API_URL`, `VITE_DASHBOARD_API_KEY`.
+- Env (dashboard Vite / nheion): `VITE_OMNI_API_URL`, `VITE_OMNI_GAME_URL`, `VITE_DASHBOARD_API_KEY`.
 
 Dutch **content packs** are not shipped yet — this is invite + locale plumbing.
 

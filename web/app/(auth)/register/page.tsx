@@ -1,12 +1,9 @@
 import { AmbientShell } from "@/components/layout/AmbientShell";
 import { StatusBar } from "@/components/layout/StatusBar";
-import {
-  RegisterForm,
-  parseRegisterStep,
-  resolveRegisterStep,
-} from "@/components/auth/RegisterForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { getLoginContent } from "@/lib/content";
 import { isAnyLocale, localeFromDashboardLang, previewInvite } from "@/lib/invites";
+import { parseRegisterStep, resolveRegisterStep } from "@/lib/register-steps";
 import { redirect } from "next/navigation";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

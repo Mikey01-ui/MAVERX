@@ -1179,6 +1179,7 @@ a {
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+  text-decoration: none;
   color: var(--brand-light);
   background: rgba(143, 68, 232, 0.08);
   border: 1px solid rgba(143, 68, 232, 0.45);

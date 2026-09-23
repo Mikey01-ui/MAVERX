@@ -24,7 +24,34 @@ import { DifficultyProvider } from "@/lib/game/DifficultyContext";
 
 const M1MargusMission = dynamic(
   () => import("@/components/missions/m1/M1MargusMission").then((m) => m.M1MargusMission),
-  { ssr: false }
+  {
+    loading: () => (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          padding: "2rem",
+          color: "var(--text, #e8e4dc)",
+          background: "var(--bg, #0a0c10)",
+          fontFamily: "var(--font-display, monospace)",
+          textAlign: "center",
+        }}
+      >
+        <div>
+          <p style={{ opacity: 0.75, marginBottom: "1rem" }}>Loading Mission 1…</p>
+          <p style={{ fontSize: "0.9rem", opacity: 0.55 }}>
+            <a href="/mission/m1?phase=game" style={{ color: "inherit", marginRight: 16 }}>
+              Retry
+            </a>
+            <a href="/hub" style={{ color: "inherit" }}>
+              Hub
+            </a>
+          </p>
+        </div>
+      </main>
+    ),
+  }
 );
 
 // SSR-enabled so the no-hydration "Start mission" fallback link is in the HTML.

@@ -191,6 +191,59 @@
   background: rgba(84, 0, 173, 0.08);
 }
 
+.vi-brief-details {
+  width: 100%;
+}
+
+.vi-brief-details > summary {
+  list-style: none;
+  display: inline-block;
+}
+
+.vi-brief-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.vi-brief-fallback {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(84, 0, 173, 0.35);
+  background: rgba(21, 10, 18, 0.92);
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.vi-brief-fallback-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--purple-light);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+
+.vi-brief-fallback-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: #fff;
+  margin: 0 0 0.75rem;
+}
+
+.vi-brief-fallback-p {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0 0 0.65rem;
+}
+
+.vi-brief-fallback-footer {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--purple-light);
+  margin: 0.75rem 0 0;
+}
+
 .vi-start-section {
   display: flex;
   flex-direction: column;

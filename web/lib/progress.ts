@@ -195,3 +195,11 @@ export async function ensureFirstMissionUnlocked(userId: string): Promise<void> 
     data: { userId, missionId: "m1", status: "in_progress", checkpoint: "start" },
   });
 }
+
+/** Wipe all mission progress and re-open M1. Keeps the user account. */
+export async function resetPlayerProgress(userId: string): Promise<void> {
+  await prisma.userProgress.deleteMany({ where: { userId } });
+  await prisma.userProgress.create({
+    data: { userId, missionId: "m1", status: "in_progress", checkpoint: "start" },
+  });
+}

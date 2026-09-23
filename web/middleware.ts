@@ -127,6 +127,17 @@ const authMiddleware = NextAuth(authConfig).auth((req) => {
     return NextResponse.redirect(new URL("/intro", req.nextUrl));
   }
 
+  // Invite-only registration: bare /register without token goes to login.
+  if (pathname === "/register") {
+    const invite = req.nextUrl.searchParams.get("invite");
+    const group = req.nextUrl.searchParams.get("group");
+    if (!invite && !group) {
+      const login = new URL("/login", req.nextUrl);
+      login.searchParams.set("needInvite", "1");
+      return NextResponse.redirect(login);
+    }
+  }
+
   return NextResponse.next();
 });
 

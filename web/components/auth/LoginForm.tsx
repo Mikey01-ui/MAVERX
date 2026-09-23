@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
@@ -13,6 +12,7 @@ export function LoginForm({ content }: { content: LoginContent }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const needInvite = searchParams.get("needInvite") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,6 +55,11 @@ export function LoginForm({ content }: { content: LoginContent }) {
           <h1 className="omni-title">{content.title}</h1>
         </div>
         <hr className="omni-rule" />
+        {needInvite && (
+          <p className="error-text show" style={{ marginBottom: "0.75rem" }}>
+            Registration requires a personal invite link from your administrator.
+          </p>
+        )}
         <p
           className="omni-intro"
           dangerouslySetInnerHTML={{ __html: content.intro }}
@@ -109,10 +114,6 @@ export function LoginForm({ content }: { content: LoginContent }) {
             {content.aboutButton}
           </button>
         </div>
-
-        <Link href="/register" className="link-muted">
-          {content.switchToRegister}
-        </Link>
       </form>
 
       <AboutModal content={content.about} open={aboutOpen} onClose={() => setAboutOpen(false)} />

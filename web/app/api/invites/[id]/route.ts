@@ -31,3 +31,17 @@ export async function PATCH(request: Request, ctx: Ctx) {
     return jsonWithCors(request, { error: message }, { status: 400 });
   }
 }
+
+export async function DELETE(request: Request, ctx: Ctx) {
+  const gate = await requireDashboardAdmin(request);
+  if (!gate.ok) return gate.response;
+
+  const { id } = await ctx.params;
+  try {
+    const invite = await revokeInvite(id);
+    return jsonWithCors(request, { ok: true, invite });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Revoke failed.";
+    return jsonWithCors(request, { error: message }, { status: 400 });
+  }
+}

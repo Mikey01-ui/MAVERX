@@ -2,14 +2,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
-import { resolveInviteForRegister, markInviteUsed, localeFromDashboardLang } from "@/lib/invites";
+import {
+  resolveInviteForRegister,
+  markInviteUsed,
+  resolvePlayableLocale,
+  isAnyLocale,
+} from "@/lib/invites";
 import { ensureLocalePacksSeeded } from "@/lib/locale";
+import { notifyAdminOfRegistration } from "@/lib/email/notifyAdminRegistration";
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   preferredLocale: z.string().min(2).max(8).optional(),
-  invite: z.string().optional(),
+  invite: z.string().min(1),
   group: z.string().optional(),
   lang: z.string().optional(),
   diff: z.string().optional(),
@@ -21,7 +27,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid email, password (min 8), or language." }, { status: 400 });
+      return NextResponse.json(
+        { error: "A valid invite link, email, and password (min 8) are required." },
+        { status: 400 },
+      );
     }
 
     await ensureLocalePacksSeeded();
@@ -38,16 +47,20 @@ export async function POST(request: Request) {
         invite: parsed.data.invite,
         group: parsed.data.group,
         lang: parsed.data.lang ?? parsed.data.preferredLocale,
+        requireInvite: true,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid invite.";
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
+    const playerPick = parsed.data.preferredLocale ?? parsed.data.lang;
     const preferredLocale =
-      redeem.groupId != null
-        ? redeem.locale
-        : localeFromDashboardLang(parsed.data.preferredLocale ?? parsed.data.lang ?? redeem.locale);
+      redeem.groupId != null && !isAnyLocale(redeem.locale)
+        ? resolvePlayableLocale(redeem.locale)
+        : isAnyLocale(redeem.locale)
+          ? resolvePlayableLocale(playerPick, "en")
+          : resolvePlayableLocale(redeem.locale || playerPick, "en");
 
     const passwordHash = await hashPassword(parsed.data.password);
     const user = await prisma.user.create({
@@ -69,6 +82,18 @@ export async function POST(request: Request) {
     await prisma.userProgress.create({
       data: { userId: user.id, missionId: "m1", status: "in_progress", checkpoint: "start" },
     });
+
+    try {
+      await notifyAdminOfRegistration({
+        playerEmail: user.email,
+        company: user.company,
+        difficulty: user.difficulty,
+        locale: user.preferredLocale,
+        inviteType: redeem.groupId ? "group" : "individual",
+      });
+    } catch (err) {
+      console.error("register notify email failed", err);
+    }
 
     return NextResponse.json({
       ok: true,

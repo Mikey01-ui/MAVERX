@@ -94,3 +94,10 @@ model UserProgress {
   @@unique([userId, missionId])
   @@index([userId, status])
 }
+
+/// Singleton org config for dashboard (notify email, etc.).
+model OrgSettings {
+  id          String   @id @default("default")
+  notifyEmail String?
+  updatedAt   DateTime @updatedAt
+}

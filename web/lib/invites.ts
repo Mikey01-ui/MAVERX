@@ -9,6 +9,8 @@ const LANG_ALIASES: Record<string, string> = {
   nederlands: "nl",
   dutch: "nl",
   nl: "nl",
+  anyone: "any",
+  any: "any",
   estonian: "et",
   et: "et",
   finnish: "fi",
@@ -18,11 +20,24 @@ const LANG_ALIASES: Record<string, string> = {
   de: "de",
 };
 
+/** True when invite lets the player pick language at register. */
+export function isAnyLocale(raw: string | null | undefined): boolean {
+  const key = (raw ?? "").trim().toLowerCase();
+  return key === "any" || key === "anyone";
+}
+
 export function localeFromDashboardLang(raw: string | null | undefined): string {
   if (!raw) return "en";
   const key = raw.trim().toLowerCase();
   if (LANG_ALIASES[key]) return LANG_ALIASES[key];
   return normalizeLocaleCode(key) ?? "en";
+}
+
+/** Resolve a concrete en/nl (etc.) for gameplay — never returns `any`. */
+export function resolvePlayableLocale(raw: string | null | undefined, fallback = "en"): string {
+  if (isAnyLocale(raw)) return fallback === "nl" ? "nl" : "en";
+  const code = localeFromDashboardLang(raw);
+  return code === "any" ? fallback : code;
 }
 
 export function difficultyNormalize(raw: string | null | undefined): string {
@@ -65,24 +80,26 @@ export async function createInvite(input: CreateInviteInput) {
   const expiresInDays = input.expiresInDays ?? 7;
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-  // Ensure pack exists for any lang the dashboard sends (et/fi/de/nl/…)
-  const label =
-    locale === "nl"
-      ? "Nederlands"
-      : locale === "et"
-        ? "Estonian"
-        : locale === "fi"
-          ? "Finnish"
-          : locale === "de"
-            ? "German"
-            : locale === "en"
-              ? "English"
-              : locale.toUpperCase();
-  await prisma.localePack.upsert({
-    where: { code: locale },
-    create: { code: locale, label, enabled: true },
-    update: { enabled: true },
-  });
+  // Ensure pack exists for concrete langs; `any` means player chooses later.
+  if (locale !== "any") {
+    const label =
+      locale === "nl"
+        ? "Nederlands"
+        : locale === "et"
+          ? "Estonian"
+          : locale === "fi"
+            ? "Finnish"
+            : locale === "de"
+              ? "German"
+              : locale === "en"
+                ? "English"
+                : locale.toUpperCase();
+    await prisma.localePack.upsert({
+      where: { code: locale },
+      create: { code: locale, label, enabled: true },
+      update: { enabled: true },
+    });
+  }
 
   if (input.type === "group") {
     const cohortLabel = (input.cohort?.trim() || company || "Cohort").slice(0, 80);
@@ -91,12 +108,16 @@ export async function createInvite(input: CreateInviteInput) {
     const existing = await prisma.group.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${token.slice(-4)}`;
 
+    const groupLocale = locale === "any" ? "en" : locale;
     const group = await prisma.group.create({
       data: {
         name: cohortLabel,
         slug,
-        locale,
-        availableLocales: ["en", "nl", locale].filter((v, i, a) => a.indexOf(v) === i),
+        locale: groupLocale,
+        availableLocales:
+          locale === "any"
+            ? ["en", "nl"]
+            : ["en", "nl", groupLocale].filter((v, i, a) => a.indexOf(v) === i),
         inviteCode: token,
         company,
         difficulty,
@@ -169,12 +190,15 @@ export async function resolveInviteForRegister(params: {
   invite?: string | null;
   group?: string | null;
   lang?: string | null;
+  /** When true, missing token throws (invite-only registration). */
+  requireInvite?: boolean;
 }): Promise<RedeemResult> {
   const now = new Date();
   const fallbackLocale = localeFromDashboardLang(params.lang);
 
   const token = (params.invite || params.group || "").trim();
   if (!token) {
+    if (params.requireInvite) throw new Error("A valid invite link is required to register.");
     return { groupId: null, locale: fallbackLocale, difficulty: "standard", company: null, inviteId: null };
   }
 
@@ -215,6 +239,36 @@ export async function resolveInviteForRegister(params: {
     difficulty: invite.difficulty || "standard",
     company: invite.company,
     inviteId: invite.id,
+  };
+}
+
+export type InvitePreview = {
+  token: string;
+  type: string;
+  locale: string;
+  localeIsAny: boolean;
+  difficulty: string;
+  company: string | null;
+  cohortLabel: string | null;
+  emailHint: string | null;
+  expiresAt: string | null;
+};
+
+/** Public preview for the register wizard (no secrets). */
+export async function previewInvite(token: string): Promise<InvitePreview> {
+  const redeem = await resolveInviteForRegister({ invite: token, requireInvite: true });
+  const invite = await prisma.invite.findUnique({ where: { token } });
+  if (!invite && !redeem.groupId) throw new Error("Invite link is invalid.");
+  return {
+    token,
+    type: invite?.type ?? "group",
+    locale: redeem.locale,
+    localeIsAny: isAnyLocale(redeem.locale),
+    difficulty: redeem.difficulty,
+    company: redeem.company,
+    cohortLabel: invite?.cohortLabel ?? null,
+    emailHint: invite?.email ?? null,
+    expiresAt: invite?.expiresAt?.toISOString() ?? null,
   };
 }
 

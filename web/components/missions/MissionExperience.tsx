@@ -27,9 +27,9 @@ const M1MargusMission = dynamic(
   { ssr: false }
 );
 
+// SSR-enabled so the no-hydration "Start mission" fallback link is in the HTML.
 const M1TutorialPhase = dynamic(
-  () => import("@/components/missions/m1/M1TutorialPhase").then((m) => m.M1TutorialPhase),
-  { ssr: false }
+  () => import("@/components/missions/m1/M1TutorialPhase").then((m) => m.M1TutorialPhase)
 );
 
 type MissionExperienceProps = {

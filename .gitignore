@@ -3,6 +3,9 @@
 .env
 .env.*
 
+# Nested clone of sister dashboard repo (pushed separately)
+maverxdashboard/
+
 # Next.js app
 web/node_modules/
 web/.next/
@@ -11,3 +14,4 @@ web/build/
 web/.vercel/
 web/*.tsbuildinfo
 web/app/generated/prisma/
+maverxdashboard/

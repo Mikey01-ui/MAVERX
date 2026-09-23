@@ -2,7 +2,7 @@ import { AmbientShell } from "@/components/layout/AmbientShell";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { getLoginContent } from "@/lib/content";
-import { isAnyLocale, localeFromDashboardLang } from "@/lib/invites";
+import { isAnyLocale, localeFromDashboardLang, previewInvite } from "@/lib/invites";
 import { redirect } from "next/navigation";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -21,7 +21,16 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     redirect("/login?needInvite=1");
   }
 
-  const lang = pick("lang") ?? null;
+  const token = (invite || group || "").trim();
+  let initialPreview: Awaited<ReturnType<typeof previewInvite>> | null = null;
+  let previewError: string | null = null;
+  try {
+    initialPreview = await previewInvite(token);
+  } catch (err) {
+    previewError = err instanceof Error ? err.message : "Invite link is invalid.";
+  }
+
+  const lang = pick("lang") ?? initialPreview?.locale ?? null;
   const playable =
     isAnyLocale(lang) ? "en" : localeFromDashboardLang(lang) === "nl" ? "nl" : "en";
 
@@ -29,9 +38,9 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     invite,
     group,
     lang,
-    diff: pick("diff") ?? null,
-    co: pick("co") ?? null,
-    cohort: pick("cohort") ?? null,
+    diff: pick("diff") ?? initialPreview?.difficulty ?? null,
+    co: pick("co") ?? initialPreview?.company ?? null,
+    cohort: pick("cohort") ?? initialPreview?.cohortLabel ?? null,
     seats: pick("seats") ?? null,
     initialLocale: playable as "en" | "nl",
   };
@@ -40,7 +49,12 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     <AmbientShell theme="theme-v2">
       <StatusBar left={content.statusLeft} right={content.statusRight} />
       <main className="omni-page">
-        <RegisterForm content={content} inviteContext={inviteContext} />
+        <RegisterForm
+          content={content}
+          inviteContext={inviteContext}
+          initialPreview={initialPreview}
+          initialPreviewError={previewError}
+        />
       </main>
     </AmbientShell>
   );

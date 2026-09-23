@@ -30,6 +30,7 @@ type InvitePreview = {
   company: string | null;
   cohortLabel: string | null;
   emailHint: string | null;
+  expiresAt?: string | null;
 };
 
 type Step = "context" | "language" | "email" | "password";
@@ -37,40 +38,60 @@ type Step = "context" | "language" | "email" | "password";
 export function RegisterForm({
   content,
   inviteContext,
+  initialPreview = null,
+  initialPreviewError = null,
 }: {
   content: LoginContent;
   inviteContext?: InviteContext;
+  /** Server-validated invite — preferred so the wizard never hangs on client fetch. */
+  initialPreview?: InvitePreview | null;
+  initialPreviewError?: string | null;
 }) {
   const router = useRouter();
   const token = (inviteContext?.invite || inviteContext?.group || "").trim();
 
-  const [preview, setPreview] = useState<InvitePreview | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(!!token);
+  const [preview, setPreview] = useState<InvitePreview | null>(initialPreview);
+  const [previewError, setPreviewError] = useState<string | null>(
+    initialPreviewError ??
+      (!token ? "Registration requires a valid invite link from your administrator." : null),
+  );
+  // Only show validating spinner when the server did not already resolve the invite.
+  const [previewLoading, setPreviewLoading] = useState(
+    !!token && !initialPreview && !initialPreviewError,
+  );
 
   const [step, setStep] = useState<Step>("context");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialPreview?.emailHint ?? "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [preferredLocale, setPreferredLocale] = useState<PreferredLocale>(
-    inviteContext?.initialLocale === "nl" ? "nl" : "en",
-  );
+  const [preferredLocale, setPreferredLocale] = useState<PreferredLocale>(() => {
+    if (!initialPreview?.localeIsAny && initialPreview?.locale === "nl") return "nl";
+    return inviteContext?.initialLocale === "nl" ? "nl" : "en";
+  });
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Server already resolved invite — nothing to fetch.
+    if (initialPreview || initialPreviewError) {
+      setPreviewLoading(false);
+      return;
+    }
     if (!token) {
       setPreviewLoading(false);
       setPreviewError("Registration requires a valid invite link from your administrator.");
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
     (async () => {
       setPreviewLoading(true);
       try {
         const res = await fetch(
           `/api/invites/preview?${inviteContext?.group ? "group" : "invite"}=${encodeURIComponent(token)}`,
+          { signal: controller.signal },
         );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
@@ -93,8 +114,10 @@ export function RegisterForm({
     })();
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
     };
-  }, [token, inviteContext?.group]);
+  }, [token, inviteContext?.group, initialPreview, initialPreviewError]);
 
   const emailValid = EMAIL_RE.test(email.trim());
   const passwordValid = password.length >= 8;

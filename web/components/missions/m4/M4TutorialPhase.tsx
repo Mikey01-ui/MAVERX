@@ -8,9 +8,10 @@ import { M4TutorialShell, type M4TutorialShellHandle } from "@/components/missio
 type M4TutorialPhaseProps = {
   onComplete: () => void;
   enterFromBrief?: boolean;
+  continueHref?: string;
 };
 
-export function M4TutorialPhase({ onComplete, enterFromBrief }: M4TutorialPhaseProps) {
+export function M4TutorialPhase({ onComplete, enterFromBrief, continueHref }: M4TutorialPhaseProps) {
   const shellRef = useRef<M4TutorialShellHandle>(null);
   const [shellRoot, setShellRoot] = useState<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -50,7 +51,38 @@ export function M4TutorialPhase({ onComplete, enterFromBrief }: M4TutorialPhaseP
     shellRef.current?.prepareForStep(ix);
   }, []);
 
-  if (!portalReady) return null;
+  if (!portalReady) {
+    if (!continueHref) return null;
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          padding: "2rem",
+          fontFamily: "var(--font-display, monospace)",
+          color: "var(--text, #e8e4dc)",
+          background: "var(--bg, #0a0c10)",
+        }}
+      >
+        <div style={{ textAlign: "center", maxWidth: 420 }}>
+          <p style={{ opacity: 0.7, marginBottom: "1.25rem" }}>Mission tutorial</p>
+          <a
+            href={continueHref}
+            className="btn-primary btn-sweep"
+            style={{ textDecoration: "none", display: "inline-flex" }}
+          >
+            Start mission →
+          </a>
+          <p style={{ marginTop: "1rem", fontSize: "0.85rem", opacity: 0.55 }}>
+            <a href={continueHref} style={{ color: "inherit" }}>
+              Skip tutorial
+            </a>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return createPortal(
     <>
@@ -61,6 +93,7 @@ export function M4TutorialPhase({ onComplete, enterFromBrief }: M4TutorialPhaseP
           getDemoApi={() => shellRef.current!.getDemoApi()}
           onStepChange={handleStepChange}
           onComplete={onComplete}
+          continueHref={continueHref}
         />
       )}
     </>,

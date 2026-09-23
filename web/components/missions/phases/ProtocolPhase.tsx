@@ -6,6 +6,8 @@ import type { MissionIntro } from "@/lib/content";
 type ProtocolPhaseProps = {
   protocol: MissionIntro["protocol"];
   onBreach: () => void;
+  /** Real navigation target — works when React never hydrates. */
+  breachHref?: string;
   showAllSteps?: boolean;
   hideBreachButton?: boolean;
 };
@@ -20,18 +22,25 @@ function pillClass(variant: string) {
 export function ProtocolPhase({
   protocol,
   onBreach,
+  breachHref,
   showAllSteps = false,
   hideBreachButton = false,
 }: ProtocolPhaseProps) {
   const [activeStep, setActiveStep] = useState(0);
-  const [breachUnlocked, setBreachUnlocked] = useState(protocol.steps.length === 0);
+  const [breachUnlocked, setBreachUnlocked] = useState(
+    Boolean(breachHref) || protocol.steps.length === 0
+  );
   const hasM3Protocol = protocol.steps.some((s) => s.title.includes("WALL") || s.title.includes("RELEASE"));
 
   useEffect(() => {
+    if (breachHref) {
+      setBreachUnlocked(true);
+      return;
+    }
     if (protocol.steps.length === 0) return;
     const timer = setTimeout(() => setBreachUnlocked(true), 1400);
     return () => clearTimeout(timer);
-  }, [protocol.steps.length]);
+  }, [breachHref, protocol.steps.length]);
 
   const detectionParagraphs =
     protocol.detection?.paragraphs ??
@@ -143,15 +152,31 @@ export function ProtocolPhase({
       {!hideBreachButton && (
         <div className="mission-btn-section">
           <div className="mission-btn-label">{protocol.breachReadyLabel}</div>
-          <button
-            type="button"
-            className={`mission-btn-next btn-sweep${breachUnlocked ? "" : " is-locked"}`}
-            style={{ "--sweep-ms": "1400ms" } as React.CSSProperties}
-            disabled={!breachUnlocked}
-            onClick={onBreach}
-          >
-            {protocol.breachLabel} →
-          </button>
+          {breachHref ? (
+            <a
+              href={breachHref}
+              className="mission-btn-next btn-sweep"
+              style={
+                {
+                  "--sweep-ms": "1400ms",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                } as React.CSSProperties
+              }
+            >
+              {protocol.breachLabel} →
+            </a>
+          ) : (
+            <button
+              type="button"
+              className={`mission-btn-next btn-sweep${breachUnlocked ? "" : " is-locked"}`}
+              style={{ "--sweep-ms": "1400ms" } as React.CSSProperties}
+              disabled={!breachUnlocked}
+              onClick={onBreach}
+            >
+              {protocol.breachLabel} →
+            </button>
+          )}
         </div>
       )}
     </div>

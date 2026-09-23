@@ -8,9 +8,11 @@ import { M1TutorialShell, type M1TutorialShellHandle } from "@/components/missio
 type M1TutorialPhaseProps = {
   onComplete: () => void;
   enterFromBrief?: boolean;
+  /** Skip / finish → real URL (works without client hydration). */
+  continueHref?: string;
 };
 
-export function M1TutorialPhase({ onComplete, enterFromBrief }: M1TutorialPhaseProps) {
+export function M1TutorialPhase({ onComplete, enterFromBrief, continueHref }: M1TutorialPhaseProps) {
   const shellRef = useRef<M1TutorialShellHandle>(null);
   const [shellRoot, setShellRoot] = useState<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -52,7 +54,39 @@ export function M1TutorialPhase({ onComplete, enterFromBrief }: M1TutorialPhaseP
     shellRef.current?.prepareForStep(ix);
   }, []);
 
-  if (!portalReady) return null;
+  if (!portalReady) {
+    // SSR / no-hydration fallback — real link into the mission.
+    if (!continueHref) return null;
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          padding: "2rem",
+          fontFamily: "var(--font-display, monospace)",
+          color: "var(--text, #e8e4dc)",
+          background: "var(--bg, #0a0c10)",
+        }}
+      >
+        <div style={{ textAlign: "center", maxWidth: 420 }}>
+          <p style={{ opacity: 0.7, marginBottom: "1.25rem" }}>Mission tutorial</p>
+          <a
+            href={continueHref}
+            className="btn-primary btn-sweep"
+            style={{ textDecoration: "none", display: "inline-flex" }}
+          >
+            Start mission →
+          </a>
+          <p style={{ marginTop: "1rem", fontSize: "0.85rem", opacity: 0.55 }}>
+            <a href={continueHref} style={{ color: "inherit" }}>
+              Skip tutorial
+            </a>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return createPortal(
     <>
@@ -63,6 +97,7 @@ export function M1TutorialPhase({ onComplete, enterFromBrief }: M1TutorialPhaseP
           getDemoApi={() => shellRef.current?.getDemoApi()}
           onStepChange={handleStepChange}
           onComplete={onComplete}
+          continueHref={continueHref}
         />
       )}
     </>,

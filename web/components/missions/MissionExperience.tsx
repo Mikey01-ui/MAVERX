@@ -6,6 +6,7 @@ import type { MissionIntro, MissionMedia } from "@/lib/content";
 import { GameAudioProvider } from "@/lib/audio/GameAudioProvider";
 import { toMissionAudioConfig } from "@/lib/audio/missionMedia";
 import { checkpointToPhase, phaseToCheckpoint, type MissionPhase } from "@/lib/game/types";
+import { missionPhaseHref, nextPhaseAfterBrief } from "@/lib/game/phaseNav";
 import { useMissionProgress } from "@/lib/game/useMissionProgress";
 import { MissionChrome } from "@/components/missions/MissionChrome";
 import { BriefPhase } from "@/components/missions/phases/BriefPhase";
@@ -39,6 +40,7 @@ type MissionExperienceProps = {
   missionLabel: string;
   initialCheckpoint: string | null;
   resume: boolean;
+  forcedPhase?: MissionPhase | null;
   savedState?: Record<string, unknown> | null;
   debriefPreview?: boolean;
   difficulty?: string | null;
@@ -64,6 +66,7 @@ function MissionExperienceInner({
   missionLabel,
   initialCheckpoint,
   resume,
+  forcedPhase = null,
   savedState,
   debriefPreview = false,
 }: MissionExperienceProps) {
@@ -79,10 +82,15 @@ function MissionExperienceInner({
   const hasTutorial = isM1 || isM2 || isM3 || isM4 || isM5;
   const { save } = useMissionProgress(intro.missionId);
   const [phase, setPhase] = useState<MissionPhase>(() =>
-    checkpointToPhase(initialCheckpoint, resume, missionId)
+    forcedPhase ?? checkpointToPhase(initialCheckpoint, resume, missionId)
   );
   const [clock, setClock] = useState("--:--:--");
   const [fromBrief, setFromBrief] = useState(false);
+
+  const afterBrief = nextPhaseAfterBrief(missionId);
+  const continueFromBriefHref = missionPhaseHref(missionId, afterBrief);
+  const continueFromProtocolHref = missionPhaseHref(missionId, "game");
+  const skipToGameHref = missionPhaseHref(missionId, "game");
 
   useEffect(() => {
     const tick = () => setClock(formatClock(new Date()));
@@ -90,6 +98,11 @@ function MissionExperienceInner({
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Keep client phase in sync when the server re-renders with a new ?phase=.
+  useEffect(() => {
+    if (forcedPhase) setPhase(forcedPhase);
+  }, [forcedPhase]);
 
   const goToTutorial = useCallback(async () => {
     if (hasTutorial && !shouldShowTutorial()) {
@@ -167,23 +180,53 @@ function MissionExperienceInner({
   }
 
   if (phase === "tutorial" && isM3) {
-    return <M3TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+    return (
+      <M3TutorialPhase
+        enterFromBrief={fromBrief}
+        onComplete={goToGame}
+        continueHref={continueFromProtocolHref}
+      />
+    );
   }
 
   if (phase === "tutorial" && isM5) {
-    return <M5TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+    return (
+      <M5TutorialPhase
+        enterFromBrief={fromBrief}
+        onComplete={goToGame}
+        continueHref={continueFromProtocolHref}
+      />
+    );
   }
 
   if (phase === "tutorial" && isM4) {
-    return <M4TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+    return (
+      <M4TutorialPhase
+        enterFromBrief={fromBrief}
+        onComplete={goToGame}
+        continueHref={continueFromProtocolHref}
+      />
+    );
   }
 
   if (phase === "tutorial" && isM1) {
-    return <M1TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+    return (
+      <M1TutorialPhase
+        enterFromBrief={fromBrief}
+        onComplete={goToGame}
+        continueHref={continueFromProtocolHref}
+      />
+    );
   }
 
   if (phase === "tutorial" && isM2) {
-    return <M2TutorialPhase enterFromBrief={fromBrief} onComplete={goToGame} />;
+    return (
+      <M2TutorialPhase
+        enterFromBrief={fromBrief}
+        onComplete={goToGame}
+        continueHref={continueFromProtocolHref}
+      />
+    );
   }
 
   if (isM1) {
@@ -196,7 +239,7 @@ function MissionExperienceInner({
           showAudio
           theme="theme-v2"
         >
-          <MargusM1Brief onContinue={goToProtocol} />
+          <MargusM1Brief onContinue={goToProtocol} continueHref={continueFromBriefHref} />
         </MissionChrome>
       );
     }
@@ -209,7 +252,7 @@ function MissionExperienceInner({
           showAudio
           theme="theme-v2"
         >
-          <MargusM1Protocol onContinue={goToGame} />
+          <MargusM1Protocol onContinue={goToGame} continueHref={continueFromProtocolHref} />
         </MissionChrome>
       );
     }
@@ -225,7 +268,12 @@ function MissionExperienceInner({
           showAudio
           theme="theme-v2"
         >
-          <M2Brief onContinue={goToProtocol} onSkip={goToGame} />
+          <M2Brief
+            onContinue={goToProtocol}
+            onSkip={goToGame}
+            continueHref={continueFromBriefHref}
+            skipHref={skipToGameHref}
+          />
         </MissionChrome>
       );
     }
@@ -239,11 +287,14 @@ function MissionExperienceInner({
       showAudio
       theme="theme-v2"
     >
-      {phase === "brief" && <BriefPhase brief={intro.brief} onContinue={goToProtocol} />}
+      {phase === "brief" && (
+        <BriefPhase brief={intro.brief} onContinue={goToProtocol} continueHref={continueFromBriefHref} />
+      )}
       {phase === "protocol" && (
         <ProtocolPhase
           protocol={intro.protocol}
           onBreach={goToGame}
+          breachHref={continueFromProtocolHref}
           showAllSteps={isM3}
           hideBreachButton={isM3}
         />

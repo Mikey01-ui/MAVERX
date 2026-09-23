@@ -10,17 +10,23 @@ interface GlossItem {
 
 interface MargusM1BriefProps {
   onContinue: () => void;
+  /** Real navigation target — works when React never hydrates. */
+  continueHref?: string;
 }
 
-export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
-  const [continueEnabled, setContinueEnabled] = useState(false);
+export function MargusM1Brief({ onContinue, continueHref }: MargusM1BriefProps) {
+  const [continueEnabled, setContinueEnabled] = useState(Boolean(continueHref));
 
   useEffect(() => {
+    if (continueHref) {
+      setContinueEnabled(true);
+      return;
+    }
     const timer = setTimeout(() => {
       setContinueEnabled(true);
     }, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [continueHref]);
 
   const glossItems: { [key: string]: string } = {
     "Project OMNI": "MegaCorp's covert AI program. Currently denied; this mission is the first attempt to prove its existence.",
@@ -146,19 +152,38 @@ export function MargusM1Brief({ onContinue }: MargusM1BriefProps) {
           </div>
         </div>
 
-        {/* Continue Button */}
+        {/* Continue — plain <a> so navigation works without client hydration */}
         <div className="button-section">
-          <button
-            className={`btn-next btn-sweep ${!continueEnabled ? "is-locked" : ""}`}
-            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
-            onClick={onContinue}
-            disabled={!continueEnabled}
-          >
-            <div className="btn-inner">
-              <span>Continue</span>
-              <span className="btn-arrow">→</span>
-            </div>
-          </button>
+          {continueHref ? (
+            <a
+              href={continueHref}
+              className="btn-next btn-sweep"
+              style={
+                {
+                  "--sweep-ms": "3000ms",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                } as React.CSSProperties
+              }
+            >
+              <div className="btn-inner">
+                <span>Continue</span>
+                <span className="btn-arrow">→</span>
+              </div>
+            </a>
+          ) : (
+            <button
+              className={`btn-next btn-sweep ${!continueEnabled ? "is-locked" : ""}`}
+              style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
+              onClick={onContinue}
+              disabled={!continueEnabled}
+            >
+              <div className="btn-inner">
+                <span>Continue</span>
+                <span className="btn-arrow">→</span>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </div>

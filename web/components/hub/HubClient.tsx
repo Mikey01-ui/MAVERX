@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { signOut } from "next-auth/react";
 import type { HubContent, MissionMeta } from "@/lib/content";
+import { restartGameAction, signOutAction } from "@/app/(protected)/hub/actions";
 
 type SerializedProgress = {
   missionId: string;
@@ -49,37 +47,7 @@ export function HubClient({
   showReportLink,
   showDashboardLink = false,
 }: HubClientProps) {
-  const router = useRouter();
-  const [restarting, setRestarting] = useState(false);
   const progressMap = new Map(progress.map((p) => [p.missionId, p]));
-
-  async function handleRestart() {
-    if (restarting) return;
-    setRestarting(true);
-    try {
-      // Restart the WHOLE game: clear every mission, unlock only M1, back to the intro.
-      await Promise.all(
-        missions.map((m) =>
-          fetch("/api/progress", {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              missionId: m.id,
-              status: m.id === "m1" ? "in_progress" : "locked",
-              checkpoint: "start",
-              stateJson: null,
-              score: null,
-            }),
-          })
-        )
-      );
-      router.push("/intro");
-      router.refresh();
-    } finally {
-      setRestarting(false);
-    }
-  }
 
   return (
     <main className={`hub${continueMission ? " hub--centered" : ""}`}>
@@ -106,21 +74,16 @@ export function HubClient({
             <Link href={resumeUrl(continueMission)} className="btn-primary btn-sweep hub-choice-btn" style={{ "--sweep-ms": "1200ms" } as React.CSSProperties}>
               {content.continueLabel} →
             </Link>
-            <button
-              type="button"
-              className="btn-secondary hub-choice-btn"
-              onClick={handleRestart}
-              disabled={restarting}
-            >
-              {restarting ? "Resetting…" : `${content.restartLabel} →`}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary hub-choice-btn hub-signout"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-            >
-              {content.signOut}
-            </button>
+            <form action={restartGameAction}>
+              <button type="submit" className="btn-secondary hub-choice-btn">
+                {content.restartLabel} →
+              </button>
+            </form>
+            <form action={signOutAction}>
+              <button type="submit" className="btn-secondary hub-choice-btn hub-signout">
+                {content.signOut}
+              </button>
+            </form>
           </div>
           <p className="hub-choice-hint">{content.restartHint}</p>
           {showDashboardLink && (
@@ -147,13 +110,11 @@ export function HubClient({
               Group language →
             </Link>
           )}
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            {content.signOut}
-          </button>
+          <form action={signOutAction}>
+            <button type="submit" className="btn-secondary">
+              {content.signOut}
+            </button>
+          </form>
         </div>
         {showReportLink && (
           <div className="hub-report-banner">
@@ -183,23 +144,31 @@ export function HubClient({
 
             return (
               <li key={mission.id}>
-                <Link
-                  href={state.playable ? href : "#"}
-                  className={`round-card${state.playable ? "" : " round-card--locked"}`}
-                  aria-disabled={!state.playable}
-                >
-                  <div className="round-meta">
-                    <span>{mission.label}</span>
-                    <span className="round-badge">{cta}</span>
+                {state.playable ? (
+                  <Link href={href} className="round-card">
+                    <div className="round-meta">
+                      <span>{mission.label}</span>
+                      <span className="round-badge">{cta}</span>
+                    </div>
+                    <h2 className="round-name">{mission.name}</h2>
+                    <p className="round-desc">{mission.description}</p>
+                    <div className="round-cta">
+                      {cta} <span aria-hidden="true">→</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="round-card round-card--locked" aria-disabled="true">
+                    <div className="round-meta">
+                      <span>{mission.label}</span>
+                      <span className="round-badge">{cta}</span>
+                    </div>
+                    <h2 className="round-name">{mission.name}</h2>
+                    <p className="round-desc">{content.lockedHint}</p>
+                    <div className="round-cta">
+                      {cta} <span aria-hidden="true">→</span>
+                    </div>
                   </div>
-                  <h2 className="round-name">{mission.name}</h2>
-                  <p className="round-desc">
-                    {state.playable ? mission.description : content.lockedHint}
-                  </p>
-                  <div className="round-cta">
-                    {cta} <span aria-hidden="true">→</span>
-                  </div>
-                </Link>
+                )}
               </li>
             );
           })}

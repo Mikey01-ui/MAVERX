@@ -16,6 +16,7 @@ type M1TutorialOverlayProps = {
   getDemoApi?: () => M1TutorialDemoApi | undefined;
   onStepChange?: (stepIndex: number) => void;
   onComplete: () => void;
+  continueHref?: string;
 };
 
 function normalizePad(pad: TutorialPad) {
@@ -93,7 +94,7 @@ function scheduleAfterLayout(fn: () => void): () => void {
   };
 }
 
-export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: M1TutorialOverlayProps) {
+export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete, continueHref }: M1TutorialOverlayProps) {
   const [stepIx, setStepIx] = useState(0);
   const [interactionComplete, setInteractionComplete] = useState(false);
   const [footerPos, setFooterPos] = useState<{ left: number; top: number } | null>(null);
@@ -498,23 +499,40 @@ export function M1TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
             </div>
           )}
           <div className="m1-tut-actions">
-            <button type="button" id="m1-tut-skip" onClick={finish}>
-              Skip tutorial
-            </button>
+            {continueHref ? (
+              <a href={continueHref} id="m1-tut-skip" style={{ textDecoration: "none" }}>
+                Skip tutorial
+              </a>
+            ) : (
+              <button type="button" id="m1-tut-skip" onClick={finish}>
+                Skip tutorial
+              </button>
+            )}
             {stepIx > 0 && !isDemo && (
               <button type="button" id="m1-tut-back" onClick={handleBack}>
                 Back
               </button>
             )}
-            <button
-              type="button"
-              id="m1-tut-next"
-              className={isLastStep ? "m1-tut-next--cta" : undefined}
-              onClick={handleNext}
-              disabled={nextDisabled}
-            >
-              {nextLabel}
-            </button>
+            {isLastStep && continueHref ? (
+              <a
+                href={continueHref}
+                id="m1-tut-next"
+                className="m1-tut-next--cta"
+                style={{ textDecoration: "none" }}
+              >
+                {nextLabel}
+              </a>
+            ) : (
+              <button
+                type="button"
+                id="m1-tut-next"
+                className={isLastStep ? "m1-tut-next--cta" : undefined}
+                onClick={handleNext}
+                disabled={nextDisabled}
+              >
+                {nextLabel}
+              </button>
+            )}
           </div>
         </div>
       </div>

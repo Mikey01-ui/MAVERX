@@ -16,6 +16,7 @@ type Props = {
   getDemoApi: () => M5TutorialDemoApi;
   onStepChange?: (stepIndex: number) => void;
   onComplete: () => void;
+  continueHref?: string;
 };
 
 function clampHole(domRect: DOMRect, pad: number): SpotlightRect | null {
@@ -49,7 +50,7 @@ function scheduleAfterLayout(fn: () => void): () => void {
   };
 }
 
-export function M5TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: Props) {
+export function M5TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete, continueHref }: Props) {
   const [stepIx, setStepIx] = useState(0);
   const [demoDone, setDemoDone] = useState(false);
 
@@ -387,11 +388,16 @@ export function M5TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
                 Back
               </button>
             )}
-            {!demoDone && (
-              <button type="button" id="m5-tut-skip" onClick={finish}>
-                Skip tutorial
-              </button>
-            )}
+            {!demoDone &&
+              (continueHref ? (
+                <a href={continueHref} id="m5-tut-skip" style={{ textDecoration: "none" }}>
+                  Skip tutorial
+                </a>
+              ) : (
+                <button type="button" id="m5-tut-skip" onClick={finish}>
+                  Skip tutorial
+                </button>
+              ))}
             <button
               type="button"
               id="m5-tut-next"

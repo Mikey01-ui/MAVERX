@@ -17,6 +17,7 @@ type M3TutorialOverlayProps = {
   getDemoApi?: () => M3TutorialDemoApi | undefined;
   onStepChange?: (stepIndex: number) => void;
   onComplete: () => void;
+  continueHref?: string;
 };
 
 function clampHole(domRect: DOMRect, pad: number): SpotlightRect | null {
@@ -78,7 +79,7 @@ function scheduleAfterLayout(fn: () => void): () => void {
   };
 }
 
-export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: M3TutorialOverlayProps) {
+export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete, continueHref }: M3TutorialOverlayProps) {
   const difficulty = useDifficulty();
   const steps = getM3TutorialSteps(difficulty.m3SignoffMax);
   const [stepIx, setStepIx] = useState(0);
@@ -448,11 +449,16 @@ export function M3TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
         <div className="m3-tut-inner">
           <div id="m3-tut-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           <div className="m3-tut-actions">
-            {!demoDone && (
-              <button type="button" id="m3-tut-skip" onClick={finish}>
-                Skip tutorial
-              </button>
-            )}
+            {!demoDone &&
+              (continueHref ? (
+                <a href={continueHref} id="m3-tut-skip" style={{ textDecoration: "none" }}>
+                  Skip tutorial
+                </a>
+              ) : (
+                <button type="button" id="m3-tut-skip" onClick={finish}>
+                  Skip tutorial
+                </button>
+              ))}
             <button
               type="button"
               id="m3-tut-next"

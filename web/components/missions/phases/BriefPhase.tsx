@@ -6,19 +6,44 @@ import type { MissionIntro } from "@/lib/content";
 type BriefPhaseProps = {
   brief: MissionIntro["brief"];
   onContinue: () => void;
+  /** Real navigation target — works when React never hydrates. */
+  continueHref?: string;
 };
 
-export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
-  const [unlocked, setUnlocked] = useState(false);
+function continueFormParts(href: string): { action: string; phase: string | null } {
+  try {
+    const u = new URL(href, "http://local.invalid");
+    return { action: u.pathname, phase: u.searchParams.get("phase") };
+  } catch {
+    return { action: href.split("?")[0] || href, phase: null };
+  }
+}
+
+export function BriefPhase({ brief, onContinue, continueHref }: BriefPhaseProps) {
+  const [unlocked, setUnlocked] = useState(Boolean(continueHref));
   const [acked, setAcked] = useState(!brief.ackGateLabel);
   const isPremission = brief.params.length > 0;
   const encryptedLabel = brief.encryptedChannel ?? "VOSS";
   const canContinue = unlocked && acked;
+  const formParts = continueHref ? continueFormParts(continueHref) : null;
 
   useEffect(() => {
+    if (continueHref) {
+      setUnlocked(true);
+      return;
+    }
     const timer = setTimeout(() => setUnlocked(true), brief.continueDelayMs);
     return () => clearTimeout(timer);
-  }, [brief.continueDelayMs]);
+  }, [brief.continueDelayMs, continueHref]);
+
+  const ctaClass = `mission-btn-next btn-sweep${brief.ghostContinue ? " mission-btn-next--ghost" : ""}`;
+  const ctaStyle = { "--sweep-ms": `${brief.continueDelayMs}ms` } as React.CSSProperties;
+  const ctaInner = (
+    <span className="mission-btn-inner">
+      <span>{brief.continueLabel}</span>
+      <span className="mission-btn-arrow">→</span>
+    </span>
+  );
 
   return (
     <div className={`mission-page${isPremission ? " mission-page--premission" : ""}`}>
@@ -79,7 +104,8 @@ export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
           )}
         </div>
 
-        {brief.ackGateLabel && (
+        {/* Native checkbox + GET form when continueHref is set (no-JS ack gate). */}
+        {brief.ackGateLabel && !continueHref && (
           <button
             type="button"
             id="ack-gate"
@@ -95,18 +121,40 @@ export function BriefPhase({ brief, onContinue }: BriefPhaseProps) {
       </div>
 
       <div className={`mission-btn-section${isPremission ? " mission-btn-section--premission" : ""}`}>
-        <button
-          type="button"
-          className={`mission-btn-next btn-sweep${brief.ghostContinue ? " mission-btn-next--ghost" : ""}${canContinue ? "" : " is-locked"}`}
-          style={{ "--sweep-ms": `${brief.continueDelayMs}ms` } as React.CSSProperties}
-          disabled={!canContinue}
-          onClick={onContinue}
-        >
-          <span className="mission-btn-inner">
-            <span>{brief.continueLabel}</span>
-            <span className="mission-btn-arrow">→</span>
-          </span>
-        </button>
+        {continueHref && formParts && brief.ackGateLabel ? (
+          <form method="get" action={formParts.action}>
+            {formParts.phase ? <input type="hidden" name="phase" value={formParts.phase} /> : null}
+            <label
+              id="ack-gate"
+              className="ack-gate"
+              style={{ display: "flex", cursor: "pointer", marginBottom: "1rem" }}
+            >
+              <input type="checkbox" name="ack" value="1" required style={{ marginRight: 10 }} />
+              {brief.ackGateLabel}
+            </label>
+            <button type="submit" className={ctaClass} style={ctaStyle}>
+              {ctaInner}
+            </button>
+          </form>
+        ) : continueHref ? (
+          <a
+            href={continueHref}
+            className={ctaClass}
+            style={{ ...ctaStyle, textDecoration: "none", display: "inline-flex" }}
+          >
+            {ctaInner}
+          </a>
+        ) : (
+          <button
+            type="button"
+            className={`${ctaClass}${canContinue ? "" : " is-locked"}`}
+            style={ctaStyle}
+            disabled={!canContinue}
+            onClick={onContinue}
+          >
+            {ctaInner}
+          </button>
+        )}
       </div>
     </div>
   );

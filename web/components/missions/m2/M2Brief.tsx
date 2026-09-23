@@ -10,14 +10,28 @@ const G = (text: string, children: string) => (
 );
 
 /** Intro page 1 — Pre-Mission Brief (round2_v14 #page1). Ambient/status from MissionChrome. */
-export function M2Brief({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
-  const [unlocked, setUnlocked] = useState(false);
+export function M2Brief({
+  onContinue,
+  onSkip,
+  continueHref,
+  skipHref,
+}: {
+  onContinue: () => void;
+  onSkip: () => void;
+  continueHref?: string;
+  skipHref?: string;
+}) {
+  const [unlocked, setUnlocked] = useState(Boolean(continueHref));
 
   // Continue auto-unlocks after 3s — gives time to read the brief.
   useEffect(() => {
+    if (continueHref) {
+      setUnlocked(true);
+      return;
+    }
     const t = setTimeout(() => setUnlocked(true), 3000);
     return () => clearTimeout(t);
-  }, []);
+  }, [continueHref]);
 
   return (
     <div className="m2-mission">
@@ -137,22 +151,48 @@ export function M2Brief({ onContinue, onSkip }: { onContinue: () => void; onSkip
         </div>
 
         <div className="button-section">
-          <button
-            className={`btn-next btn-sweep${unlocked ? "" : " is-locked"}`}
-            style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
-            id="btn-continue"
-            disabled={!unlocked}
-            onClick={onContinue}
-          >
-            <div className="btn-inner">
-              <span>Continue</span>
-              <span className="btn-arrow">→</span>
-            </div>
-          </button>
+          {continueHref ? (
+            <a
+              href={continueHref}
+              className="btn-next btn-sweep"
+              id="btn-continue"
+              style={
+                {
+                  "--sweep-ms": "3000ms",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                } as React.CSSProperties
+              }
+            >
+              <div className="btn-inner">
+                <span>Continue</span>
+                <span className="btn-arrow">→</span>
+              </div>
+            </a>
+          ) : (
+            <button
+              className={`btn-next btn-sweep${unlocked ? "" : " is-locked"}`}
+              style={{ "--sweep-ms": "3000ms" } as React.CSSProperties}
+              id="btn-continue"
+              disabled={!unlocked}
+              onClick={onContinue}
+            >
+              <div className="btn-inner">
+                <span>Continue</span>
+                <span className="btn-arrow">→</span>
+              </div>
+            </button>
+          )}
         </div>
-        <button id="skip-intro" onClick={onSkip}>
-          SKIP INTRO →
-        </button>
+        {skipHref ? (
+          <a id="skip-intro" href={skipHref} style={{ textDecoration: "none" }}>
+            SKIP INTRO →
+          </a>
+        ) : (
+          <button id="skip-intro" onClick={onSkip}>
+            SKIP INTRO →
+          </button>
+        )}
       </div>
     </div>
   );

@@ -6,17 +6,20 @@ import { VideoBlock } from "@/components/media/VideoBlock";
 import { getHubContent, getMissionCatalog, getMissionIntro, getMissionMedia, getMissionMeta } from "@/lib/content";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { parseMissionPhase } from "@/lib/game/phaseNav";
+import { phaseToCheckpoint } from "@/lib/game/types";
 import { getMissionProgress, hasResumableSession, upsertProgress } from "@/lib/progress";
 
 type PageProps = {
   params: Promise<{ missionId: string }>;
-  searchParams: Promise<{ resume?: string; replay?: string; debrief?: string }>;
+  searchParams: Promise<{ resume?: string; replay?: string; debrief?: string; phase?: string }>;
 };
 
 export default async function MissionPage({ params, searchParams }: PageProps) {
   const { missionId } = await params;
-  const { resume, replay, debrief } = await searchParams;
-  const isResume = resume === "1";
+  const { resume, replay, debrief, phase: phaseRaw } = await searchParams;
+  const forcedPhase = parseMissionPhase(phaseRaw);
+  const isResume = resume === "1" || Boolean(forcedPhase);
   const isDebriefPreview = debrief === "1" && missionId === "m1";
   const session = await auth();
   const userId = session!.user!.id;
@@ -33,7 +36,8 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
   ]);
   const difficulty = userRow?.difficulty ?? "standard";
 
-  if (!replay && !isDebriefPreview && hasResumableSession(existing) && !isResume) {
+  // Explicit ?phase= is progressive-enhancement navigation — do not bounce to ?resume=1.
+  if (!replay && !isDebriefPreview && !forcedPhase && hasResumableSession(existing) && resume !== "1") {
     redirect(`/mission/${missionId}?resume=1`);
   }
 
@@ -43,6 +47,13 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
       status: "in_progress",
       checkpoint: "start",
       stateJson: null,
+    });
+  } else if (forcedPhase) {
+    await upsertProgress(userId, {
+      missionId,
+      status: "in_progress",
+      checkpoint: phaseToCheckpoint(forcedPhase),
+      stateJson: forcedPhase === "game" ? existing?.stateJson ?? null : null,
     });
   } else if (!replay) {
     if (!existing || existing.status === "locked") {
@@ -68,7 +79,7 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
     }
   }
 
-  if (isResume && existing?.status === "completed") {
+  if (isResume && !forcedPhase && existing?.status === "completed") {
     const catalog = await getMissionCatalog();
     const sorted = [...catalog].sort((a, b) => a.order - b.order);
     const idx = sorted.findIndex((m) => m.id === missionId);
@@ -85,9 +96,20 @@ export default async function MissionPage({ params, searchParams }: PageProps) {
         missionId={missionId}
         missionName={meta.name}
         missionLabel={meta.label}
-        initialCheckpoint={replay === "1" ? "start" : (existing?.checkpoint ?? "start")}
+        initialCheckpoint={
+          forcedPhase
+            ? phaseToCheckpoint(forcedPhase)
+            : replay === "1"
+              ? "start"
+              : (existing?.checkpoint ?? "start")
+        }
         resume={isResume}
-        savedState={isResume && existing?.status === "in_progress" ? existing.stateJson : null}
+        forcedPhase={forcedPhase}
+        savedState={
+          forcedPhase === "game" || (isResume && existing?.status === "in_progress")
+            ? existing?.stateJson ?? null
+            : null
+        }
         debriefPreview={isDebriefPreview}
         difficulty={difficulty}
       />

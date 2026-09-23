@@ -16,6 +16,7 @@ type Props = {
   getDemoApi: () => M4TutorialDemoApi;
   onStepChange?: (stepIndex: number) => void;
   onComplete: () => void;
+  continueHref?: string;
 };
 
 function clampHole(domRect: DOMRect, pad: number): SpotlightRect | null {
@@ -49,7 +50,7 @@ function scheduleAfterLayout(fn: () => void): () => void {
   };
 }
 
-export function M4TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: Props) {
+export function M4TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete, continueHref }: Props) {
   const [stepIx, setStepIx] = useState(0);
   const [demoDone, setDemoDone] = useState(false);
 
@@ -379,11 +380,16 @@ export function M4TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
           <h3 id="m4-tut-title">{step?.title}</h3>
           <div id="m4-tut-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           <div className="m4-tut-actions">
-            {!demoDone && (
-              <button type="button" id="m4-tut-skip" onClick={finish}>
-                Skip tutorial
-              </button>
-            )}
+            {!demoDone &&
+              (continueHref ? (
+                <a href={continueHref} id="m4-tut-skip" style={{ textDecoration: "none" }}>
+                  Skip tutorial
+                </a>
+              ) : (
+                <button type="button" id="m4-tut-skip" onClick={finish}>
+                  Skip tutorial
+                </button>
+              ))}
             <button
               type="button"
               id="m4-tut-next"

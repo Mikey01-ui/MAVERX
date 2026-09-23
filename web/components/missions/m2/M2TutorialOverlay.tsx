@@ -16,6 +16,7 @@ type M2TutorialOverlayProps = {
   getDemoApi?: () => M2TutorialDemoApi | undefined;
   onStepChange?: (stepIndex: number) => void;
   onComplete: () => void;
+  continueHref?: string;
 };
 
 function normalizePad(pad: TutorialPad) {
@@ -93,7 +94,7 @@ function scheduleAfterLayout(fn: () => void): () => void {
   };
 }
 
-export function M2TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete }: M2TutorialOverlayProps) {
+export function M2TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onComplete, continueHref }: M2TutorialOverlayProps) {
   const [stepIx, setStepIx] = useState(0);
   const [interactionComplete, setInteractionComplete] = useState(false);
   const [footerPos, setFooterPos] = useState<{ left: number; top: number } | null>(null);
@@ -453,9 +454,15 @@ export function M2TutorialOverlay({ shellRoot, getDemoApi, onStepChange, onCompl
             </div>
           )}
           <div className="m2-tut-actions">
-            <button type="button" id="m2-tut-skip" onClick={finish}>
-              Skip tutorial
-            </button>
+            {continueHref ? (
+              <a href={continueHref} id="m2-tut-skip" style={{ textDecoration: "none" }}>
+                Skip tutorial
+              </a>
+            ) : (
+              <button type="button" id="m2-tut-skip" onClick={finish}>
+                Skip tutorial
+              </button>
+            )}
             {stepIx > 0 && !isDemo && (
               <button type="button" id="m2-tut-back" onClick={handleBack}>
                 Back

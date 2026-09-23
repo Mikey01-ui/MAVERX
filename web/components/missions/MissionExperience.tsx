@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MissionIntro, MissionMedia } from "@/lib/content";
 import { GameAudioProvider } from "@/lib/audio/GameAudioProvider";
@@ -15,49 +14,14 @@ import { MargusM1Brief } from "@/components/missions/margus-m1/MargusM1Brief";
 import { MargusM1Protocol } from "@/components/missions/margus-m1/MargusM1Protocol";
 import { M2Brief } from "@/components/missions/m2/M2Brief";
 import { MissionGame } from "@/components/missions/MissionGame";
+import { M1MargusMission } from "@/components/missions/m1/M1MargusMission";
+import { M1TutorialPhase } from "@/components/missions/m1/M1TutorialPhase";
 import { M2TutorialPhase } from "@/components/missions/m2/M2TutorialPhase";
 import { M3TutorialPhase } from "@/components/missions/m3/M3TutorialPhase";
 import { M4TutorialPhase } from "@/components/missions/m4/M4TutorialPhase";
 import { M5TutorialPhase } from "@/components/missions/m5/M5TutorialPhase";
 import { PlaytestMissionNav } from "@/components/admin/PlaytestMissionNav";
 import { DifficultyProvider } from "@/lib/game/DifficultyContext";
-
-const M1MargusMission = dynamic(
-  () => import("@/components/missions/m1/M1MargusMission").then((m) => m.M1MargusMission),
-  {
-    loading: () => (
-      <main
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          padding: "2rem",
-          color: "var(--text, #e8e4dc)",
-          background: "var(--bg, #0a0c10)",
-          fontFamily: "var(--font-display, monospace)",
-          textAlign: "center",
-        }}
-      >
-        <div>
-          <p style={{ opacity: 0.75, marginBottom: "1rem" }}>Loading Mission 1…</p>
-          <p style={{ fontSize: "0.9rem", opacity: 0.55 }}>
-            <a href="/mission/m1?phase=game" style={{ color: "inherit", marginRight: 16 }}>
-              Retry
-            </a>
-            <a href="/hub" style={{ color: "inherit" }}>
-              Hub
-            </a>
-          </p>
-        </div>
-      </main>
-    ),
-  }
-);
-
-// SSR-enabled so the no-hydration "Start mission" fallback link is in the HTML.
-const M1TutorialPhase = dynamic(
-  () => import("@/components/missions/m1/M1TutorialPhase").then((m) => m.M1TutorialPhase)
-);
 
 type MissionExperienceProps = {
   intro: MissionIntro;

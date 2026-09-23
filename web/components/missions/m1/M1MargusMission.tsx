@@ -1,48 +1,13 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import type { GameStats } from "@/components/missions/margus-m1/MargusM1Game";
+import { MargusM1Debrief } from "@/components/missions/margus-m1/MargusM1Debrief";
+import { MargusM1Game, type GameStats } from "@/components/missions/margus-m1/MargusM1Game";
 import { m1ReportSnapshot } from "@/lib/finale/missionReportSnapshot";
 import { persistMissionReport } from "@/lib/finale/persistMissionReport";
 import { isMargusM1DebriefState, serializeMargusM1Debrief } from "@/lib/game/margus-m1/session";
 import { useMissionProgress } from "@/lib/game/useMissionProgress";
-
-const MargusM1Game = dynamic(
-  () => import("@/components/missions/margus-m1/MargusM1Game").then((m) => m.MargusM1Game),
-  {
-    ssr: false,
-    loading: () => (
-      <main
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          padding: "2rem",
-          color: "var(--text, #e8e4dc)",
-          background: "var(--bg, #0a0c10)",
-          fontFamily: "var(--font-display, monospace)",
-          textAlign: "center",
-        }}
-      >
-        <div>
-          <p style={{ opacity: 0.75, marginBottom: "1rem" }}>Loading Mission 1…</p>
-          <p style={{ fontSize: "0.9rem", opacity: 0.55 }}>
-            <a href="/hub" style={{ color: "inherit" }}>
-              Back to hub
-            </a>
-          </p>
-        </div>
-      </main>
-    ),
-  }
-);
-
-const MargusM1Debrief = dynamic(
-  () => import("@/components/missions/margus-m1/MargusM1Debrief").then((m) => m.MargusM1Debrief),
-  { ssr: false }
-);
 
 type Phase = "game" | "debrief";
 

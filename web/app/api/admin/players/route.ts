@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const gate = await requireDashboardAdmin(request);
   if (!gate.ok) return gate.response;
 
+  try {
   const users = await prisma.user.findMany({
     where: { role: { not: "admin" } },
     orderBy: { createdAt: "desc" },
@@ -86,4 +87,9 @@ export async function GET(request: Request) {
       };
     }),
   });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load players.";
+    console.error("[api/admin/players GET]", err);
+    return jsonWithCors(request, { error: message }, { status: 500 });
+  }
 }

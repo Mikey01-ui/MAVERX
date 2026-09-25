@@ -16,64 +16,70 @@ export async function GET(request: Request) {
   const gate = await requireDashboardAdmin(request);
   if (!gate.ok) return gate.response;
 
-  const rows = await listInvites();
-  const usedIds = rows.map((r) => r.usedByUserId).filter(Boolean) as string[];
-  const usedUsers =
-    usedIds.length > 0
-      ? await prisma.user.findMany({
-          where: { id: { in: usedIds } },
-          select: { id: true, name: true, email: true },
-        })
-      : [];
-  const usedById = new Map(usedUsers.map((u) => [u.id, u]));
+  try {
+    const rows = await listInvites();
+    const usedIds = rows.map((r) => r.usedByUserId).filter(Boolean) as string[];
+    const usedUsers =
+      usedIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: usedIds } },
+            select: { id: true, name: true, email: true },
+          })
+        : [];
+    const usedById = new Map(usedUsers.map((u) => [u.id, u]));
 
-  const gameBase = (process.env.OMNI_PUBLIC_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
+    const gameBase = (process.env.OMNI_PUBLIC_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(
+      /\/$/,
+      "",
+    );
 
-  return jsonWithCors(request, {
-    invites: rows.map((inv) => {
-      const used = inv.usedByUserId ? usedById.get(inv.usedByUserId) : null;
-      return {
-        id: inv.id,
-        token: inv.token,
-        type: inv.type,
-        label: inviteDisplayLabel({
+    return jsonWithCors(request, {
+      invites: rows.map((inv) => {
+        const used = inv.usedByUserId ? usedById.get(inv.usedByUserId) : null;
+        return {
+          id: inv.id,
+          token: inv.token,
           type: inv.type,
+          label: inviteDisplayLabel({
+            type: inv.type,
+            playerName: inv.playerName,
+            email: inv.email,
+            cohortLabel: inv.cohortLabel,
+            token: inv.token,
+            group: inv.group,
+            usedUserName: used?.name ?? null,
+          }),
+          meta:
+            inv.type === "group"
+              ? `${inv.seats ?? "—"} seats · ${inv.difficulty} · ${inv.locale}`
+              : `${inv.difficulty} · ${inv.company ?? "—"} · ${inv.locale}`,
+          url: buildRegisterUrl(gameBase, inv),
+          status:
+            inv.status === "revoked"
+              ? "Expired"
+              : inv.status === "used"
+                ? "Used"
+                : inv.expiresAt && inv.expiresAt < new Date()
+                  ? "Expired"
+                  : "Active",
+          language: inv.locale,
+          difficulty: inv.difficulty,
+          company: inv.company,
           playerName: inv.playerName,
           email: inv.email,
-          cohortLabel: inv.cohortLabel,
-          token: inv.token,
-          group: inv.group,
-          usedUserName: used?.name ?? null,
-        }),
-        meta:
-          inv.type === "group"
-            ? `${inv.seats ?? "—"} seats · ${inv.difficulty} · ${inv.locale}`
-            : `${inv.difficulty} · ${inv.company ?? "—"} · ${inv.locale}`,
-        url: buildRegisterUrl(gameBase, inv),
-        status:
-          inv.status === "revoked"
-            ? "Expired"
-            : inv.status === "used"
-              ? "Used"
-              : inv.expiresAt && inv.expiresAt < new Date()
-                ? "Expired"
-                : "Active",
-        language: inv.locale,
-        difficulty: inv.difficulty,
-        company: inv.company,
-        playerName: inv.playerName,
-        email: inv.email,
-        seats: inv.seats,
-        cohort: inv.cohortLabel,
-        created: inv.createdAt.toISOString(),
-        expires: inv.expiresAt?.toISOString() ?? null,
-        groupId: inv.groupId,
-      };
-    }),
-  });
+          seats: inv.seats,
+          cohort: inv.cohortLabel,
+          created: inv.createdAt.toISOString(),
+          expires: inv.expiresAt?.toISOString() ?? null,
+          groupId: inv.groupId,
+        };
+      }),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load invites.";
+    console.error("[api/invites GET]", err);
+    return jsonWithCors(request, { error: message }, { status: 500 });
+  }
 }
 
 const createSchema = z.object({

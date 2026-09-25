@@ -42,6 +42,8 @@ model Invite {
   groupId      String?
   group        Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   email        String?
+  /// Optional display name from dashboard (shown on invite cards).
+  playerName   String?
   /// BCP-47 style code (en, nl, …)
   locale       String    @default("en")
   difficulty   String    @default("standard")
@@ -62,6 +64,8 @@ model Invite {
 model User {
   id               String         @id @default(cuid())
   email            String         @unique
+  /// Display name shown in the dashboard Accounts list.
+  name             String?
   passwordHash     String
   role             String         @default("player")
   /// Fallback when user has no group; group.locale wins for missions.

@@ -32,6 +32,7 @@ type InvitePreview = {
   company: string | null;
   cohortLabel: string | null;
   emailHint: string | null;
+  nameHint: string | null;
   expiresAt?: string | null;
 };
 
@@ -45,6 +46,7 @@ export function RegisterForm({
   initialPreviewError = null,
   initialStep = null,
   initialEmail = "",
+  initialName = "",
   initialRegError = null,
 }: {
   content: LoginContent;
@@ -56,6 +58,8 @@ export function RegisterForm({
   initialStep?: RegisterStep | null;
   /** From ?email= — carried across GET step forms. */
   initialEmail?: string;
+  /** From ?name= — carried across GET step forms / invite prefills. */
+  initialName?: string;
   /** From ?regError= — server-action failure echoed back without JS. */
   initialRegError?: string | null;
 }) {
@@ -77,6 +81,9 @@ export function RegisterForm({
   );
   const [email, setEmail] = useState(
     () => initialEmail || initialPreview?.emailHint || "",
+  );
+  const [displayName, setDisplayName] = useState(
+    () => initialName || initialPreview?.nameHint || "",
   );
   const [preferredLocale, setPreferredLocale] = useState<PreferredLocale>(() => {
     if (!initialPreview?.localeIsAny && initialPreview?.locale === "nl") return "nl";
@@ -121,6 +128,7 @@ export function RegisterForm({
           setPreview(data.invite as InvitePreview);
           setPreviewError(null);
           if (data.invite?.emailHint && !email) setEmail(data.invite.emailHint);
+          if (data.invite?.nameHint && !displayName) setDisplayName(data.invite.nameHint);
           if (!data.invite?.localeIsAny && data.invite?.locale === "nl") {
             setPreferredLocale("nl");
           }
@@ -148,7 +156,10 @@ export function RegisterForm({
 
   const stepIndex = Math.max(0, steps.indexOf(step));
 
-  function stepHref(target: RegisterStep, extras?: { email?: string; lang?: string | null }) {
+  function stepHref(
+    target: RegisterStep,
+    extras?: { email?: string; name?: string; lang?: string | null },
+  ) {
     return buildRegisterHref(inviteContext, target, extras);
   }
 
@@ -196,10 +207,12 @@ export function RegisterForm({
   const backFromLanguageHref = stepHref("context");
   const backFromEmailHref = stepHref(backFromEmail, {
     email: email.trim() || undefined,
+    name: displayName.trim() || undefined,
     lang: preferredLocale,
   });
   const backFromPasswordHref = stepHref("email", {
     email: email.trim() || undefined,
+    name: displayName.trim() || undefined,
     lang: preferredLocale,
   });
 
@@ -334,6 +347,25 @@ export function RegisterForm({
         <form method="get" action="/register" style={{ marginTop: "1.25rem" }}>
           <InviteHiddenFields stepValue="password" includeLang />
           <div className="form-group">
+            <label className="form-label" htmlFor="name">
+              {content.nameLabel}
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              className="form-input"
+              placeholder={content.namePlaceholder}
+              defaultValue={displayName}
+              autoComplete="name"
+              autoFocus
+              required
+              minLength={2}
+              maxLength={80}
+            />
+            <p className="error-text">{content.nameError}</p>
+          </div>
+          <div className="form-group">
             <label className="form-label" htmlFor="email">
               {content.emailLabel}
             </label>
@@ -345,7 +377,6 @@ export function RegisterForm({
               placeholder={content.emailPlaceholder}
               defaultValue={email}
               autoComplete="email"
-              autoFocus
               required
             />
             <p className="error-text">{content.emailError}</p>
@@ -365,6 +396,7 @@ export function RegisterForm({
         <form action={completeRegistration} style={{ marginTop: "1.25rem" }}>
           <InviteHiddenFields stepValue="password" includeLang />
           <input type="hidden" name="email" value={email.trim().toLowerCase()} />
+          <input type="hidden" name="name" value={displayName.trim()} />
           <input type="hidden" name="preferredLocale" value={preferredLocale} />
           <div className="form-group">
             <label className="form-label" htmlFor="password">

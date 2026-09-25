@@ -69,6 +69,8 @@ export type CreateInviteInput = {
   cohort?: string;
   seats?: number;
   email?: string;
+  /** Optional display name for individual invite cards / register prefills. */
+  playerName?: string;
   expiresInDays?: number;
 };
 
@@ -143,11 +145,13 @@ export async function createInvite(input: CreateInviteInput) {
   }
 
   const token = makeToken("px");
+  const playerName = input.playerName?.trim().slice(0, 80) || null;
   const invite = await prisma.invite.create({
     data: {
       token,
       type: "individual",
       email: input.email?.trim().toLowerCase() || null,
+      playerName,
       locale,
       difficulty,
       company,
@@ -161,8 +165,26 @@ export async function createInvite(input: CreateInviteInput) {
 export async function listInvites() {
   return prisma.invite.findMany({
     orderBy: { createdAt: "desc" },
-    include: { group: { select: { id: true, name: true, slug: true, locale: true } } },
+    include: {
+      group: { select: { id: true, name: true, slug: true, locale: true } },
+    },
   });
+}
+
+/** Resolve display labels for invite rows (prefer player name). */
+export function inviteDisplayLabel(inv: {
+  type: string;
+  playerName?: string | null;
+  email?: string | null;
+  cohortLabel?: string | null;
+  token: string;
+  group?: { name: string } | null;
+  usedUserName?: string | null;
+}): string {
+  if (inv.type === "group") {
+    return inv.cohortLabel ?? inv.group?.name ?? inv.token;
+  }
+  return inv.usedUserName?.trim() || inv.playerName?.trim() || inv.email || inv.token;
 }
 
 export async function revokeInvite(tokenOrId: string) {
@@ -251,6 +273,7 @@ export type InvitePreview = {
   company: string | null;
   cohortLabel: string | null;
   emailHint: string | null;
+  nameHint: string | null;
   expiresAt: string | null;
 };
 
@@ -268,6 +291,7 @@ export async function previewInvite(token: string): Promise<InvitePreview> {
     company: redeem.company,
     cohortLabel: invite?.cohortLabel ?? null,
     emailHint: invite?.email ?? null,
+    nameHint: invite?.playerName ?? null,
     expiresAt: invite?.expiresAt?.toISOString() ?? null,
   };
 }

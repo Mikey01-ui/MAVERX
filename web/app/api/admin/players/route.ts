@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     select: {
       id: true,
       email: true,
+      name: true,
       company: true,
       difficulty: true,
       preferredLocale: true,
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
       return {
         id: u.id,
         email: u.email,
+        name: u.name,
         company: u.company,
         difficulty: u.difficulty,
         locale: u.group?.locale ?? u.preferredLocale,

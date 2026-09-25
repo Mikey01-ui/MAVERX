@@ -22,7 +22,7 @@ export type RegisterInviteQuery = {
 export function buildRegisterHref(
   ctx: RegisterInviteQuery | undefined,
   step: RegisterStep,
-  extras?: { email?: string; lang?: string | null },
+  extras?: { email?: string; name?: string; lang?: string | null },
 ): string {
   const params = new URLSearchParams();
   if (ctx?.invite) params.set("invite", ctx.invite);
@@ -34,6 +34,7 @@ export function buildRegisterHref(
   if (ctx?.cohort) params.set("cohort", ctx.cohort);
   if (ctx?.seats) params.set("seats", ctx.seats);
   if (extras?.email) params.set("email", extras.email);
+  if (extras?.name) params.set("name", extras.name);
   params.set("step", step);
   return `/register?${params.toString()}`;
 }

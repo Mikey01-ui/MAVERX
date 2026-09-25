@@ -52,6 +52,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
     !!initialPreview?.localeIsAny,
   );
   const initialEmail = pick("email")?.trim() ?? "";
+  const initialName = pick("name")?.trim() ?? initialPreview?.nameHint?.trim() ?? "";
   const initialRegError = pick("regError")?.trim() || null;
 
   return (
@@ -65,6 +66,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
           initialPreviewError={previewError}
           initialStep={initialStep}
           initialEmail={initialEmail}
+          initialName={initialName}
           initialRegError={initialRegError}
         />
       </main>

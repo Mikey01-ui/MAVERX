@@ -17,6 +17,7 @@ import { buildRegisterHref } from "@/lib/register-steps";
 
 const formSchema = z.object({
   email: z.string().email(),
+  name: z.string().trim().min(2).max(80),
   password: z.string().min(8),
   confirm: z.string().min(8),
   preferredLocale: z.string().min(2).max(8).optional(),
@@ -41,6 +42,7 @@ function backToPassword(form: FormData, error: string): never {
     "password",
     {
       email: String(form.get("email") || "").trim() || undefined,
+      name: String(form.get("name") || "").trim() || undefined,
       lang: String(form.get("lang") || form.get("preferredLocale") || "") || null,
     },
   );
@@ -54,6 +56,7 @@ function backToPassword(form: FormData, error: string): never {
 export async function completeRegistration(formData: FormData) {
   const raw = {
     email: String(formData.get("email") || ""),
+    name: String(formData.get("name") || ""),
     password: String(formData.get("password") || ""),
     confirm: String(formData.get("confirm") || ""),
     preferredLocale: String(formData.get("preferredLocale") || formData.get("lang") || "") || undefined,
@@ -66,7 +69,7 @@ export async function completeRegistration(formData: FormData) {
 
   const parsed = formSchema.safeParse(raw);
   if (!parsed.success) {
-    backToPassword(formData, "A valid invite, email, and password (min 8) are required.");
+    backToPassword(formData, "A valid invite, name, email, and password (min 8) are required.");
   }
 
   if (parsed.data.password !== parsed.data.confirm) {
@@ -106,6 +109,7 @@ export async function completeRegistration(formData: FormData) {
   const user = await prisma.user.create({
     data: {
       email,
+      name: parsed.data.name.trim(),
       passwordHash,
       preferredLocale,
       groupId: redeem.groupId,

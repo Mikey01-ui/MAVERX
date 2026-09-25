@@ -11,13 +11,6 @@ const LANG_ALIASES: Record<string, string> = {
   nl: "nl",
   anyone: "any",
   any: "any",
-  estonian: "et",
-  et: "et",
-  finnish: "fi",
-  fi: "fi",
-  german: "de",
-  deutsch: "de",
-  de: "de",
 };
 
 /** True when invite lets the player pick language at register. */
@@ -84,22 +77,11 @@ export async function createInvite(input: CreateInviteInput) {
 
   // Ensure pack exists for concrete langs; `any` means player chooses later.
   if (locale !== "any") {
-    const label =
-      locale === "nl"
-        ? "Nederlands"
-        : locale === "et"
-          ? "Estonian"
-          : locale === "fi"
-            ? "Finnish"
-            : locale === "de"
-              ? "German"
-              : locale === "en"
-                ? "English"
-                : locale.toUpperCase();
+    const label = locale === "nl" ? "Dutch" : "English";
     await prisma.localePack.upsert({
-      where: { code: locale },
-      create: { code: locale, label, enabled: true },
-      update: { enabled: true },
+      where: { code: locale === "nl" ? "nl" : "en" },
+      create: { code: locale === "nl" ? "nl" : "en", label, enabled: true },
+      update: { enabled: true, label },
     });
   }
 

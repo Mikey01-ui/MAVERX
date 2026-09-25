@@ -1,306 +1,180 @@
-From bc6306cceca210c55764220060558e39c8144912 Mon Sep 17 00:00:00 2001
+From f11c24c1c39f6b0e502c36c1dac593c7ad75b755 Mon Sep 17 00:00:00 2001
 From: Cursor Agent <cursoragent@cursor.com>
-Date: Fri, 25 Sep 2026 07:40:02 +0000
-Subject: [PATCH] Morph invite modal steps and invite list cards
+Date: Fri, 25 Sep 2026 07:55:06 +0000
+Subject: [PATCH] Trim invite languages and clip morph overflow
 
-Reuse the PageMorph GSAP pattern for Individual/Group step changes
-and for invite card list enter/filter transitions.
+Language select is English / Dutch / Anyone only. Step and page morph
+drop filter blur and clip overflow so scrollbars do not flash.
 ---
- src/components/StepMorph.tsx  | 116 ++++++++++++++++++++++++++++++++++
- src/pages/MaverxDashboard.tsx |  45 ++++++++++---
- 2 files changed, 151 insertions(+), 10 deletions(-)
- create mode 100644 src/components/StepMorph.tsx
+ src/components/PageMorph.tsx  | 23 +++++++++++++----------
+ src/components/StepMorph.tsx  | 30 +++++++++++++++---------------
+ src/pages/MaverxDashboard.tsx |  8 ++------
+ 3 files changed, 30 insertions(+), 31 deletions(-)
 
+diff --git a/src/components/PageMorph.tsx b/src/components/PageMorph.tsx
+index 36f192a..8c5b079 100644
+--- a/src/components/PageMorph.tsx
++++ b/src/components/PageMorph.tsx
+@@ -34,36 +34,39 @@ function PageMorphInner({
+       const items = root.querySelectorAll<HTMLElement>("[data-morph-item]");
+       const bars = root.querySelectorAll<HTMLElement>("[data-morph-bar]");
+ 
++      // Clip during enter so transforms don't flash page/panel scrollbars.
++      gsap.set(root, { overflow: "hidden" });
++
+       gsap.fromTo(
+         root,
+         {
+           opacity: 0,
+-          x: direction * 36,
+-          y: 14,
+-          filter: "blur(6px)",
++          x: direction * 28,
++          y: 10,
+         },
+         {
+           opacity: 1,
+           x: 0,
+           y: 0,
+-          filter: "blur(0px)",
+-          duration: 0.55,
++          duration: 0.48,
+           ease: "power3.out",
++          onComplete: () => {
++            gsap.set(root, { clearProps: "overflow,transform" });
++          },
+         }
+       );
+ 
+       if (items.length) {
+         gsap.fromTo(
+           items,
+-          { opacity: 0, y: 22, scale: 0.985 },
++          { opacity: 0, y: 18 },
+           {
+             opacity: 1,
+             y: 0,
+-            scale: 1,
+-            duration: 0.48,
+-            stagger: 0.055,
++            duration: 0.42,
++            stagger: 0.05,
+             ease: "power2.out",
+-            delay: 0.06,
++            delay: 0.05,
+           }
+         );
+       }
 diff --git a/src/components/StepMorph.tsx b/src/components/StepMorph.tsx
-new file mode 100644
-index 0000000..590907f
---- /dev/null
+index 590907f..e33e7ba 100644
+--- a/src/components/StepMorph.tsx
 +++ b/src/components/StepMorph.tsx
-@@ -0,0 +1,116 @@
-+import { useLayoutEffect, useRef, type ReactNode } from "react";
-+import gsap from "gsap";
+@@ -33,49 +33,49 @@ function StepMorphInner({
+ 
+     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+     if (reduceMotion) {
+-      gsap.set(root, { clearProps: "all" });
++      gsap.set(root, { clearProps: "transform,opacity" });
+       return;
+     }
+ 
+-    // Kill any leftover tweens from a prior step before remount animation.
+     gsap.killTweensOf(root);
+ 
+     const ctx = gsap.context(() => {
+       const items = root.querySelectorAll<HTMLElement>("[data-step-item]");
+ 
++      // Clip during the tween so x/y motion never flashes a scrollbar.
++      gsap.set(root, { overflow: "hidden" });
 +
-+type StepMorphProps = {
-+  /** Unique key for the active step — remounts + re-runs enter morph. */
-+  stepKey: string;
-+  /** 1 = forward, -1 = back. */
-+  direction?: 1 | -1;
-+  children: ReactNode;
-+  className?: string;
-+  /** Optional marker for targeting (e.g. invite modal vs list). */
-+  dataAttr?: string;
-+};
-+
-+function StepMorphInner({
-+  direction,
-+  children,
-+  className,
-+  stepKey,
-+  dataAttr,
-+}: {
-+  direction: 1 | -1;
-+  children: ReactNode;
-+  className?: string;
-+  stepKey: string;
-+  dataAttr?: string;
-+}) {
-+  const rootRef = useRef<HTMLDivElement>(null);
-+
-+  useLayoutEffect(() => {
-+    const root = rootRef.current;
-+    if (!root) return;
-+
-+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-+    if (reduceMotion) {
-+      gsap.set(root, { clearProps: "all" });
-+      return;
-+    }
-+
-+    // Kill any leftover tweens from a prior step before remount animation.
-+    gsap.killTweensOf(root);
-+
-+    const ctx = gsap.context(() => {
-+      const items = root.querySelectorAll<HTMLElement>("[data-step-item]");
-+
-+      gsap.fromTo(
-+        root,
-+        {
-+          opacity: 0,
-+          x: direction * 40,
-+          y: 14,
-+          scale: 0.97,
-+          filter: "blur(8px)",
-+        },
-+        {
-+          opacity: 1,
-+          x: 0,
-+          y: 0,
-+          scale: 1,
-+          filter: "blur(0px)",
-+          duration: 0.55,
-+          ease: "power3.out",
-+          overwrite: true,
-+        }
-+      );
-+
-+      if (items.length) {
-+        gsap.fromTo(
-+          items,
-+          { opacity: 0, y: 20, scale: 0.98 },
-+          {
-+            opacity: 1,
-+            y: 0,
-+            scale: 1,
-+            duration: 0.45,
-+            stagger: 0.055,
-+            ease: "power2.out",
-+            delay: 0.08,
-+            overwrite: true,
-+          }
-+        );
-+      }
-+    }, root);
-+
-+    return () => {
-+      ctx.revert();
-+    };
-+  }, [direction, stepKey]);
-+
-+  return (
-+    <div
-+      ref={rootRef}
-+      className={className}
-+      data-step={stepKey}
-+      data-invite-flow={dataAttr === "data-invite-flow" ? stepKey : undefined}
-+      data-invite-list={dataAttr === "data-invite-list" ? stepKey : undefined}
-+    >
-+      {children}
-+    </div>
-+  );
-+}
-+
-+/** Same GSAP enter morph as PageMorph, scoped to modal / panel step changes. */
-+export function StepMorph({ stepKey, direction = 1, children, className, dataAttr }: StepMorphProps) {
-+  return (
-+    <StepMorphInner
-+      key={stepKey}
-+      stepKey={stepKey}
-+      direction={direction}
-+      className={className}
-+      dataAttr={dataAttr}
-+    >
-+      {children}
-+    </StepMorphInner>
-+  );
-+}
+       gsap.fromTo(
+         root,
+         {
+           opacity: 0,
+-          x: direction * 40,
+-          y: 14,
+-          scale: 0.97,
+-          filter: "blur(8px)",
++          x: direction * 28,
++          y: 10,
+         },
+         {
+           opacity: 1,
+           x: 0,
+           y: 0,
+-          scale: 1,
+-          filter: "blur(0px)",
+-          duration: 0.55,
++          duration: 0.42,
+           ease: "power3.out",
+           overwrite: true,
++          onComplete: () => {
++            gsap.set(root, { clearProps: "overflow,transform" });
++          },
+         }
+       );
+ 
+       if (items.length) {
+         gsap.fromTo(
+           items,
+-          { opacity: 0, y: 20, scale: 0.98 },
++          { opacity: 0, y: 14 },
+           {
+             opacity: 1,
+             y: 0,
+-            scale: 1,
+-            duration: 0.45,
+-            stagger: 0.055,
++            duration: 0.36,
++            stagger: 0.04,
+             ease: "power2.out",
+-            delay: 0.08,
++            delay: 0.04,
+             overwrite: true,
+           }
+         );
+@@ -90,7 +90,7 @@ function StepMorphInner({
+   return (
+     <div
+       ref={rootRef}
+-      className={className}
++      className={`overflow-hidden ${className ?? ""}`.trim()}
+       data-step={stepKey}
+       data-invite-flow={dataAttr === "data-invite-flow" ? stepKey : undefined}
+       data-invite-list={dataAttr === "data-invite-list" ? stepKey : undefined}
 diff --git a/src/pages/MaverxDashboard.tsx b/src/pages/MaverxDashboard.tsx
-index 0fac913..a543b95 100644
+index a543b95..18fb08f 100644
 --- a/src/pages/MaverxDashboard.tsx
 +++ b/src/pages/MaverxDashboard.tsx
-@@ -23,6 +23,7 @@ import {
- } from "lucide-react";
- import { CountUp } from "../components/CountUp";
- import { PageMorph } from "../components/PageMorph";
-+import { StepMorph } from "../components/StepMorph";
- import {
-   createInviteApi,
-   fetchInvites,
-@@ -117,6 +118,7 @@ export function MaverxDashboard() {
-   const [expiresIn, setExpiresIn] = useState("7");
-   const [inviteFlowOpen, setInviteFlowOpen] = useState(false);
-   const [inviteFlowStep, setInviteFlowStep] = useState<"type" | "details" | "done">("type");
-+  const [inviteFlowDir, setInviteFlowDir] = useState<1 | -1>(1);
-   const [generatedLinks, setGeneratedLinks] = useState<
-     {
-       id: string;
-@@ -261,7 +263,13 @@ export function MaverxDashboard() {
-   const filteredInvites =
-     inviteFilter === "All" ? generatedLinks : generatedLinks.filter((l) => l.status === inviteFilter);
- 
-+  const goInviteStep = (step: "type" | "details" | "done", dir: 1 | -1 = 1) => {
-+    setInviteFlowDir(dir);
-+    setInviteFlowStep(step);
-+  };
-+
-   const openInviteFlow = () => {
-+    setInviteFlowDir(1);
-     setInviteFlowStep("type");
-     setInviteEmail("");
-     setInvitePlayerName("");
-@@ -271,6 +279,7 @@ export function MaverxDashboard() {
- 
-   const closeInviteFlow = () => {
-     setInviteFlowOpen(false);
-+    setInviteFlowDir(1);
-     setInviteFlowStep("type");
-   };
- 
-@@ -406,7 +415,7 @@ export function MaverxDashboard() {
-       setGeneratedLinks((prev) => [entry, ...prev]);
-       setSelectedInviteId(inv.id);
-       setLastGeneratedUrl(inv.url);
--      setInviteFlowStep("done");
-+      goInviteStep("done", 1);
-       flash(inviteMode === "group" ? "Group invite ready" : "Personal invite ready");
-     } catch (err) {
-       setInviteApiError(err instanceof Error ? err.message : "Could not create invite");
-@@ -1199,14 +1208,24 @@ export function MaverxDashboard() {
+@@ -1207,7 +1207,7 @@ export function MaverxDashboard() {
+                   ))}
                  </div>
  
-                 <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto pr-1">
-+                  <StepMorph
-+                    stepKey={`invites-${inviteFilter}-${invitesLoading ? "loading" : invitesError ? "error" : filteredInvites.map((i) => i.id).join(",") || "empty"}`}
-+                    direction={1}
-+                    className="flex flex-col gap-2"
-+                    dataAttr="data-invite-list"
-+                  >
-                   {invitesLoading && (
--                    <p className="text-[12px] text-[#888e99] text-center py-10">Loading invites…</p>
-+                    <p className="text-[12px] text-[#888e99] text-center py-10" data-step-item>
-+                      Loading invites…
-+                    </p>
-                   )}
-                   {invitesError && !invitesLoading && (
--                    <p className="text-[12px] text-red-600 text-center py-10 px-3">{invitesError}</p>
-+                    <p className="text-[12px] text-red-600 text-center py-10 px-3" data-step-item>
-+                      {invitesError}
-+                    </p>
-                   )}
-                   {!invitesLoading && !invitesError && filteredInvites.length === 0 && (
--                    <div className="text-center py-12 px-4">
-+                    <div className="text-center py-12 px-4" data-step-item>
-                       <p className="text-[13px] font-semibold text-[#1a1a1a]">No invites yet</p>
-                       <p className="text-[12px] text-[#888e99] mt-1 mb-4">
-                         Create a personal or group link to get started
-@@ -1227,6 +1246,7 @@ export function MaverxDashboard() {
-                       <button
-                         key={invite.id}
-                         type="button"
-+                        data-step-item
-                         onClick={() => {
-                           setSelectedInviteId(invite.id);
-                           setLastGeneratedUrl(invite.url);
-@@ -1283,6 +1303,7 @@ export function MaverxDashboard() {
-                       </button>
-                     );
-                   })}
-+                  </StepMorph>
-                 </div>
-               </div>
- 
-@@ -1418,13 +1439,15 @@ export function MaverxDashboard() {
-                   </div>
- 
-                   <div className="p-5">
-+                    <StepMorph stepKey={inviteFlowStep} direction={inviteFlowDir} dataAttr="data-invite-flow">
-                     {inviteFlowStep === "type" && (
-                       <div className="flex flex-col gap-3">
-                         <button
-                           type="button"
-+                          data-step-item
-                           onClick={() => {
-                             setInviteMode("individual");
--                            setInviteFlowStep("details");
-+                            goInviteStep("details", 1);
-                           }}
-                           className="w-full text-left rounded-[22px] border border-black/[0.08] bg-neutral-50/80 hover:bg-white hover:border-black/15 p-4 transition-colors cursor-pointer"
-                         >
-@@ -1442,9 +1465,10 @@ export function MaverxDashboard() {
-                         </button>
-                         <button
-                           type="button"
-+                          data-step-item
-                           onClick={() => {
-                             setInviteMode("group");
--                            setInviteFlowStep("details");
-+                            goInviteStep("details", 1);
-                           }}
-                           className="w-full text-left rounded-[22px] border border-black/[0.08] bg-neutral-50/80 hover:bg-white hover:border-black/15 p-4 transition-colors cursor-pointer"
-                         >
-@@ -1464,7 +1488,7 @@ export function MaverxDashboard() {
-                     )}
- 
-                     {inviteFlowStep === "details" && (
--                      <div className="flex flex-col gap-3">
-+                      <div className="flex flex-col gap-3" data-step-item>
-                         {inviteMode === "individual" ? (
-                           <div className="flex flex-col gap-3">
-                             <div>
-@@ -1580,7 +1604,7 @@ export function MaverxDashboard() {
-                         <div className="flex gap-2 mt-2">
-                           <button
-                             type="button"
--                            onClick={() => setInviteFlowStep("type")}
-+                            onClick={() => goInviteStep("type", -1)}
-                             className="flex-1 bg-neutral-100 text-[#1a1a1a] text-[12px] font-semibold rounded-full py-2.5 cursor-pointer hover:bg-neutral-200"
-                           >
-                             Back
-@@ -1605,7 +1629,7 @@ export function MaverxDashboard() {
-                     )}
- 
-                     {inviteFlowStep === "done" && (
--                      <div className="flex flex-col gap-4">
-+                      <div className="flex flex-col gap-4" data-step-item>
-                         <div className="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center gap-2">
-                           <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                             <Check size={14} strokeWidth={2.5} />
-@@ -1640,7 +1664,7 @@ export function MaverxDashboard() {
-                           <button
-                             type="button"
-                             onClick={() => {
--                              setInviteFlowStep("type");
-+                              goInviteStep("type", -1);
-                               setInviteEmail("");
-                               setInvitePlayerName("");
-                               setLastGeneratedUrl("");
-@@ -1659,6 +1683,7 @@ export function MaverxDashboard() {
-                         </div>
-                       </div>
-                     )}
-+                    </StepMorph>
-                   </div>
-                 </div>
-               </div>,
+-                <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto pr-1">
++                <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
+                   <StepMorph
+                     stepKey={`invites-${inviteFilter}-${invitesLoading ? "loading" : invitesError ? "error" : filteredInvites.map((i) => i.id).join(",") || "empty"}`}
+                     direction={1}
+@@ -1409,7 +1409,7 @@ export function MaverxDashboard() {
+                   aria-label="Close"
+                   onClick={closeInviteFlow}
+                 />
+-                <div className="relative w-full sm:max-w-[480px] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-white/80 max-h-[92vh] overflow-y-auto">
++                <div className="relative w-full sm:max-w-[480px] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-white/80 max-h-[92vh] overflow-x-hidden overflow-y-auto overscroll-contain">
+                   <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-5 pt-5 pb-3 flex items-center justify-between border-b border-black/[0.04] z-10">
+                     <div>
+                       <p className="text-[10px] font-semibold text-[#888e99] uppercase tracking-wide">
+@@ -1554,10 +1554,6 @@ export function MaverxDashboard() {
+                               <option>English</option>
+                               <option>Dutch</option>
+                               <option>Anyone</option>
+-                              <option>Nederlands</option>
+-                              <option>Estonian</option>
+-                              <option>Finnish</option>
+-                              <option>German</option>
+                             </select>
+                           </div>
+                           <div>
 -- 
 2.43.0
 

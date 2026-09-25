@@ -1,7 +1,7 @@
 From 51945eb1cfccdeb61ac7740e4c7678c858d0c462 Mon Sep 17 00:00:00 2001
 From: Cursor Agent <cursoragent@cursor.com>
 Date: Fri, 25 Sep 2026 08:32:14 +0000
-Subject: [PATCH] Remove Companies tab from dashboard nav
+Subject: [PATCH 1/2] Remove Companies tab from dashboard nav
 
 ---
  src/pages/MaverxDashboard.tsx | 2 +-
@@ -20,6 +20,32 @@ index 18fb08f..ea944d7 100644
  
    const goToTab = (tab: string) => {
      if (tab === activeTab) return;
+-- 
+2.43.0
+
+
+From 6c2492ba6ad25d01b9f73f7267f55a22bb1370d6 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Fri, 25 Sep 2026 08:33:05 +0000
+Subject: [PATCH 2/2] Drop Companies from main dashboard grid gating
+
+---
+ src/pages/MaverxDashboard.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/pages/MaverxDashboard.tsx b/src/pages/MaverxDashboard.tsx
+index ea944d7..7b5e3ad 100644
+--- a/src/pages/MaverxDashboard.tsx
++++ b/src/pages/MaverxDashboard.tsx
+@@ -452,7 +452,7 @@ export function MaverxDashboard() {
+   const showInvites = activeTab === "Invites";
+   const showAccounts = activeTab === "Accounts";
+   const showStats = activeTab === "Stats";
+-  const showMainGrid = activeTab === "Dashboard" || activeTab === "Companies";
++  const showMainGrid = activeTab === "Dashboard";
+ 
+   const totalPlayers = accounts.length;
+   const onlinePlayersCount = accounts.filter((a) => a.online).length;
 -- 
 2.43.0
 

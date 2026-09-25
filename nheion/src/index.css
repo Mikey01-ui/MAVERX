@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Ambient Mesh Gradient Keyframes for Maverx Dashboard */
+@keyframes ambientFloatOrange {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(50px, 40px, 0) scale(1.12) rotate(6deg);
+  }
+  66% {
+    transform: translate3d(-30px, 60px, 0) scale(0.96) rotate(-4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ambientPulseWarm {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate3d(35px, 20px, 0) scale(1.2);
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes ambientFloatPurple {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-60px, 50px, 0) scale(1.15) rotate(-6deg);
+  }
+  66% {
+    transform: translate3d(40px, -40px, 0) scale(0.92) rotate(8deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ambientFloatAccentPurple {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(-50px, -45px, 0) scale(1.22);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes ambientFloatLavender {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(40px, -30px, 0) scale(1.15);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-ambient-orange {
+  animation: ambientFloatOrange 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ambient-warm {
+  animation: ambientPulseWarm 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-ambient-purple {
+  animation: ambientFloatPurple 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ambient-accent-purple {
+  animation: ambientFloatAccentPurple 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-ambient-lavender {
+  animation: ambientFloatLavender 15s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-orange,
+  .animate-ambient-warm,
+  .animate-ambient-purple,
+  .animate-ambient-accent-purple,
+  .animate-ambient-lavender {
+    animation: none !important;
+  }
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Anti-Copy & Anti-Inspection Rules */
+img, video, canvas, svg {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+@media print {
+  html, body {
+    display: none !important;
+  }
+}
+
+

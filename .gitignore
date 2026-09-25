@@ -2,9 +2,7 @@
 *.pem
 .env
 .env.*
-
-# Nested clone of sister dashboard repo (pushed separately)
-maverxdashboard/
+!.env.example
 
 # Next.js app
 web/node_modules/
@@ -14,7 +12,11 @@ web/build/
 web/.vercel/
 web/*.tsbuildinfo
 web/app/generated/prisma/
-maverxdashboard/
 
-# Local clones of sister dashboards
-nheion/
+# Admin dashboard (Vite)
+nheion/node_modules/
+nheion/dist/
+nheion/dist-ssr/
+
+# Legacy separate dashboard clone (optional local only)
+maverxdashboard/

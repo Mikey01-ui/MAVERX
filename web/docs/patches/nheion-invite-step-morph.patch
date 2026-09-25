@@ -1,180 +1,25 @@
-From f11c24c1c39f6b0e502c36c1dac593c7ad75b755 Mon Sep 17 00:00:00 2001
+From 51945eb1cfccdeb61ac7740e4c7678c858d0c462 Mon Sep 17 00:00:00 2001
 From: Cursor Agent <cursoragent@cursor.com>
-Date: Fri, 25 Sep 2026 07:55:06 +0000
-Subject: [PATCH] Trim invite languages and clip morph overflow
+Date: Fri, 25 Sep 2026 08:32:14 +0000
+Subject: [PATCH] Remove Companies tab from dashboard nav
 
-Language select is English / Dutch / Anyone only. Step and page morph
-drop filter blur and clip overflow so scrollbars do not flash.
 ---
- src/components/PageMorph.tsx  | 23 +++++++++++++----------
- src/components/StepMorph.tsx  | 30 +++++++++++++++---------------
- src/pages/MaverxDashboard.tsx |  8 ++------
- 3 files changed, 30 insertions(+), 31 deletions(-)
+ src/pages/MaverxDashboard.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/components/PageMorph.tsx b/src/components/PageMorph.tsx
-index 36f192a..8c5b079 100644
---- a/src/components/PageMorph.tsx
-+++ b/src/components/PageMorph.tsx
-@@ -34,36 +34,39 @@ function PageMorphInner({
-       const items = root.querySelectorAll<HTMLElement>("[data-morph-item]");
-       const bars = root.querySelectorAll<HTMLElement>("[data-morph-bar]");
- 
-+      // Clip during enter so transforms don't flash page/panel scrollbars.
-+      gsap.set(root, { overflow: "hidden" });
-+
-       gsap.fromTo(
-         root,
-         {
-           opacity: 0,
--          x: direction * 36,
--          y: 14,
--          filter: "blur(6px)",
-+          x: direction * 28,
-+          y: 10,
-         },
-         {
-           opacity: 1,
-           x: 0,
-           y: 0,
--          filter: "blur(0px)",
--          duration: 0.55,
-+          duration: 0.48,
-           ease: "power3.out",
-+          onComplete: () => {
-+            gsap.set(root, { clearProps: "overflow,transform" });
-+          },
-         }
-       );
- 
-       if (items.length) {
-         gsap.fromTo(
-           items,
--          { opacity: 0, y: 22, scale: 0.985 },
-+          { opacity: 0, y: 18 },
-           {
-             opacity: 1,
-             y: 0,
--            scale: 1,
--            duration: 0.48,
--            stagger: 0.055,
-+            duration: 0.42,
-+            stagger: 0.05,
-             ease: "power2.out",
--            delay: 0.06,
-+            delay: 0.05,
-           }
-         );
-       }
-diff --git a/src/components/StepMorph.tsx b/src/components/StepMorph.tsx
-index 590907f..e33e7ba 100644
---- a/src/components/StepMorph.tsx
-+++ b/src/components/StepMorph.tsx
-@@ -33,49 +33,49 @@ function StepMorphInner({
- 
-     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-     if (reduceMotion) {
--      gsap.set(root, { clearProps: "all" });
-+      gsap.set(root, { clearProps: "transform,opacity" });
-       return;
-     }
- 
--    // Kill any leftover tweens from a prior step before remount animation.
-     gsap.killTweensOf(root);
- 
-     const ctx = gsap.context(() => {
-       const items = root.querySelectorAll<HTMLElement>("[data-step-item]");
- 
-+      // Clip during the tween so x/y motion never flashes a scrollbar.
-+      gsap.set(root, { overflow: "hidden" });
-+
-       gsap.fromTo(
-         root,
-         {
-           opacity: 0,
--          x: direction * 40,
--          y: 14,
--          scale: 0.97,
--          filter: "blur(8px)",
-+          x: direction * 28,
-+          y: 10,
-         },
-         {
-           opacity: 1,
-           x: 0,
-           y: 0,
--          scale: 1,
--          filter: "blur(0px)",
--          duration: 0.55,
-+          duration: 0.42,
-           ease: "power3.out",
-           overwrite: true,
-+          onComplete: () => {
-+            gsap.set(root, { clearProps: "overflow,transform" });
-+          },
-         }
-       );
- 
-       if (items.length) {
-         gsap.fromTo(
-           items,
--          { opacity: 0, y: 20, scale: 0.98 },
-+          { opacity: 0, y: 14 },
-           {
-             opacity: 1,
-             y: 0,
--            scale: 1,
--            duration: 0.45,
--            stagger: 0.055,
-+            duration: 0.36,
-+            stagger: 0.04,
-             ease: "power2.out",
--            delay: 0.08,
-+            delay: 0.04,
-             overwrite: true,
-           }
-         );
-@@ -90,7 +90,7 @@ function StepMorphInner({
-   return (
-     <div
-       ref={rootRef}
--      className={className}
-+      className={`overflow-hidden ${className ?? ""}`.trim()}
-       data-step={stepKey}
-       data-invite-flow={dataAttr === "data-invite-flow" ? stepKey : undefined}
-       data-invite-list={dataAttr === "data-invite-list" ? stepKey : undefined}
 diff --git a/src/pages/MaverxDashboard.tsx b/src/pages/MaverxDashboard.tsx
-index a543b95..18fb08f 100644
+index 18fb08f..ea944d7 100644
 --- a/src/pages/MaverxDashboard.tsx
 +++ b/src/pages/MaverxDashboard.tsx
-@@ -1207,7 +1207,7 @@ export function MaverxDashboard() {
-                   ))}
-                 </div>
+@@ -238,7 +238,7 @@ export function MaverxDashboard() {
+       });
+   };
  
--                <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto pr-1">
-+                <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
-                   <StepMorph
-                     stepKey={`invites-${inviteFilter}-${invitesLoading ? "loading" : invitesError ? "error" : filteredInvites.map((i) => i.id).join(",") || "empty"}`}
-                     direction={1}
-@@ -1409,7 +1409,7 @@ export function MaverxDashboard() {
-                   aria-label="Close"
-                   onClick={closeInviteFlow}
-                 />
--                <div className="relative w-full sm:max-w-[480px] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-white/80 max-h-[92vh] overflow-y-auto">
-+                <div className="relative w-full sm:max-w-[480px] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-white/80 max-h-[92vh] overflow-x-hidden overflow-y-auto overscroll-contain">
-                   <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-5 pt-5 pb-3 flex items-center justify-between border-b border-black/[0.04] z-10">
-                     <div>
-                       <p className="text-[10px] font-semibold text-[#888e99] uppercase tracking-wide">
-@@ -1554,10 +1554,6 @@ export function MaverxDashboard() {
-                               <option>English</option>
-                               <option>Dutch</option>
-                               <option>Anyone</option>
--                              <option>Nederlands</option>
--                              <option>Estonian</option>
--                              <option>Finnish</option>
--                              <option>German</option>
-                             </select>
-                           </div>
-                           <div>
+-  const navTabs = ["Dashboard", "Accounts", "Invites", "Stats", "Companies"];
++  const navTabs = ["Dashboard", "Accounts", "Invites", "Stats"];
+ 
+   const goToTab = (tab: string) => {
+     if (tab === activeTab) return;
 -- 
 2.43.0
 

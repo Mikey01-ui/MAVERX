@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+# Design mockups — ship the app, not marketing renders
+public/assets/final_render.png

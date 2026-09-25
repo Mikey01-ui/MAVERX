@@ -1,0 +1,25 @@
+From 51945eb1cfccdeb61ac7740e4c7678c858d0c462 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Fri, 25 Sep 2026 08:32:14 +0000
+Subject: [PATCH] Remove Companies tab from dashboard nav
+
+---
+ src/pages/MaverxDashboard.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/pages/MaverxDashboard.tsx b/src/pages/MaverxDashboard.tsx
+index 18fb08f..ea944d7 100644
+--- a/src/pages/MaverxDashboard.tsx
++++ b/src/pages/MaverxDashboard.tsx
+@@ -238,7 +238,7 @@ export function MaverxDashboard() {
+       });
+   };
+ 
+-  const navTabs = ["Dashboard", "Accounts", "Invites", "Stats", "Companies"];
++  const navTabs = ["Dashboard", "Accounts", "Invites", "Stats"];
+ 
+   const goToTab = (tab: string) => {
+     if (tab === activeTab) return;
+-- 
+2.43.0
+
